@@ -179,3 +179,13 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+@layer utilities {
+  .h-dvh {
+    height: 100dvh;
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
