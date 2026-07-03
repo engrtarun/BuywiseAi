@@ -524,9 +524,13 @@ export default function SignupPage() {
                 <h1 className="font-heading font-extrabold text-2xl tracking-tight">
                   Verify your email
                 </h1>
-                <p className="text-sm font-sans text-text-dim-ondark">
-                  We sent a 6-digit verification code to <span className="text-text-ondark font-semibold">{email}</span>.
+                <p className="text-sm font-sans text-text-dim-ondark leading-relaxed">
+                  We've sent a verification email to <span className="text-text-ondark font-semibold">{email}</span>.
                 </p>
+                <div className="text-xs font-sans text-text-dim-ondark/80 bg-ink-deeper/40 p-3.5 rounded-2xl border border-line-ondark/60 space-y-1.5 mt-1">
+                  <p>👉 <strong>Option 1:</strong> Click the <strong>Confirm email address</strong> link in the email to log in directly.</p>
+                  <p>👉 <strong>Option 2:</strong> Enter the 6-digit OTP code below (if your Supabase email template is configured to send the code).</p>
+                </div>
               </div>
 
               {/* Six Digits OTP Box */}
