@@ -34,7 +34,44 @@ export async function updateSession(request: NextRequest) {
   )
 
   // Refresh session if expired
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const pathname = request.nextUrl.pathname
+
+  // 1. Unauthenticated users:
+  // Redirect to /login if trying to access protected paths (root "/" or "/chat" or "/welcome")
+  if (!user) {
+    if (pathname === "/" || pathname === "/chat" || pathname.startsWith("/chat/") || pathname === "/welcome") {
+      const url = request.nextUrl.clone()
+      url.pathname = "/login"
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // 2. Authenticated users:
+  // Redirect to /chat if trying to access auth pages (/login, /signup)
+  // For /welcome, only redirect to /chat if they already have a completed profile (full_name set)
+  if (user) {
+    if (pathname === "/login" || pathname === "/signup") {
+      const url = request.nextUrl.clone()
+      url.pathname = "/chat"
+      return NextResponse.redirect(url)
+    }
+    
+    if (pathname === "/welcome") {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .maybeSingle()
+        
+      if (profile && profile.full_name) {
+        const url = request.nextUrl.clone()
+        url.pathname = "/chat"
+        return NextResponse.redirect(url)
+      }
+    }
+  }
 
   return supabaseResponse
 }
