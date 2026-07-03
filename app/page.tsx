@@ -1,10 +1,16 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  getOrCreateActiveSession,
+  getChatHistory,
+  sendMessage as apiSendMessage,
+} from "@/app/actions/chat";
 
 /* ──────────────────────────────────────────────
    Types & Dummy AI Responses
@@ -116,11 +122,17 @@ function TypingIndicator() {
    ────────────────────────────────────────────── */
 
 export default function ChatShell() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [responseIndex, setResponseIndex] = useState(0);
   
+  // Supabase states
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
   // Auto-scroll refs and state
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -129,6 +141,45 @@ export default function ChatShell() {
   const [showScrollButton, setShowScrollButton] = useState(false);
   
   const prevMessagesLength = useRef(messages.length);
+
+  // Load session & chat history on mount
+  useEffect(() => {
+    async function initChat() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const sid = await getOrCreateActiveSession();
+        setSessionId(sid);
+        const history = await getChatHistory(sid);
+        if (history.length > 0) {
+          setMessages(
+            history.map((msg) => ({
+              id: msg.id,
+              role: msg.sender === "ai" ? "assistant" : "user",
+              content: msg.message,
+            }))
+          );
+        } else {
+          setMessages(initialMessages);
+        }
+      } catch (err: any) {
+        console.error("Failed to initialize chat:", err);
+        const errMsg = err.message || "";
+        if (
+          errMsg.includes("User is not logged in") ||
+          errMsg.includes("Unauthorized") ||
+          errMsg.includes("Authentication failed")
+        ) {
+          router.push("/login");
+        } else {
+          setError("Failed to load chat history. Please try refreshing.");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    initChat();
+  }, [router]);
 
   // Auto-scroll logic triggered on messages or typing state change
   useEffect(() => {
@@ -166,46 +217,67 @@ export default function ChatShell() {
     }
   };
 
-  const handleSend = (e?: React.FormEvent) => {
+  const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const content = inputText.trim();
-    if (!content || isTyping) return;
+    if (!content || isTyping || !sessionId) return;
 
-    // 1. Add user message
+    const tempUserMsgId = Date.now().toString();
+
+    // 1. Add user message locally
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: tempUserMsgId,
       role: "user",
       content,
     };
     setMessages((prev) => [...prev, userMessage]);
     setInputText("");
+    setError(null);
     
     // Force scroll to bottom for the user's own sent message
     isAtBottomRef.current = true;
     setShowScrollButton(false);
     setTimeout(() => inputRef.current?.focus(), 0);
 
-    // 2. Show typing indicator and wait
-    setIsTyping(true);
-    
-    // Simulate network/thinking delay (1.5 seconds)
-    setTimeout(() => {
-      // 3. Add fake AI response
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: fakeAIResponses[responseIndex % fakeAIResponses.length],
-      };
+    try {
+      // Persist user message to Supabase
+      await apiSendMessage(sessionId, "user", content);
+
+      // 2. Show typing indicator and wait
+      setIsTyping(true);
       
-      setMessages((prev) => [...prev, aiMessage]);
-      setResponseIndex((prev) => prev + 1);
-      setIsTyping(false);
-      
-      // Refocus input if the user is still at the bottom
-      if (isAtBottomRef.current) {
-        setTimeout(() => inputRef.current?.focus(), 50);
-      }
-    }, 1500);
+      // Simulate network/thinking delay (1.5 seconds)
+      setTimeout(async () => {
+        try {
+          const aiReplyText = fakeAIResponses[responseIndex % fakeAIResponses.length];
+          
+          // Persist AI reply to Supabase
+          const aiMsg = await apiSendMessage(sessionId, "ai", aiReplyText);
+          
+          const aiMessage: Message = {
+            id: aiMsg.id,
+            role: "assistant",
+            content: aiMsg.message,
+          };
+          
+          setMessages((prev) => [...prev, aiMessage]);
+          setResponseIndex((prev) => prev + 1);
+        } catch (err: any) {
+          console.error("Failed to save AI response:", err);
+          setError("Failed to save AI message in database.");
+        } finally {
+          setIsTyping(false);
+          // Refocus input if the user is still at the bottom
+          if (isAtBottomRef.current) {
+            setTimeout(() => inputRef.current?.focus(), 50);
+          }
+        }
+      }, 1500);
+
+    } catch (err: any) {
+      console.error("Failed to send message:", err);
+      setError("Failed to send message. Please check your connection.");
+    }
   };
 
   return (
@@ -220,11 +292,28 @@ export default function ChatShell() {
         onScroll={handleScroll}
       >
         <div className="w-full max-w-3xl mx-auto flex flex-col gap-4 sm:gap-6 p-4 pb-2">
-          {messages.map((msg) =>
-            msg.role === "assistant" ? (
-              <AiBubble key={msg.id} text={msg.content} />
-            ) : (
-              <UserBubble key={msg.id} text={msg.content} />
+          {isLoading ? (
+            <div className="flex flex-col gap-4 sm:gap-6 w-full animate-pulse">
+              <div className="flex flex-col items-start gap-2.5 max-w-[70%]">
+                <Skeleton className="h-4 w-32 bg-line-onlight rounded-full" />
+                <div className="bg-paper rounded-2xl rounded-bl-sm px-4 py-4 w-[280px] h-12 shadow-sm" />
+              </div>
+              <div className="flex flex-col items-end gap-2.5 max-w-[70%] ml-auto">
+                <Skeleton className="h-4 w-24 bg-line-onlight rounded-full" />
+                <div className="bg-marigold/40 rounded-2xl rounded-br-sm px-4 py-4 w-[200px] h-12 shadow-sm" />
+              </div>
+              <div className="flex flex-col items-start gap-2.5 max-w-[70%]">
+                <Skeleton className="h-4 w-36 bg-line-onlight rounded-full" />
+                <div className="bg-paper rounded-2xl rounded-bl-sm px-4 py-4 w-[250px] h-16 shadow-sm" />
+              </div>
+            </div>
+          ) : (
+            messages.map((msg) =>
+              msg.role === "assistant" ? (
+                <AiBubble key={msg.id} text={msg.content} />
+              ) : (
+                <UserBubble key={msg.id} text={msg.content} />
+              )
             )
           )}
 
@@ -249,6 +338,17 @@ export default function ChatShell() {
       {/* Input area, fixed to bottom */}
       <div className="shrink-0 relative bg-ink-deeper border-t border-line-ondark w-full p-3 sm:p-4 pb-safe z-10">
         <div className="w-full max-w-3xl mx-auto">
+          {error && (
+            <div className="mb-3 px-4 py-2 bg-destructive/15 border border-destructive/30 rounded-lg text-destructive text-[13px] flex items-center justify-between animate-in fade-in duration-300">
+              <span className="font-sans">{error}</span>
+              <button 
+                onClick={() => setError(null)}
+                className="text-destructive hover:text-destructive/80 font-bold ml-2 text-[14px]"
+              >
+                ✕
+              </button>
+            </div>
+          )}
           <form 
             onSubmit={handleSend}
             className="flex items-center gap-2 relative bg-ink-deep rounded-full border border-line-ondark p-1 pr-1.5 focus-within:border-marigold/50 transition-colors shadow-sm"
@@ -259,9 +359,9 @@ export default function ChatShell() {
               dir="auto"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="Ask BuyWise anything…"
+              placeholder={isLoading ? "Loading chat..." : "Ask BuyWise anything…"}
               className="flex-1 h-10 sm:h-12 bg-transparent px-4 sm:px-5 text-[14px] sm:text-[15px] text-text-ondark placeholder:text-text-dim-ondark outline-none font-sans"
-              disabled={isTyping}
+              disabled={isTyping || isLoading}
             />
             <button
               type="submit"
@@ -271,7 +371,7 @@ export default function ChatShell() {
                 e.preventDefault();
                 handleSend(e);
               }}
-              disabled={!inputText.trim() || isTyping}
+              disabled={!inputText.trim() || isTyping || isLoading}
               aria-label="Send message"
               className="flex items-center justify-center size-10 sm:size-11 shrink-0 rounded-full bg-marigold text-ink-deeper hover:bg-marigold-dark active:scale-95 disabled:opacity-50 disabled:hover:bg-marigold disabled:active:scale-100 transition-all shadow-md touch-manipulation"
             >
