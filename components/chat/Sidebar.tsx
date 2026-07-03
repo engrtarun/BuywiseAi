@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatSession } from "./types";
 
@@ -157,6 +157,18 @@ export function Sidebar({
   isOpen,
   onClose,
 }: SidebarProps) {
+  // Lock body scroll when sidebar is open on mobile
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   return (
     <>
       {/* ── Mobile overlay backdrop ── */}
@@ -168,17 +180,18 @@ export function Sidebar({
           ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}
         `}
         onClick={onClose}
+        aria-hidden={!isOpen}
       />
 
       {/* ── Sidebar panel ── */}
       <aside
         className={`
           fixed top-0 left-0 bottom-0 z-50
-          w-[272px] flex flex-col
+          w-[80vw] max-w-[320px] flex flex-col
           bg-[#091e1a]/95 backdrop-blur-md
           border-r border-line-ondark
-          transition-transform duration-300 ease-out
-          md:relative md:z-auto md:translate-x-0 md:shrink-0
+          transition-transform duration-300 ease-in-out
+          md:relative md:z-auto md:translate-x-0 md:shrink-0 md:w-[272px] md:max-w-none
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >

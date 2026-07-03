@@ -6,27 +6,22 @@ import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
 import { WelcomeScreen } from "./WelcomeScreen";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Menu } from "lucide-react";
+import { HamburgerButton } from "./HamburgerButton";
 
 /* ── Header ──────────────────────────────────────────── */
 
 interface ChatHeaderProps {
   isTyping: boolean;
+  isSidebarOpen: boolean;
   onMenuToggle: () => void;
 }
 
-function ChatHeader({ isTyping, onMenuToggle }: ChatHeaderProps) {
+function ChatHeader({ isTyping, isSidebarOpen, onMenuToggle }: ChatHeaderProps) {
   return (
     <header className="shrink-0 z-20 flex items-center gap-3 bg-ink-deeper px-4 py-3 border-b border-line-ondark">
       <div className="w-full max-w-3xl mx-auto flex items-center gap-3">
-        {/* Hamburger — mobile only */}
-        <button
-          onClick={onMenuToggle}
-          className="md:hidden size-9 flex items-center justify-center rounded-lg hover:bg-white/[0.06] active:scale-95 transition-all touch-manipulation text-text-ondark"
-          aria-label="Toggle sidebar"
-        >
-          <Menu className="size-5" />
-        </button>
+        {/* Animated hamburger ↔ X — mobile only */}
+        <HamburgerButton isOpen={isSidebarOpen} onClick={onMenuToggle} />
 
         <Avatar className="size-10 shrink-0">
           <AvatarFallback className="bg-marigold text-ink-deeper font-heading font-extrabold text-base">
@@ -61,16 +56,17 @@ function ChatHeader({ isTyping, onMenuToggle }: ChatHeaderProps) {
 interface ChatWindowProps {
   messages: Message[];
   isTyping: boolean;
+  isSidebarOpen: boolean;
   onSend: (content: string) => void;
   onMenuToggle: () => void;
 }
 
-export function ChatWindow({ messages, isTyping, onSend, onMenuToggle }: ChatWindowProps) {
+export function ChatWindow({ messages, isTyping, isSidebarOpen, onSend, onMenuToggle }: ChatWindowProps) {
   const showWelcome = messages.length === 0 && !isTyping;
 
   return (
     <div className="flex flex-col h-dvh w-full bg-ink-deeper overflow-hidden relative">
-      <ChatHeader isTyping={isTyping} onMenuToggle={onMenuToggle} />
+      <ChatHeader isTyping={isTyping} isSidebarOpen={isSidebarOpen} onMenuToggle={onMenuToggle} />
       {showWelcome ? (
         <WelcomeScreen onSuggestionClick={onSend} />
       ) : (

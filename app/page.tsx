@@ -134,6 +134,7 @@ export default function Page() {
         <ChatWindow
           messages={activeMessages}
           isTyping={isTyping}
+          isSidebarOpen={sidebarOpen}
           onSend={handleSend}
           onMenuToggle={() => setSidebarOpen((o) => !o)}
         />
