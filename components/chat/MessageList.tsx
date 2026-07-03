@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "./MessageBubble";
 import { TypingIndicator } from "./TypingIndicator";
+import { ErrorMessageCard } from "./ErrorMessageCard";
 import { Message, Feedback } from "./types";
 import { ArrowDown } from "lucide-react";
 
@@ -11,10 +12,11 @@ interface MessageListProps {
   messages: Message[];
   isTyping: boolean;
   onRegenerate: () => void;
+  onRetry: () => void;
   onFeedback: (id: string, feedback: Feedback) => void;
 }
 
-export function MessageList({ messages, isTyping, onRegenerate, onFeedback }: MessageListProps) {
+export function MessageList({ messages, isTyping, onRegenerate, onRetry, onFeedback }: MessageListProps) {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -22,7 +24,7 @@ export function MessageList({ messages, isTyping, onRegenerate, onFeedback }: Me
   const prevMessagesLength = useRef(messages.length);
 
   // Find last AI message id
-  const lastAiMessageId = [...messages].reverse().find((m) => m.role === "assistant")?.id ?? null;
+  const lastAiMessageId = [...messages].reverse().find((m) => m.role === "assistant" && m.status !== "error")?.id ?? null;
 
   useEffect(() => {
     const isNewMessage = messages.length > prevMessagesLength.current;
@@ -61,15 +63,19 @@ export function MessageList({ messages, isTyping, onRegenerate, onFeedback }: Me
         className="h-full"
       >
         <div className="w-full max-w-3xl mx-auto flex flex-col gap-4 sm:gap-6 px-4 py-4">
-          {messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              message={msg}
-              isLastAiMessage={msg.id === lastAiMessageId}
-              onRegenerate={onRegenerate}
-              onFeedback={onFeedback}
-            />
-          ))}
+          {messages.map((msg) =>
+            msg.status === "error" ? (
+              <ErrorMessageCard key={msg.id} onRetry={onRetry} />
+            ) : (
+              <MessageBubble
+                key={msg.id}
+                message={msg}
+                isLastAiMessage={msg.id === lastAiMessageId}
+                onRegenerate={onRegenerate}
+                onFeedback={onFeedback}
+              />
+            )
+          )}
           {isTyping && <TypingIndicator />}
           <div ref={messagesEndRef} className="h-4" />
         </div>

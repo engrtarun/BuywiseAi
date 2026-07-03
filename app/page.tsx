@@ -40,8 +40,6 @@ export default function Page() {
 
   // Ref for the AI response timeout so we can cancel it (Stop Generating)
   const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Ref to track which chat the AI is currently responding to
-  const generatingChatIdRef = useRef<string | null>(null);
 
   // Derive the active session's messages
   const activeSession = chatSessions.find((s) => s.id === activeChatId);
@@ -49,11 +47,17 @@ export default function Page() {
 
   /* ── Helpers ──────────────────────────────────────── */
 
-  /** Simulate an AI response with cancel support */
+  /**
+   * Simulate an AI response with cancel support.
+   *
+   * In a real integration, replace setTimeout with a fetch() call using an
+   * AbortController. Store the controller in a ref and call .abort() in
+   * handleStop to cancel mid-stream. Wrap the fetch in try/catch and call
+   * appendErrorMessage(chatId) in the catch block.
+   */
   const simulateAiReply = useCallback(
     (chatId: string) => {
       setIsTyping(true);
-      generatingChatIdRef.current = chatId;
 
       aiTimeoutRef.current = setTimeout(() => {
         const aiMsg: Message = {
@@ -69,11 +73,26 @@ export default function Page() {
         setResponseIndex((i) => i + 1);
         setIsTyping(false);
         aiTimeoutRef.current = null;
-        generatingChatIdRef.current = null;
       }, 1500);
     },
     [responseIndex]
   );
+
+  /** Append an error placeholder message to a chat session */
+  const appendErrorMessage = useCallback((chatId: string) => {
+    const errMsg: Message = {
+      id: generateId(),
+      role: "assistant",
+      content: "",
+      status: "error",
+    };
+    setChatSessions((prev) =>
+      prev.map((s) =>
+        s.id === chatId ? { ...s, messages: [...s.messages, errMsg] } : s
+      )
+    );
+    setIsTyping(false);
+  }, []);
 
   /* ── Handlers ─────────────────────────────────────── */
 
@@ -94,46 +113,55 @@ export default function Page() {
     }
   }, [activeChatId]);
 
+  /**
+   * handleSend — FIXED DUPLICATE BUG:
+   *
+   * Previous code called setChatSessions INSIDE a setActiveChatId functional
+   * updater. React 18 StrictMode double-invokes functional updaters in dev,
+   * causing the session to be created twice.
+   *
+   * Fix: Generate the new ID in a ref BEFORE calling any state setters,
+   * then use separate setState calls (not nested functional updaters).
+   */
   const handleSend = useCallback(
     (content: string) => {
       const userMsg: Message = { id: generateId(), role: "user", content };
 
-      setActiveChatId((currentActiveId) => {
-        let chatIdToUpdate: string;
+      let chatIdToUpdate: string;
 
-        if (currentActiveId === null) {
-          const newId = generateId();
-          chatIdToUpdate = newId;
-          const newSession: ChatSession = {
-            id: newId,
-            title: generateTitle(content),
-            messages: [userMsg],
-            createdAt: Date.now(),
-          };
-          setChatSessions((prev) => [newSession, ...prev]);
-        } else {
-          chatIdToUpdate = currentActiveId;
-          setChatSessions((prev) =>
-            prev.map((s) =>
-              s.id === currentActiveId
-                ? { ...s, messages: [...s.messages, userMsg] }
-                : s
-            )
-          );
-        }
+      if (activeChatId === null) {
+        // Starting a brand new chat session
+        const newId = generateId();
+        chatIdToUpdate = newId;
+        const newSession: ChatSession = {
+          id: newId,
+          title: generateTitle(content),
+          messages: [userMsg],
+          createdAt: Date.now(),
+        };
+        setChatSessions((prev) => [newSession, ...prev]);
+        setActiveChatId(newId);
+      } else {
+        // Appending to the active session
+        chatIdToUpdate = activeChatId;
+        setChatSessions((prev) =>
+          prev.map((s) =>
+            s.id === activeChatId
+              ? { ...s, messages: [...s.messages, userMsg] }
+              : s
+          )
+        );
+      }
 
-        simulateAiReply(chatIdToUpdate);
-        return chatIdToUpdate;
-      });
+      simulateAiReply(chatIdToUpdate);
     },
-    [simulateAiReply]
+    [activeChatId, simulateAiReply]
   );
 
   /**
    * Stop Generating:
    * Clears the pending AI timeout so no AI message is appended.
-   * In a real integration, you'd call abortController.abort() here
-   * to cancel a streaming fetch request mid-response.
+   * In a real integration, you'd call abortController.abort() here.
    */
   const handleStop = useCallback(() => {
     if (aiTimeoutRef.current) {
@@ -141,23 +169,19 @@ export default function Page() {
       aiTimeoutRef.current = null;
     }
     setIsTyping(false);
-    generatingChatIdRef.current = null;
   }, []);
 
   /**
    * Regenerate Response:
-   * Removes the last AI message from the active session and re-triggers
-   * the AI reply for the same user query.
+   * Removes the last AI message and re-triggers the AI reply.
    */
   const handleRegenerate = useCallback(() => {
     if (!activeChatId) return;
 
-    // Remove the last AI message
     setChatSessions((prev) =>
       prev.map((s) => {
         if (s.id !== activeChatId) return s;
         const msgs = [...s.messages];
-        // Find and remove the last assistant message
         for (let i = msgs.length - 1; i >= 0; i--) {
           if (msgs[i].role === "assistant") {
             msgs.splice(i, 1);
@@ -168,7 +192,24 @@ export default function Page() {
       })
     );
 
-    // Trigger a new AI reply
+    simulateAiReply(activeChatId);
+  }, [activeChatId, simulateAiReply]);
+
+  /**
+   * Retry failed request:
+   * Removes the error message and re-triggers the AI reply.
+   */
+  const handleRetry = useCallback(() => {
+    if (!activeChatId) return;
+
+    // Remove error messages from the active session
+    setChatSessions((prev) =>
+      prev.map((s) => {
+        if (s.id !== activeChatId) return s;
+        return { ...s, messages: s.messages.filter((m) => m.status !== "error") };
+      })
+    );
+
     simulateAiReply(activeChatId);
   }, [activeChatId, simulateAiReply]);
 
@@ -211,6 +252,7 @@ export default function Page() {
           onSend={handleSend}
           onStop={handleStop}
           onRegenerate={handleRegenerate}
+          onRetry={handleRetry}
           onFeedback={handleFeedback}
           onMenuToggle={() => setSidebarOpen((o) => !o)}
         />

@@ -5,6 +5,7 @@ import { Message, Feedback } from "./types";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
 import { WelcomeScreen } from "./WelcomeScreen";
+import { OfflineBanner } from "./OfflineBanner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { HamburgerButton } from "./HamburgerButton";
 
@@ -60,6 +61,7 @@ interface ChatWindowProps {
   onSend: (content: string) => void;
   onStop: () => void;
   onRegenerate: () => void;
+  onRetry: () => void;
   onFeedback: (id: string, feedback: Feedback) => void;
   onMenuToggle: () => void;
 }
@@ -71,6 +73,7 @@ export function ChatWindow({
   onSend,
   onStop,
   onRegenerate,
+  onRetry,
   onFeedback,
   onMenuToggle,
 }: ChatWindowProps) {
@@ -79,6 +82,7 @@ export function ChatWindow({
   return (
     <div className="flex flex-col h-dvh w-full bg-ink-deeper overflow-hidden relative">
       <ChatHeader isTyping={isTyping} isSidebarOpen={isSidebarOpen} onMenuToggle={onMenuToggle} />
+      <OfflineBanner />
       {showWelcome ? (
         <WelcomeScreen onSuggestionClick={onSend} />
       ) : (
@@ -86,6 +90,7 @@ export function ChatWindow({
           messages={messages}
           isTyping={isTyping}
           onRegenerate={onRegenerate}
+          onRetry={onRetry}
           onFeedback={onFeedback}
         />
       )}
