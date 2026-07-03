@@ -1,217 +1,261 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowUp } from "lucide-react";
+import React, { useState, useCallback, useRef } from "react";
+import { Message, ChatSession, Feedback } from "@/components/chat/types";
+import { ChatWindow } from "@/components/chat/ChatWindow";
+import { Sidebar } from "@/components/chat/Sidebar";
 
-/* ──────────────────────────────────────────────
-   Types & Dummy AI Responses
-   ────────────────────────────────────────────── */
-
-type Role = "ai" | "user";
-
-interface Message {
-  id: string;
-  role: Role;
-  text: string;
-}
-
-const initialMessages: Message[] = [
-  {
-    id: "init-1",
-    role: "ai",
-    text: "Hey there! 👋 I'm BuyWise, your smart shopping assistant. Tell me what you're looking for and I'll find you the best deals.",
-  },
-];
+/* ── Mock AI responses ───────────────────────────────── */
 
 const fakeAIResponses = [
   "I can definitely help with that! Let me search for some top-rated options within your budget.",
   "Here are a few choices that stand out for their quality and value. Which feature is most important to you?",
-  "Great choice! Did you know there's a 10% bank discount currently available for this category on Amazon?",
-  "I've tracked the price history for that item, and this is actually the lowest price it's been in 3 months! Worth grabbing now.",
+  "Great choice! Did you know there's a 10% bank discount currently available for this category on Amazon?\n\nCheck it out here: [Amazon Deals](https://amazon.com)",
+  "I've tracked the price history for that item, and this is actually the **lowest price** it's been in 3 months! Worth grabbing now.\n\n```json\n{\n  \"price\": \"$199.99\",\n  \"discount\": \"20%\"\n}\n```",
   "If you want to save a bit more, I can show you a slightly older model that still performs exceptionally well.",
-  "Would you like me to set a price drop alert for you? I'll notify you if it goes below your target price.",
+  "Would you like me to set a price drop alert for you? I'll notify you if it goes below your target price.\n- [x] Set Alert\n- [ ] Ignore",
 ];
 
-/* ──────────────────────────────────────────────
-   Sub-components
-   ────────────────────────────────────────────── */
+/* ── Helpers ──────────────────────────────────────────── */
 
-function ChatHeader({ isTyping }: { isTyping: boolean }) {
-  return (
-    <header className="flex items-center gap-3 bg-ink-deeper px-4 py-3 shrink-0 border-b border-line-ondark sticky top-0 z-10 w-full">
-      <div className="w-full max-w-3xl mx-auto flex items-center gap-3">
-        {/* Avatar */}
-        <Avatar size="lg" className="size-10 after:border-none shrink-0">
-          <AvatarFallback className="bg-marigold text-ink-deeper font-heading font-extrabold text-base">
-            B
-          </AvatarFallback>
-        </Avatar>
-
-        {/* Name + status */}
-        <div className="flex flex-col min-w-0">
-          <span className="font-heading font-bold text-[15px] leading-tight text-text-ondark tracking-tight">
-            BuyWise
-          </span>
-          <span className="font-mono text-[11px] leading-tight text-marigold flex items-center gap-1.5 mt-0.5 min-h-[14px]">
-            {isTyping ? (
-              <>
-                <span className="inline-block size-[6px] rounded-full bg-marigold animate-pulse" />
-                typing
-              </>
-            ) : (
-              <>
-                <span className="inline-block size-[6px] rounded-full bg-marigold" />
-                online
-              </>
-            )}
-          </span>
-        </div>
-      </div>
-    </header>
-  );
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-function AiBubble({ text }: { text: string }) {
-  return (
-    <div className="flex flex-col items-start gap-2 w-full max-w-[85%] sm:max-w-[75%] md:max-w-[65%]">
-      <div 
-        dir="auto"
-        className="bg-paper text-text-onlight rounded-2xl rounded-bl-sm px-4 py-3 text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap break-words shadow-sm font-sans"
-      >
-        {text}
-      </div>
-    </div>
-  );
+function generateTitle(firstMessage: string): string {
+  const max = 32;
+  const trimmed = firstMessage.trim();
+  return trimmed.length > max ? trimmed.slice(0, max) + "…" : trimmed;
 }
 
-function UserBubble({ text }: { text: string }) {
-  return (
-    <div className="flex justify-end w-full">
-      <div 
-        dir="auto"
-        className="bg-marigold text-text-onlight rounded-2xl rounded-br-sm px-4 py-3 text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap break-words shadow-sm max-w-[85%] sm:max-w-[75%] md:max-w-[65%] font-sans"
-      >
-        {text}
-      </div>
-    </div>
-  );
-}
+/* ── Page (top-level orchestrator) ────────────────────── */
 
-function TypingIndicator() {
-  return (
-    <div className="flex items-start max-w-[85%] sm:max-w-[75%] md:max-w-[65%] animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="bg-paper rounded-2xl rounded-bl-sm px-4 py-3.5 flex items-center gap-1.5 shadow-sm">
-        <span className="size-2 rounded-full bg-text-dim-onlight animate-bounce [animation-delay:0ms]" />
-        <span className="size-2 rounded-full bg-text-dim-onlight animate-bounce [animation-delay:150ms]" />
-        <span className="size-2 rounded-full bg-text-dim-onlight animate-bounce [animation-delay:300ms]" />
-      </div>
-    </div>
-  );
-}
-
-/* ──────────────────────────────────────────────
-   Page component
-   ────────────────────────────────────────────── */
-
-export default function ChatShell() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const [inputText, setInputText] = useState("");
+export default function Page() {
+  // Chat sessions state
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [responseIndex, setResponseIndex] = useState(0);
-  
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Auto-scroll to bottom whenever messages or typing state changes
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
+  // Ref for the AI response timeout so we can cancel it (Stop Generating)
+  const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleSend = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const text = inputText.trim();
-    if (!text || isTyping) return;
+  // Derive the active session's messages
+  const activeSession = chatSessions.find((s) => s.id === activeChatId);
+  const activeMessages = activeSession?.messages ?? [];
 
-    // 1. Add user message
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      text,
+  /* ── Helpers ──────────────────────────────────────── */
+
+  /**
+   * Simulate an AI response with cancel support.
+   *
+   * In a real integration, replace setTimeout with a fetch() call using an
+   * AbortController. Store the controller in a ref and call .abort() in
+   * handleStop to cancel mid-stream. Wrap the fetch in try/catch and call
+   * appendErrorMessage(chatId) in the catch block.
+   */
+  const simulateAiReply = useCallback(
+    (chatId: string) => {
+      setIsTyping(true);
+
+      aiTimeoutRef.current = setTimeout(() => {
+        const aiMsg: Message = {
+          id: generateId(),
+          role: "assistant",
+          content: fakeAIResponses[responseIndex % fakeAIResponses.length],
+        };
+        setChatSessions((prev) =>
+          prev.map((s) =>
+            s.id === chatId ? { ...s, messages: [...s.messages, aiMsg] } : s
+          )
+        );
+        setResponseIndex((i) => i + 1);
+        setIsTyping(false);
+        aiTimeoutRef.current = null;
+      }, 1500);
+    },
+    [responseIndex]
+  );
+
+  /** Append an error placeholder message to a chat session */
+  const appendErrorMessage = useCallback((chatId: string) => {
+    const errMsg: Message = {
+      id: generateId(),
+      role: "assistant",
+      content: "",
+      status: "error",
     };
-    setMessages((prev) => [...prev, userMessage]);
-    setInputText("");
+    setChatSessions((prev) =>
+      prev.map((s) =>
+        s.id === chatId ? { ...s, messages: [...s.messages, errMsg] } : s
+      )
+    );
+    setIsTyping(false);
+  }, []);
 
-    // 2. Show typing indicator and wait
-    setIsTyping(true);
-    
-    // Simulate network/thinking delay (1 to 1.5 seconds)
-    const delay = Math.floor(Math.random() * 500) + 1000;
-    
-    setTimeout(() => {
-      // 3. Add fake AI response
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "ai",
-        text: fakeAIResponses[responseIndex % fakeAIResponses.length],
-      };
-      
-      setMessages((prev) => [...prev, aiMessage]);
-      setResponseIndex((prev) => prev + 1);
-      setIsTyping(false);
-    }, delay);
-  };
+  /* ── Handlers ─────────────────────────────────────── */
+
+  const handleNewChat = useCallback(() => {
+    setActiveChatId(null);
+    setIsTyping(false);
+  }, []);
+
+  const handleSelectChat = useCallback((id: string) => {
+    setActiveChatId(id);
+    setIsTyping(false);
+  }, []);
+
+  const handleDeleteChat = useCallback((id: string) => {
+    setChatSessions((prev) => prev.filter((s) => s.id !== id));
+    if (activeChatId === id) {
+      setActiveChatId(null);
+    }
+  }, [activeChatId]);
+
+  /**
+   * handleSend — FIXED DUPLICATE BUG:
+   *
+   * Previous code called setChatSessions INSIDE a setActiveChatId functional
+   * updater. React 18 StrictMode double-invokes functional updaters in dev,
+   * causing the session to be created twice.
+   *
+   * Fix: Generate the new ID in a ref BEFORE calling any state setters,
+   * then use separate setState calls (not nested functional updaters).
+   */
+  const handleSend = useCallback(
+    (content: string) => {
+      const userMsg: Message = { id: generateId(), role: "user", content };
+
+      let chatIdToUpdate: string;
+
+      if (activeChatId === null) {
+        // Starting a brand new chat session
+        const newId = generateId();
+        chatIdToUpdate = newId;
+        const newSession: ChatSession = {
+          id: newId,
+          title: generateTitle(content),
+          messages: [userMsg],
+          createdAt: Date.now(),
+        };
+        setChatSessions((prev) => [newSession, ...prev]);
+        setActiveChatId(newId);
+      } else {
+        // Appending to the active session
+        chatIdToUpdate = activeChatId;
+        setChatSessions((prev) =>
+          prev.map((s) =>
+            s.id === activeChatId
+              ? { ...s, messages: [...s.messages, userMsg] }
+              : s
+          )
+        );
+      }
+
+      simulateAiReply(chatIdToUpdate);
+    },
+    [activeChatId, simulateAiReply]
+  );
+
+  /**
+   * Stop Generating:
+   * Clears the pending AI timeout so no AI message is appended.
+   * In a real integration, you'd call abortController.abort() here.
+   */
+  const handleStop = useCallback(() => {
+    if (aiTimeoutRef.current) {
+      clearTimeout(aiTimeoutRef.current);
+      aiTimeoutRef.current = null;
+    }
+    setIsTyping(false);
+  }, []);
+
+  /**
+   * Regenerate Response:
+   * Removes the last AI message and re-triggers the AI reply.
+   */
+  const handleRegenerate = useCallback(() => {
+    if (!activeChatId) return;
+
+    setChatSessions((prev) =>
+      prev.map((s) => {
+        if (s.id !== activeChatId) return s;
+        const msgs = [...s.messages];
+        for (let i = msgs.length - 1; i >= 0; i--) {
+          if (msgs[i].role === "assistant") {
+            msgs.splice(i, 1);
+            break;
+          }
+        }
+        return { ...s, messages: msgs };
+      })
+    );
+
+    simulateAiReply(activeChatId);
+  }, [activeChatId, simulateAiReply]);
+
+  /**
+   * Retry failed request:
+   * Removes the error message and re-triggers the AI reply.
+   */
+  const handleRetry = useCallback(() => {
+    if (!activeChatId) return;
+
+    // Remove error messages from the active session
+    setChatSessions((prev) =>
+      prev.map((s) => {
+        if (s.id !== activeChatId) return s;
+        return { ...s, messages: s.messages.filter((m) => m.status !== "error") };
+      })
+    );
+
+    simulateAiReply(activeChatId);
+  }, [activeChatId, simulateAiReply]);
+
+  /**
+   * Feedback:
+   * Updates the feedback field on a specific message.
+   * In production, you'd POST this to an analytics endpoint.
+   */
+  const handleFeedback = useCallback((messageId: string, feedback: Feedback) => {
+    setChatSessions((prev) =>
+      prev.map((s) => ({
+        ...s,
+        messages: s.messages.map((m) =>
+          m.id === messageId ? { ...m, feedback } : m
+        ),
+      }))
+    );
+    console.log(`[Feedback] Message ${messageId}: ${feedback ?? "cleared"}`);
+  }, []);
 
   return (
-    <div className="flex flex-col h-dvh w-full bg-ink-deeper overflow-hidden">
-      {/* Header spanning full width, content constrained */}
-      <ChatHeader isTyping={isTyping} />
+    <div className="flex h-dvh w-full bg-ink-deeper overflow-hidden">
+      {/* Sidebar — always visible on desktop, overlay on mobile */}
+      <Sidebar
+        chatHistory={chatSessions}
+        activeChatId={activeChatId}
+        onNewChat={handleNewChat}
+        onSelectChat={handleSelectChat}
+        onDeleteChat={handleDeleteChat}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
-      {/* Scrollable messages area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 scrollbar-hide">
-        <div className="w-full max-w-3xl mx-auto flex flex-col gap-4 sm:gap-6 pb-2">
-          {messages.map((msg) =>
-            msg.role === "ai" ? (
-              <AiBubble key={msg.id} text={msg.text} />
-            ) : (
-              <UserBubble key={msg.id} text={msg.text} />
-            )
-          )}
-
-          {isTyping && <TypingIndicator />}
-          
-          {/* Auto-scroll anchor */}
-          <div ref={bottomRef} className="h-4" />
-        </div>
-      </div>
-
-      {/* Input area, fixed to bottom */}
-      <div className="shrink-0 bg-ink-deeper border-t border-line-ondark w-full p-3 sm:p-4 pb-safe">
-        <div className="w-full max-w-3xl mx-auto">
-          <form 
-            onSubmit={handleSend}
-            className="flex items-center gap-2 relative bg-ink-deep rounded-full border border-line-ondark p-1 pr-1.5 focus-within:border-marigold/50 transition-colors shadow-sm"
-          >
-            <input
-              type="text"
-              dir="auto"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder="Ask BuyWise anything…"
-              className="flex-1 h-10 sm:h-12 bg-transparent px-4 sm:px-5 text-[14px] sm:text-[15px] text-text-ondark placeholder:text-text-dim-ondark outline-none font-sans"
-              disabled={isTyping}
-            />
-            <button
-              type="submit"
-              disabled={!inputText.trim() || isTyping}
-              aria-label="Send message"
-              className="flex items-center justify-center size-10 sm:size-11 shrink-0 rounded-full bg-marigold text-ink-deeper hover:bg-marigold-dark active:scale-95 disabled:opacity-50 disabled:hover:bg-marigold disabled:active:scale-100 transition-all shadow-md"
-            >
-              <ArrowUp className="size-5 stroke-[2.5]" />
-            </button>
-          </form>
-          {/* Small safe-area padding helper for mobile */}
-          <div className="h-2 sm:h-0" />
-        </div>
+      {/* Main chat area */}
+      <div className="flex-1 min-w-0">
+        <ChatWindow
+          messages={activeMessages}
+          isTyping={isTyping}
+          isSidebarOpen={sidebarOpen}
+          onSend={handleSend}
+          onStop={handleStop}
+          onRegenerate={handleRegenerate}
+          onRetry={handleRetry}
+          onFeedback={handleFeedback}
+          onMenuToggle={() => setSidebarOpen((o) => !o)}
+        />
       </div>
     </div>
   );
