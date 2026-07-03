@@ -19,17 +19,11 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
  */
 export async function POST(req: NextRequest) {
   try {
-    const { history, message } = await req.json();
-
     if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json(
-        {
-          error: "Gemini API key is not configured.",
-          message: "Please set up your Gemini API key as an environment variable. Create a .env.local file in the project root and add the following line: GEMINI_API_KEY=your_gemini_api_key",
-        },
-        { status: 500 }
-      );
+      throw new Error("Missing API key: GEMINI_API_KEY is not set");
     }
+
+    const { history, message } = await req.json();
     
     const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
@@ -45,10 +39,10 @@ export async function POST(req: NextRequest) {
     const text = response.text();
 
     return NextResponse.json({ text });
-  } catch (error) {
-    console.error("[API/chat] Error:", error);
+  } catch (error: any) {
+    console.error("API route error:", error);
     return NextResponse.json(
-      { error: "An error occurred while processing the request." },
+      { error: error.message || "Internal Server Error" },
       { status: 500 }
     );
   }
