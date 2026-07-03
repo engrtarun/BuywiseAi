@@ -209,13 +209,13 @@ export default function ChatShell() {
   };
 
   return (
-    <div className="flex flex-col h-dvh w-full bg-ink-deeper overflow-hidden relative">
+    <div className="flex flex-col h-full w-full bg-ink-deeper overflow-hidden relative">
       {/* Header */}
       <ChatHeader isTyping={isTyping} />
 
       {/* Scrollable messages area */}
       <ScrollArea 
-        className="flex-1" 
+        className="flex-1 min-h-0" 
         viewportRef={viewportRef}
         onScroll={handleScroll}
       >
@@ -247,7 +247,7 @@ export default function ChatShell() {
       )}
 
       {/* Input area, fixed to bottom */}
-      <div className="shrink-0 bg-ink-deeper border-t border-line-ondark w-full p-3 sm:p-4 pb-safe z-10">
+      <div className="shrink-0 relative bg-ink-deeper border-t border-line-ondark w-full p-3 sm:p-4 pb-safe z-10">
         <div className="w-full max-w-3xl mx-auto">
           <form 
             onSubmit={handleSend}
@@ -265,9 +265,15 @@ export default function ChatShell() {
             />
             <button
               type="submit"
+              onClick={handleSend}
+              onTouchEnd={(e) => {
+                // Prevent ghost clicks on mobile devices
+                e.preventDefault();
+                handleSend(e);
+              }}
               disabled={!inputText.trim() || isTyping}
               aria-label="Send message"
-              className="flex items-center justify-center size-10 sm:size-11 shrink-0 rounded-full bg-marigold text-ink-deeper hover:bg-marigold-dark active:scale-95 disabled:opacity-50 disabled:hover:bg-marigold disabled:active:scale-100 transition-all shadow-md"
+              className="flex items-center justify-center size-10 sm:size-11 shrink-0 rounded-full bg-marigold text-ink-deeper hover:bg-marigold-dark active:scale-95 disabled:opacity-50 disabled:hover:bg-marigold disabled:active:scale-100 transition-all shadow-md touch-manipulation"
             >
               <ArrowUp className="size-5 stroke-[2.5]" />
             </button>
