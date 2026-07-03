@@ -54,10 +54,68 @@ const COMPARISON_TABLE_RESPONSE = `Here's a side-by-side comparison:
 Would you like me to check current prices or deals on any of these?`;
 
 const COMPARE_KEYWORDS = /\b(compare|vs\.?|versus|difference between|which is better|head to head|comparison)\b/i;
+const RECOMMEND_KEYWORDS = /\b(recommend|suggest|find me|show me|best)\b/i;
 
 function isComparisonQuery(text: string): boolean {
   return COMPARE_KEYWORDS.test(text);
 }
+
+function isRecommendQuery(text: string): boolean {
+  return RECOMMEND_KEYWORDS.test(text);
+}
+
+const mockProducts = [
+  {
+    id: "p1",
+    name: "Sony WH-1000XM5 Wireless Noise Canceling Headphones",
+    price: "₹29,990",
+    originalPrice: "₹34,990",
+    discountBadge: "14% OFF",
+    rating: 4.8,
+    reviewCount: "12,450",
+    description: "Industry-leading noise cancellation, 30-hour battery life, and crystal clear hands-free calling.",
+    platform: "Amazon" as const,
+    image: "https://placehold.co/300x300/1e1e2e/ffb347?text=Sony+XM5",
+    link: "#",
+  },
+  {
+    id: "p2",
+    name: "Bose QuietComfort Ultra",
+    price: "₹35,900",
+    originalPrice: "₹39,900",
+    discountBadge: "10% OFF",
+    rating: 4.6,
+    reviewCount: "8,200",
+    description: "Spatial audio breakthrough, world-class noise cancellation, and custom-tuned sound.",
+    platform: "Flipkart" as const,
+    image: "https://placehold.co/300x300/1e1e2e/60a5fa?text=Bose+Ultra",
+    link: "#",
+  },
+  {
+    id: "p3",
+    name: "Sennheiser Momentum 4 Wireless",
+    price: "₹24,990",
+    originalPrice: "₹29,990",
+    discountBadge: "16% OFF",
+    rating: 4.5,
+    reviewCount: "4,100",
+    description: "Audiophile-inspired sound, 60-hour battery life, and adaptive noise cancellation.",
+    platform: "Amazon" as const,
+    image: "https://placehold.co/300x300/1e1e2e/ffb347?text=Sennheiser",
+    link: "#",
+  },
+  {
+    id: "p4",
+    name: "Apple AirPods Max",
+    price: "₹59,900",
+    rating: 4.7,
+    reviewCount: "15,800",
+    description: "High-fidelity audio, active noise cancellation with transparency mode, and spatial audio.",
+    platform: "Amazon" as const,
+    image: "https://placehold.co/300x300/1e1e2e/ffb347?text=AirPods+Max",
+    link: "#",
+  }
+];
 
 /* ── Helpers ──────────────────────────────────────────── */
 
@@ -152,10 +210,22 @@ export default function Page() {
           .find((m) => m.role === "user");
 
         const isComparison = lastUserMsg && isComparisonQuery(lastUserMsg.content);
+        const isRecommend = lastUserMsg && isRecommendQuery(lastUserMsg.content);
+        const isSingle = lastUserMsg && lastUserMsg.content.toLowerCase().includes("single");
 
-        const rawResponse = isComparison
-          ? COMPARISON_TABLE_RESPONSE
-          : fakeAIResponses[responseIndex % fakeAIResponses.length];
+        let rawResponse: any;
+        let finalProducts = undefined;
+
+        if (isComparison) {
+          rawResponse = COMPARISON_TABLE_RESPONSE;
+        } else if (isRecommend) {
+          rawResponse = isSingle 
+            ? "Here is the top recommendation for you:"
+            : "Here are some of the best options I found for you:";
+          finalProducts = isSingle ? [mockProducts[0]] : mockProducts;
+        } else {
+          rawResponse = fakeAIResponses[responseIndex % fakeAIResponses.length];
+        }
 
         const extractedText = extractAiText(rawResponse);
 
@@ -167,6 +237,7 @@ export default function Page() {
           id: generateId(),
           role: "assistant",
           content: extractedText,
+          products: finalProducts,
         };
 
         setChatSessions((prev) =>
@@ -174,7 +245,7 @@ export default function Page() {
             s.id === chatId ? { ...s, messages: [...s.messages, aiMsg] } : s
           )
         );
-        if (!isComparison) setResponseIndex((i) => i + 1);
+        if (!isComparison && !isRecommend) setResponseIndex((i) => i + 1);
         setIsTyping(false);
         aiTimeoutRef.current = null;
       }, 1500);

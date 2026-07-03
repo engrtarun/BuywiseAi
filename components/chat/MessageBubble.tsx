@@ -4,8 +4,10 @@ import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Message, Feedback } from "./types";
+import { Message, Feedback, Product } from "./types";
 import { MessageActions } from "./MessageActions";
+import { ProductCard } from "./ProductCard";
+import { ProductCarousel } from "./ProductCarousel";
 
 /** Detect if raw markdown contains a GFM table */
 function hasTable(content: string): boolean {
@@ -122,14 +124,15 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
     );
   }
 
-  // Detect table content for wider bubble
   const containsTable = hasTable(message.content);
+  const hasProducts = message.products && message.products.length > 0;
+  const isSingleProduct = hasProducts && message.products?.length === 1;
 
   // AI Bubble
   return (
     <div
       className={
-        containsTable
+        containsTable || hasProducts
           ? "w-full max-w-[95%] sm:max-w-[90%] md:max-w-[85%]"
           : "w-full max-w-[85%] sm:max-w-[75%] md:max-w-[65%]"
       }
@@ -142,16 +145,33 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
           </AvatarFallback>
         </Avatar>
 
-        <div
-          dir="auto"
-          className="bg-white/5 backdrop-blur-sm border border-white/10 text-text-ondark rounded-2xl rounded-bl-sm px-4 py-3 text-[14px] sm:text-[15px] leading-relaxed break-words shadow-sm font-sans w-full min-w-0"
-        >
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={markdownComponents}
-          >
-            {message.content}
-          </ReactMarkdown>
+        <div className="flex flex-col gap-2 w-full min-w-0">
+          {message.content && (
+            <div
+              dir="auto"
+              className="bg-white/5 backdrop-blur-sm border border-white/10 text-text-ondark rounded-2xl rounded-bl-sm px-4 py-3 text-[14px] sm:text-[15px] leading-relaxed break-words shadow-sm font-sans w-full min-w-0 inline-block"
+            >
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={markdownComponents}
+              >
+                {message.content}
+              </ReactMarkdown>
+            </div>
+          )}
+
+          {/* Product Cards / Carousel */}
+          {hasProducts && (
+            <div className={`${!message.content ? "ml-[-8px] sm:ml-[-12px]" : ""}`}>
+              {isSingleProduct ? (
+                <div className="w-full sm:max-w-[80%] md:max-w-[70%]">
+                  <ProductCard product={message.products![0]} />
+                </div>
+              ) : (
+                <ProductCarousel products={message.products!} />
+              )}
+            </div>
+          )}
         </div>
       </div>
 
