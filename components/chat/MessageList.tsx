@@ -49,32 +49,30 @@ export function MessageList({ messages, isTyping }: MessageListProps) {
   };
 
   return (
-    <>
-      <div className="flex-1 min-h-0 relative">
-        <ScrollArea
-          viewportRef={viewportRef}
-          onScroll={handleScroll}
-          className="absolute inset-0"
-        >
-          <div className="w-full max-w-3xl mx-auto flex flex-col gap-4 sm:gap-6 px-4 py-4">
-            {messages.map((msg) => (
-              <MessageBubble key={msg.id} message={msg} />
-            ))}
-            {isTyping && <TypingIndicator />}
-            <div ref={messagesEndRef} className="h-4" />
-          </div>
-        </ScrollArea>
-      </div>
+    <div className="flex-1 min-h-0 relative">
+      <ScrollArea
+        viewportRef={viewportRef}
+        onScroll={handleScroll}
+        className="h-full"
+      >
+        <div className="w-full max-w-3xl mx-auto flex flex-col gap-4 sm:gap-6 px-4 py-4">
+          {messages.map((msg) => (
+            <MessageBubble key={msg.id} message={msg} />
+          ))}
+          {isTyping && <TypingIndicator />}
+          <div ref={messagesEndRef} className="h-4" />
+        </div>
+      </ScrollArea>
 
       {showScrollButton && (
         <button
           onClick={scrollToBottom}
-          className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-4 py-2 bg-ink-deep border border-line-ondark text-text-ondark text-[13px] font-mono rounded-full shadow-lg hover:border-marigold transition-all animate-in fade-in slide-in-from-bottom-2"
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-4 py-2 bg-ink-deep border border-line-ondark text-text-ondark text-[13px] font-mono rounded-full shadow-lg hover:border-marigold transition-all animate-in fade-in slide-in-from-bottom-2"
         >
           New message
           <ArrowDown className="size-4 text-marigold" />
         </button>
       )}
-    </>
+    </div>
   );
 }
