@@ -7,6 +7,8 @@ const DEFAULT_WIDTH = 272;
 const MIN_WIDTH = 220;
 const COLLAPSE_THRESHOLD = 150;
 
+const COLLAPSED_WIDTH = 64;
+
 interface SidebarState {
   width: number;
   collapsed: boolean;
@@ -31,7 +33,7 @@ function saveState(state: SidebarState) {
  * Custom hook for desktop sidebar resize & collapse logic.
  *
  * Returns:
- *  - `width`        – current sidebar width in px (0 when collapsed)
+ *  - `width`        – current sidebar width in px (64 when collapsed)
  *  - `isCollapsed`  – whether the sidebar is fully hidden
  *  - `isDragging`   – true while the user is actively dragging the handle
  *  - `handleProps`  – spread onto the resize-handle element (`onMouseDown`)
@@ -72,7 +74,7 @@ export function useSidebarResize() {
     setIsDragging(true);
 
     const startX = e.clientX;
-    const startWidth = isCollapsed ? 0 : width;
+    const startWidth = isCollapsed ? COLLAPSED_WIDTH : width;
 
     const onMouseMove = (ev: MouseEvent) => {
       const maxW = Math.floor(window.innerWidth * 0.5);
@@ -81,7 +83,7 @@ export function useSidebarResize() {
       if (newW < COLLAPSE_THRESHOLD) {
         // Auto-collapse
         setIsCollapsed(true);
-        setWidth(0);
+        setWidth(COLLAPSED_WIDTH);
         return;
       }
 
@@ -116,14 +118,14 @@ export function useSidebarResize() {
       } else {
         // Collapsing — remember current width
         lastExpandedWidth.current = width;
-        setWidth(0);
+        setWidth(COLLAPSED_WIDTH);
         return true;
       }
     });
   }, [width]);
 
   return {
-    width: isCollapsed ? 0 : width,
+    width: isCollapsed ? COLLAPSED_WIDTH : width,
     isCollapsed,
     isDragging,
     toggleCollapse,
