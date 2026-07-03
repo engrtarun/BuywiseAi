@@ -5,117 +5,12 @@ import { Message, ChatSession, Feedback } from "@/components/chat/types";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { Sidebar } from "@/components/chat/Sidebar";
 
-/* ── Mock AI responses ───────────────────────────────── */
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const fakeAIResponses: any[] = [
-  "I can definitely help with that! Let me search for some top-rated options within your budget.",
-  // Mock Gemini API JSON response to test the extraction logic
-  {
-    candidates: [
-      {
-        content: {
-          parts: [
-            { text: "Here is a simulated response coming from a **Gemini API JSON object**!\n\nAs you can see, the text was properly extracted from `candidates[0].content.parts[0].text` instead of showing raw JSON." }
-          ]
-        }
-      }
-    ]
-  },
-  "Great choice! Did you know there's a 10% bank discount currently available for this category on Amazon?\n\nCheck it out here: [Amazon Deals](https://amazon.com)",
-  "I've tracked the price history for that item, and this is actually the **lowest price** it's been in 3 months! Worth grabbing now.\n\n```json\n{\n  \"price\": \"$199.99\",\n  \"discount\": \"20%\"\n}\n```",
-  "If you want to save a bit more, I can show you a slightly older model that still performs exceptionally well.",
-  "Would you like me to set a price drop alert for you? I'll notify you if it goes below your target price.\n- [x] Set Alert\n- [ ] Ignore",
-];
-
-/**
- * Mock comparison table response — returned when the user asks to compare products.
- *
- * In a real Gemini integration, you'd add this to the system prompt:
- * "When the user asks to compare 2+ products, respond with a markdown table
- * (one column per product, rows for price/specs/pros/cons/rating). For all
- * other queries, respond conversationally. Do NOT use tables unless a
- * comparison is genuinely requested."
- */
-const COMPARISON_TABLE_RESPONSE = `Here's a side-by-side comparison:
-
-| Feature | iPhone 15 | Samsung Galaxy S24 | Google Pixel 8 |
-|---|---|---|---|
-| **Price** | ₹69,900 | ₹64,999 | ₹59,999 |
-| **Display** | 6.1" Super Retina XDR, 60Hz | 6.2" Dynamic AMOLED, 120Hz | 6.2" OLED, 120Hz |
-| **Processor** | A16 Bionic | Snapdragon 8 Gen 3 | Tensor G3 |
-| **RAM** | 6 GB | 8 GB | 8 GB |
-| **Battery** | 3,349 mAh | 4,000 mAh | 4,575 mAh |
-| **Camera** | 48 MP + 12 MP | 50 MP + 12 MP + 10 MP | 50 MP + 12 MP |
-| **OS** | iOS 17 | Android 14 (One UI 6.1) | Android 14 (Stock) |
-| **Rating** | ⭐ 4.5/5 | ⭐ 4.6/5 | ⭐ 4.4/5 |
-
-**Verdict:** The Samsung S24 offers the best specs for the price with a 120Hz display and triple camera. The Pixel 8 is the best value pick with stock Android and the longest battery life. The iPhone 15 is ideal if you're already in the Apple ecosystem.
-
-Would you like me to check current prices or deals on any of these?`;
-
-const COMPARE_KEYWORDS = /\b(compare|vs\.?|versus|difference between|which is better|head to head|comparison)\b/i;
-const RECOMMEND_KEYWORDS = /\b(recommend|suggest|find me|show me|best)\b/i;
-
-function isComparisonQuery(text: string): boolean {
-  return COMPARE_KEYWORDS.test(text);
-}
-
-function isRecommendQuery(text: string): boolean {
-  return RECOMMEND_KEYWORDS.test(text);
-}
-
-const mockProducts = [
-  {
-    id: "p1",
-    name: "Sony WH-1000XM5 Wireless Noise Canceling Headphones",
-    price: "₹29,990",
-    originalPrice: "₹34,990",
-    discountBadge: "14% OFF",
-    rating: 4.8,
-    reviewCount: "12,450",
-    description: "Industry-leading noise cancellation, 30-hour battery life, and crystal clear hands-free calling.",
-    platform: "Amazon" as const,
-    image: "https://placehold.co/300x300/1e1e2e/ffb347?text=Sony+XM5",
-    link: "#",
-  },
-  {
-    id: "p2",
-    name: "Bose QuietComfort Ultra",
-    price: "₹35,900",
-    originalPrice: "₹39,900",
-    discountBadge: "10% OFF",
-    rating: 4.6,
-    reviewCount: "8,200",
-    description: "Spatial audio breakthrough, world-class noise cancellation, and custom-tuned sound.",
-    platform: "Flipkart" as const,
-    image: "https://placehold.co/300x300/1e1e2e/60a5fa?text=Bose+Ultra",
-    link: "#",
-  },
-  {
-    id: "p3",
-    name: "Sennheiser Momentum 4 Wireless",
-    price: "₹24,990",
-    originalPrice: "₹29,990",
-    discountBadge: "16% OFF",
-    rating: 4.5,
-    reviewCount: "4,100",
-    description: "Audiophile-inspired sound, 60-hour battery life, and adaptive noise cancellation.",
-    platform: "Amazon" as const,
-    image: "https://placehold.co/300x300/1e1e2e/ffb347?text=Sennheiser",
-    link: "#",
-  },
-  {
-    id: "p4",
-    name: "Apple AirPods Max",
-    price: "₹59,900",
-    rating: 4.7,
-    reviewCount: "15,800",
-    description: "High-fidelity audio, active noise cancellation with transparency mode, and spatial audio.",
-    platform: "Amazon" as const,
-    image: "https://placehold.co/300x300/1e1e2e/ffb347?text=AirPods+Max",
-    link: "#",
-  }
-];
+// IMPORTANT: Set up your Gemini API key as an environment variable
+// Create a .env.local file in the project root and add the following line:
+// GEMINI_API_KEY=your_gemini_api_key
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
 
 /* ── Helpers ──────────────────────────────────────────── */
 
@@ -177,11 +72,10 @@ export default function Page() {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
-  const [responseIndex, setResponseIndex] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Ref for the AI response timeout so we can cancel it (Stop Generating)
-  const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ref for the AbortController to cancel fetch requests
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Derive the active session's messages
   const activeSession = chatSessions.find((s) => s.id === activeChatId);
@@ -190,54 +84,33 @@ export default function Page() {
   /* ── Helpers ──────────────────────────────────────── */
 
   /**
-   * Simulate an AI response with cancel support.
-   *
-   * In a real integration, replace setTimeout with a fetch() call using an
-   * AbortController. Store the controller in a ref and call .abort() in
-   * handleStop to cancel mid-stream. Wrap the fetch in try/catch and call
-   * appendErrorMessage(chatId) in the catch block.
+   * Get an AI response by calling the API route.
    */
-  const simulateAiReply = useCallback(
-    (chatId: string) => {
+  const getAiReply = useCallback(
+    async (chatId: string, history: Message[], message: string) => {
       setIsTyping(true);
+      abortControllerRef.current = new AbortController();
 
-      aiTimeoutRef.current = setTimeout(() => {
-        // Check the last user message in this chat for comparison intent
-        const session = chatSessions.find((s) => s.id === chatId);
-        const lastUserMsg = session?.messages
-          .slice()
-          .reverse()
-          .find((m) => m.role === "user");
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ history, message }),
+          signal: abortControllerRef.current.signal,
+        });
 
-        const isComparison = lastUserMsg && isComparisonQuery(lastUserMsg.content);
-        const isRecommend = lastUserMsg && isRecommendQuery(lastUserMsg.content);
-        const isSingle = lastUserMsg && lastUserMsg.content.toLowerCase().includes("single");
-
-        let rawResponse: any;
-        let finalProducts = undefined;
-
-        if (isComparison) {
-          rawResponse = COMPARISON_TABLE_RESPONSE;
-        } else if (isRecommend) {
-          rawResponse = isSingle 
-            ? "Here is the top recommendation for you:"
-            : "Here are some of the best options I found for you:";
-          finalProducts = isSingle ? [mockProducts[0]] : mockProducts;
-        } else {
-          rawResponse = fakeAIResponses[responseIndex % fakeAIResponses.length];
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("API Error:", errorData);
+          appendErrorMessage(chatId);
+          return;
         }
 
-        const extractedText = extractAiText(rawResponse);
-
-        // Temporary logs for debugging API response extraction
-        console.log("[API DEBUG] Raw API response before extraction:", JSON.stringify(rawResponse, null, 2));
-        console.log("[API DEBUG] Final extracted text:", extractedText);
-
+        const data = await response.json();
         const aiMsg: Message = {
           id: generateId(),
           role: "assistant",
-          content: extractedText,
-          products: finalProducts,
+          content: data.text,
         };
 
         setChatSessions((prev) =>
@@ -245,12 +118,19 @@ export default function Page() {
             s.id === chatId ? { ...s, messages: [...s.messages, aiMsg] } : s
           )
         );
-        if (!isComparison && !isRecommend) setResponseIndex((i) => i + 1);
+      } catch (error: any) {
+        if (error.name === "AbortError") {
+          console.log("Fetch aborted");
+        } else {
+          console.error("Fetch Error:", error);
+          appendErrorMessage(chatId);
+        }
+      } finally {
         setIsTyping(false);
-        aiTimeoutRef.current = null;
-      }, 1500);
+        abortControllerRef.current = null;
+      }
     },
-    [responseIndex, chatSessions]
+    []
   );
 
   /** Append an error placeholder message to a chat session */
@@ -303,6 +183,7 @@ export default function Page() {
       const userMsg: Message = { id: generateId(), role: "user", content };
 
       let chatIdToUpdate: string;
+      let history: Message[] = [];
 
       if (activeChatId === null) {
         // Starting a brand new chat session
@@ -316,9 +197,12 @@ export default function Page() {
         };
         setChatSessions((prev) => [newSession, ...prev]);
         setActiveChatId(newId);
+        history = [];
       } else {
         // Appending to the active session
         chatIdToUpdate = activeChatId;
+        const session = chatSessions.find((s) => s.id === activeChatId);
+        history = session?.messages ?? [];
         setChatSessions((prev) =>
           prev.map((s) =>
             s.id === activeChatId
@@ -328,22 +212,19 @@ export default function Page() {
         );
       }
 
-      simulateAiReply(chatIdToUpdate);
+      getAiReply(chatIdToUpdate, history, content);
     },
-    [activeChatId, simulateAiReply]
+    [activeChatId, chatSessions, getAiReply]
   );
 
   /**
    * Stop Generating:
-   * Clears the pending AI timeout so no AI message is appended.
-   * In a real integration, you'd call abortController.abort() here.
+   * Aborts the active fetch request.
    */
   const handleStop = useCallback(() => {
-    if (aiTimeoutRef.current) {
-      clearTimeout(aiTimeoutRef.current);
-      aiTimeoutRef.current = null;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
-    setIsTyping(false);
   }, []);
 
   /**
@@ -352,6 +233,9 @@ export default function Page() {
    */
   const handleRegenerate = useCallback(() => {
     if (!activeChatId) return;
+
+    let lastUserMessage: Message | undefined;
+    let history: Message[] = [];
 
     setChatSessions((prev) =>
       prev.map((s) => {
@@ -363,12 +247,16 @@ export default function Page() {
             break;
           }
         }
+        history = msgs;
+        lastUserMessage = msgs[msgs.length -1];
         return { ...s, messages: msgs };
       })
     );
+    if(lastUserMessage){
+      getAiReply(activeChatId, history, lastUserMessage.content);
+    }
 
-    simulateAiReply(activeChatId);
-  }, [activeChatId, simulateAiReply]);
+  }, [activeChatId, getAiReply]);
 
   /**
    * Retry failed request:
@@ -376,18 +264,24 @@ export default function Page() {
    */
   const handleRetry = useCallback(() => {
     if (!activeChatId) return;
+    let lastUserMessage: Message | undefined;
+    let history: Message[] = [];
 
     // Remove error messages from the active session
     setChatSessions((prev) =>
       prev.map((s) => {
         if (s.id !== activeChatId) return s;
-        return { ...s, messages: s.messages.filter((m) => m.status !== "error") };
+        const messages = s.messages.filter((m) => m.status !== "error")
+        history = messages;
+        lastUserMessage = messages[messages.length -1];
+        return { ...s, messages };
       })
     );
 
-    simulateAiReply(activeChatId);
-  }, [activeChatId, simulateAiReply]);
-
+    if(lastUserMessage){
+      getAiReply(activeChatId, history, lastUserMessage.content);
+    }
+  }, [activeChatId, getAiReply]);
   /**
    * Feedback:
    * Updates the feedback field on a specific message.
