@@ -124,6 +124,7 @@ export default function ChatShell() {
   // Auto-scroll refs and state
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const isAtBottomRef = useRef(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
   
@@ -182,6 +183,7 @@ export default function ChatShell() {
     // Force scroll to bottom for the user's own sent message
     isAtBottomRef.current = true;
     setShowScrollButton(false);
+    setTimeout(() => inputRef.current?.focus(), 0);
 
     // 2. Show typing indicator and wait
     setIsTyping(true);
@@ -198,6 +200,11 @@ export default function ChatShell() {
       setMessages((prev) => [...prev, aiMessage]);
       setResponseIndex((prev) => prev + 1);
       setIsTyping(false);
+      
+      // Refocus input if the user is still at the bottom
+      if (isAtBottomRef.current) {
+        setTimeout(() => inputRef.current?.focus(), 50);
+      }
     }, 1500);
   };
 
@@ -247,6 +254,7 @@ export default function ChatShell() {
             className="flex items-center gap-2 relative bg-ink-deep rounded-full border border-line-ondark p-1 pr-1.5 focus-within:border-marigold/50 transition-colors shadow-sm"
           >
             <input
+              ref={inputRef}
               type="text"
               dir="auto"
               value={inputText}
