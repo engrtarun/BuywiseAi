@@ -113,22 +113,48 @@ function NewChatButton({ onClick, isCollapsed }: NewChatButtonProps) {
   );
 }
 
-function SearchButton({ isCollapsed }: { isCollapsed: boolean }) {
+interface SearchFieldProps {
+  isCollapsed: boolean;
+  onExpand?: () => void;
+  value: string;
+  onChange: (val: string) => void;
+}
+
+function SearchField({ isCollapsed, onExpand, value, onChange }: SearchFieldProps) {
+  if (isCollapsed) {
+    return (
+      <Tooltip text="Search chats" isCollapsed={true}>
+        <button
+          onClick={onExpand}
+          className="
+            group flex items-center justify-center size-10 shrink-0 rounded-xl
+            bg-white/[0.04] border border-white/[0.08] text-text-ondark
+            hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-200
+          "
+          aria-label="Search chats"
+        >
+          <Search className="size-5 text-text-dim-ondark group-hover:text-text-ondark transition-colors" />
+        </button>
+      </Tooltip>
+    );
+  }
+
   return (
-    <Tooltip text="Search chats" isCollapsed={isCollapsed}>
-      <button
-        className={`
-          group flex items-center gap-2.5 rounded-xl
-          bg-white/[0.04] border border-white/[0.08] text-text-ondark
-          hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-200
-          ${isCollapsed ? "size-10 justify-center shrink-0" : "w-full px-4 py-2.5 justify-start"}
-        `}
-        aria-label="Search chats"
-      >
-        <Search className={`text-text-dim-ondark group-hover:text-text-ondark transition-colors ${isCollapsed ? "size-5" : "size-4.5"}`} />
-        {!isCollapsed && <span className="text-[13px] font-sans">Search chats</span>}
-      </button>
-    </Tooltip>
+    <div className="relative w-full">
+      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4.5 text-text-dim-ondark" />
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Search chats..."
+        className="
+          w-full bg-white/[0.04] border border-white/[0.08] rounded-xl
+          py-2.5 pl-10 pr-4 text-[13px] font-sans text-text-ondark
+          placeholder:text-text-dim-ondark outline-none
+          focus:border-marigold/40 focus:bg-white/[0.06] transition-all
+        "
+      />
+    </div>
   );
 }
 
@@ -201,6 +227,12 @@ function SidebarContent({
   isCollapsed: boolean;
   onToggleCollapse?: () => void;
 }) {
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  const filteredHistory = chatHistory.filter((session) =>
+    session.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Top Section */}
@@ -235,7 +267,12 @@ function SidebarContent({
         {/* Actions */}
         <div className={`flex flex-col gap-2 w-full ${isCollapsed ? "items-center" : ""}`}>
           <NewChatButton onClick={() => { onNewChat(); onClose(); }} isCollapsed={isCollapsed} />
-          <SearchButton isCollapsed={isCollapsed} />
+          <SearchField 
+            isCollapsed={isCollapsed} 
+            onExpand={onToggleCollapse}
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
         </div>
       </div>
 
@@ -251,12 +288,12 @@ function SidebarContent({
         </p>
         <ScrollArea className="h-full px-2">
           <div className="flex flex-col gap-0.5">
-            {chatHistory.length === 0 ? (
+            {filteredHistory.length === 0 ? (
               <p className="px-3 py-4 text-[12px] text-text-dim-ondark/60 text-center font-sans italic">
-                No chats yet. Start one!
+                {searchQuery ? "No matching chats." : "No chats yet. Start one!"}
               </p>
             ) : (
-              chatHistory.map((session) => (
+              filteredHistory.map((session) => (
                 <ChatHistoryItem
                   key={session.id}
                   session={session}
