@@ -61,60 +61,62 @@ export default function Page() {
     }
   }, [activeChatId]);
 
-  const handleSend = useCallback((content: string) => {
-    const userMsg: Message = { id: generateId(), role: "user", content };
+  const handleSend = useCallback(
+    (content: string) => {
+      const userMsg: Message = { id: generateId(), role: "user", content };
 
-    if (activeChatId === null) {
-      // Starting a new chat session
-      const newId = generateId();
-      const newSession: ChatSession = {
-        id: newId,
-        title: generateTitle(content),
-        messages: [userMsg],
-        createdAt: Date.now(),
-      };
-      setChatSessions((prev) => [newSession, ...prev]);
-      setActiveChatId(newId);
+      // Use a functional update for setActiveChatId to get the latest state.
+      // This prevents a race condition if the user sends messages quickly.
+      setActiveChatId((currentActiveId) => {
+        let chatIdToUpdate: string;
 
-      // Simulate AI reply
-      setIsTyping(true);
-      setTimeout(() => {
-        const aiMsg: Message = {
-          id: generateId(),
-          role: "assistant",
-          content: fakeAIResponses[responseIndex % fakeAIResponses.length],
-        };
-        setChatSessions((prev) =>
-          prev.map((s) => s.id === newId ? { ...s, messages: [...s.messages, aiMsg] } : s)
-        );
-        setResponseIndex((i) => i + 1);
-        setIsTyping(false);
-      }, 1500);
-    } else {
-      // Appending to the active session
-      setChatSessions((prev) =>
-        prev.map((s) =>
-          s.id === activeChatId ? { ...s, messages: [...s.messages, userMsg] } : s
-        )
-      );
+        if (currentActiveId === null) {
+          // Starting a new chat session
+          const newId = generateId();
+          chatIdToUpdate = newId;
+          const newSession: ChatSession = {
+            id: newId,
+            title: generateTitle(content),
+            messages: [userMsg],
+            createdAt: Date.now(),
+          };
+          setChatSessions((prev) => [newSession, ...prev]);
+        } else {
+          // Appending to the active session
+          chatIdToUpdate = currentActiveId;
+          setChatSessions((prev) =>
+            prev.map((s) =>
+              s.id === currentActiveId
+                ? { ...s, messages: [...s.messages, userMsg] }
+                : s
+            )
+          );
+        }
 
-      setIsTyping(true);
-      setTimeout(() => {
-        const aiMsg: Message = {
-          id: generateId(),
-          role: "assistant",
-          content: fakeAIResponses[responseIndex % fakeAIResponses.length],
-        };
-        setChatSessions((prev) =>
-          prev.map((s) =>
-            s.id === activeChatId ? { ...s, messages: [...s.messages, aiMsg] } : s
-          )
-        );
-        setResponseIndex((i) => i + 1);
-        setIsTyping(false);
-      }, 1500);
-    }
-  }, [activeChatId, responseIndex]);
+        // Simulate AI reply
+        setIsTyping(true);
+        setTimeout(() => {
+          const aiMsg: Message = {
+            id: generateId(),
+            role: "assistant",
+            content: fakeAIResponses[responseIndex % fakeAIResponses.length],
+          };
+          setChatSessions((prev) =>
+            prev.map((s) =>
+              s.id === chatIdToUpdate
+                ? { ...s, messages: [...s.messages, aiMsg] }
+                : s
+            )
+          );
+          setResponseIndex((i) => i + 1);
+          setIsTyping(false);
+        }, 1500);
+
+        return chatIdToUpdate;
+      });
+    },
+    [responseIndex]
+  );
 
   return (
     <div className="flex h-dvh w-full bg-ink-deeper overflow-hidden">
