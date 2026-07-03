@@ -5,16 +5,12 @@ import { Message, ChatSession, Feedback } from "@/components/chat/types";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { Sidebar } from "@/components/chat/Sidebar";
 
-/* ── Mock AI responses ───────────────────────────────── */
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const fakeAIResponses = [
-  "I can definitely help with that! Let me search for some top-rated options within your budget.",
-  "Here are a few choices that stand out for their quality and value. Which feature is most important to you?",
-  "Great choice! Did you know there's a 10% bank discount currently available for this category on Amazon?\n\nCheck it out here: [Amazon Deals](https://amazon.com)",
-  "I've tracked the price history for that item, and this is actually the **lowest price** it's been in 3 months! Worth grabbing now.\n\n```json\n{\n  \"price\": \"$199.99\",\n  \"discount\": \"20%\"\n}\n```",
-  "If you want to save a bit more, I can show you a slightly older model that still performs exceptionally well.",
-  "Would you like me to set a price drop alert for you? I'll notify you if it goes below your target price.\n- [x] Set Alert\n- [ ] Ignore",
-];
+// IMPORTANT: Set up your Gemini API key as an environment variable
+// Create a .env.local file in the project root and add the following line:
+// GEMINI_API_KEY=your_gemini_api_key
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
 
 /* ── Helpers ──────────────────────────────────────────── */
 
@@ -28,6 +24,47 @@ function generateTitle(firstMessage: string): string {
   return trimmed.length > max ? trimmed.slice(0, max) + "…" : trimmed;
 }
 
+/**
+ * Safely extracts text from various AI API response shapes (Gemini, Claude, OpenAI).
+ */
+function extractAiText(raw: any): string {
+  if (typeof raw === "string") return raw;
+  if (!raw) return "";
+
+  // Gemini style: { candidates: [{ content: { parts: [{ text: "..." }] } }] }
+  if (raw.candidates && Array.isArray(raw.candidates) && raw.candidates.length > 0) {
+    const candidate = raw.candidates[0];
+    if (candidate.content && Array.isArray(candidate.content.parts)) {
+      return candidate.content.parts
+        .map((p: any) => p.text || "")
+        .join("");
+    }
+  }
+
+  // Anthropic style: { content: [{ type: "text", text: "..." }] }
+  if (raw.content && Array.isArray(raw.content)) {
+    return raw.content
+      .filter((block: any) => block.type === "text")
+      .map((block: any) => block.text || "")
+      .join("");
+  }
+
+  // OpenAi style: { choices: [{ message: { content: "..." } }] }
+  if (raw.choices && Array.isArray(raw.choices) && raw.choices.length > 0) {
+    const choice = raw.choices[0];
+    if (choice.message && typeof choice.message.content === "string") {
+      return choice.message.content;
+    }
+  }
+
+  // Generic fallback if it's an object with a content string
+  if (typeof raw.content === "string") {
+    return raw.content;
+  }
+
+  return "Unable to parse AI response. Please check API response format.";
+}
+
 /* ── Page (top-level orchestrator) ────────────────────── */
 
 export default function Page() {
@@ -35,11 +72,10 @@ export default function Page() {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
-  const [responseIndex, setResponseIndex] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Ref for the AI response timeout so we can cancel it (Stop Generating)
-  const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ref for the AbortController to cancel fetch requests
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Derive the active session's messages
   const activeSession = chatSessions.find((s) => s.id === activeChatId);
@@ -48,34 +84,53 @@ export default function Page() {
   /* ── Helpers ──────────────────────────────────────── */
 
   /**
-   * Simulate an AI response with cancel support.
-   *
-   * In a real integration, replace setTimeout with a fetch() call using an
-   * AbortController. Store the controller in a ref and call .abort() in
-   * handleStop to cancel mid-stream. Wrap the fetch in try/catch and call
-   * appendErrorMessage(chatId) in the catch block.
+   * Get an AI response by calling the API route.
    */
-  const simulateAiReply = useCallback(
-    (chatId: string) => {
+  const getAiReply = useCallback(
+    async (chatId: string, history: Message[], message: string) => {
       setIsTyping(true);
+      abortControllerRef.current = new AbortController();
 
-      aiTimeoutRef.current = setTimeout(() => {
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ history, message }),
+          signal: abortControllerRef.current.signal,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("API Error:", errorData);
+          appendErrorMessage(chatId);
+          return;
+        }
+
+        const data = await response.json();
         const aiMsg: Message = {
           id: generateId(),
           role: "assistant",
-          content: fakeAIResponses[responseIndex % fakeAIResponses.length],
+          content: data.text,
         };
+
         setChatSessions((prev) =>
           prev.map((s) =>
             s.id === chatId ? { ...s, messages: [...s.messages, aiMsg] } : s
           )
         );
-        setResponseIndex((i) => i + 1);
+      } catch (error: any) {
+        if (error.name === "AbortError") {
+          console.log("Fetch aborted");
+        } else {
+          console.error("Fetch Error:", error);
+          appendErrorMessage(chatId);
+        }
+      } finally {
         setIsTyping(false);
-        aiTimeoutRef.current = null;
-      }, 1500);
+        abortControllerRef.current = null;
+      }
     },
-    [responseIndex]
+    []
   );
 
   /** Append an error placeholder message to a chat session */
@@ -128,6 +183,7 @@ export default function Page() {
       const userMsg: Message = { id: generateId(), role: "user", content };
 
       let chatIdToUpdate: string;
+      let history: Message[] = [];
 
       if (activeChatId === null) {
         // Starting a brand new chat session
@@ -141,9 +197,12 @@ export default function Page() {
         };
         setChatSessions((prev) => [newSession, ...prev]);
         setActiveChatId(newId);
+        history = [];
       } else {
         // Appending to the active session
         chatIdToUpdate = activeChatId;
+        const session = chatSessions.find((s) => s.id === activeChatId);
+        history = session?.messages ?? [];
         setChatSessions((prev) =>
           prev.map((s) =>
             s.id === activeChatId
@@ -153,22 +212,19 @@ export default function Page() {
         );
       }
 
-      simulateAiReply(chatIdToUpdate);
+      getAiReply(chatIdToUpdate, history, content);
     },
-    [activeChatId, simulateAiReply]
+    [activeChatId, chatSessions, getAiReply]
   );
 
   /**
    * Stop Generating:
-   * Clears the pending AI timeout so no AI message is appended.
-   * In a real integration, you'd call abortController.abort() here.
+   * Aborts the active fetch request.
    */
   const handleStop = useCallback(() => {
-    if (aiTimeoutRef.current) {
-      clearTimeout(aiTimeoutRef.current);
-      aiTimeoutRef.current = null;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
-    setIsTyping(false);
   }, []);
 
   /**
@@ -177,6 +233,9 @@ export default function Page() {
    */
   const handleRegenerate = useCallback(() => {
     if (!activeChatId) return;
+
+    let lastUserMessage: Message | undefined;
+    let history: Message[] = [];
 
     setChatSessions((prev) =>
       prev.map((s) => {
@@ -188,12 +247,16 @@ export default function Page() {
             break;
           }
         }
+        history = msgs;
+        lastUserMessage = msgs[msgs.length -1];
         return { ...s, messages: msgs };
       })
     );
+    if(lastUserMessage){
+      getAiReply(activeChatId, history, lastUserMessage.content);
+    }
 
-    simulateAiReply(activeChatId);
-  }, [activeChatId, simulateAiReply]);
+  }, [activeChatId, getAiReply]);
 
   /**
    * Retry failed request:
@@ -201,18 +264,24 @@ export default function Page() {
    */
   const handleRetry = useCallback(() => {
     if (!activeChatId) return;
+    let lastUserMessage: Message | undefined;
+    let history: Message[] = [];
 
     // Remove error messages from the active session
     setChatSessions((prev) =>
       prev.map((s) => {
         if (s.id !== activeChatId) return s;
-        return { ...s, messages: s.messages.filter((m) => m.status !== "error") };
+        const messages = s.messages.filter((m) => m.status !== "error")
+        history = messages;
+        lastUserMessage = messages[messages.length -1];
+        return { ...s, messages };
       })
     );
 
-    simulateAiReply(activeChatId);
-  }, [activeChatId, simulateAiReply]);
-
+    if(lastUserMessage){
+      getAiReply(activeChatId, history, lastUserMessage.content);
+    }
+  }, [activeChatId, getAiReply]);
   /**
    * Feedback:
    * Updates the feedback field on a specific message.
