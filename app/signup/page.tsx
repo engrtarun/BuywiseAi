@@ -517,32 +517,55 @@ export default function SignupPage() {
             </div>
           )}
 
-          {/* Step 4: Email Link Verification */}
+          {/* Step 4: OTP Verification */}
           {step === 4 && (
             <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="flex flex-col gap-2">
                 <h1 className="font-heading font-extrabold text-2xl tracking-tight">
                   Verify your email
                 </h1>
-                <p className="text-sm font-sans text-text-dim-ondark leading-relaxed">
-                  We sent a confirmation link to <span className="text-text-ondark font-semibold">{email}</span>. Please check your inbox and click the link to activate your account.
+                <p className="text-sm font-sans text-text-dim-ondark">
+                  We sent a 6-digit verification code to <span className="text-text-ondark font-semibold">{email}</span>.
                 </p>
+              </div>
+
+              {/* Six Digits OTP Box */}
+              <div className="flex justify-between items-center gap-2 mt-2">
+                {otpCodes.map((digit, idx) => (
+                  <input
+                    key={idx}
+                    ref={(el) => {
+                      otpRefs.current[idx] = el;
+                    }}
+                    type="text"
+                    pattern="[0-9]*"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleOtpChange(e.target.value, idx)}
+                    onKeyDown={(e) => handleOtpKeyDown(e, idx)}
+                    onPaste={idx === 0 ? handleOtpPaste : undefined}
+                    className="size-11 sm:size-12 rounded-xl border border-line-ondark bg-ink-deeper/50 text-center font-heading text-lg font-bold text-marigold focus:border-marigold focus:ring-2 focus:ring-marigold/20 outline-none transition-all disabled:opacity-50"
+                    disabled={loading}
+                    autoFocus={idx === 0}
+                  />
+                ))}
               </div>
 
               {/* Resend Cooldown Code */}
               <div className="text-center mt-2 text-xs font-mono">
                 {resendCooldown > 0 ? (
                   <span className="text-text-dim-ondark">
-                    Resend link in {resendCooldown}s
+                    Resend code in {resendCooldown}s
                   </span>
                 ) : (
                   <button
                     type="button"
                     onClick={handleResendOtp}
                     disabled={loading}
-                    className="text-marigold hover:underline transition-all disabled:opacity-50 cursor-pointer"
+                    className="text-marigold hover:underline transition-all disabled:opacity-50"
                   >
-                    Resend confirmation email
+                    Resend code
                   </button>
                 )}
               </div>
@@ -597,10 +620,17 @@ export default function SignupPage() {
           </Button>
         ) : (
           <Button
-            onClick={() => router.push("/login")}
-            className="w-full h-12 bg-marigold text-ink-deeper hover:bg-marigold-dark rounded-xl font-sans font-bold text-sm tracking-wide transition-all duration-200 shadow-md flex items-center justify-center gap-2 cursor-pointer"
+            onClick={handleSubmitOtp}
+            disabled={loading || otpCodes.join("").length !== 6}
+            className="w-full h-12 bg-marigold text-ink-deeper hover:bg-marigold-dark rounded-xl font-sans font-bold text-sm tracking-wide transition-all duration-200 shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Go to Log in
+            {loading ? (
+              <Loader2 className="size-5 animate-spin" />
+            ) : (
+              <>
+                Verify Code
+              </>
+            )}
           </Button>
         )}
 
