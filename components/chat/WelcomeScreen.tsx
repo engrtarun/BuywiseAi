@@ -45,7 +45,7 @@ export function WelcomeScreen({ onSuggestionClick }: WelcomeScreenProps) {
             <Sparkles className="size-10 sm:size-12 text-ink-deeper" />
           </div>
           {/* Subtle glow ring */}
-          <div className="absolute inset-0 rounded-3xl bg-marigold/20 blur-xl -z-10 scale-150 group-hover:bg-marigold/30 transition-colors duration-300" />
+          <div className="absolute inset-0 rounded-3xl bg-marigold/20 blur-xl -z-10 scale-150 group-hover:bg-marigold/30 transition-colors duration-300 pointer-events-none" />
         </div>
 
         {/* Welcome text */}
@@ -73,7 +73,7 @@ export function WelcomeScreen({ onSuggestionClick }: WelcomeScreenProps) {
                   onSuggestionClick(s.text);
                 }}
                 className="
-                  group flex items-center gap-3 text-left
+                  w-full h-full group flex items-center gap-3 text-left
                   px-4 py-3.5 rounded-2xl
                   bg-white/[0.03] border border-white/[0.08]
                   backdrop-blur-sm
