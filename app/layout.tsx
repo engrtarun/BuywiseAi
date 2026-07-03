@@ -36,9 +36,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${sora.variable} ${ibmPlexMono.variable} h-dvh overflow-hidden antialiased`}
+      className={`${inter.variable} ${sora.variable} ${ibmPlexMono.variable} antialiased`}
     >
-      <body className="h-full w-full flex flex-col bg-ink-deeper overflow-hidden overscroll-none">{children}</body>
+      <body className="bg-ink-deeper">{children}</body>
     </html>
   );
 }
