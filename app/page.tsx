@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
-import { Message, ChatSession } from "@/components/chat/types";
+import React, { useState, useCallback, useRef } from "react";
+import { Message, ChatSession, Feedback } from "@/components/chat/types";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { Sidebar } from "@/components/chat/Sidebar";
 
@@ -38,9 +38,42 @@ export default function Page() {
   const [responseIndex, setResponseIndex] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Ref for the AI response timeout so we can cancel it (Stop Generating)
+  const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ref to track which chat the AI is currently responding to
+  const generatingChatIdRef = useRef<string | null>(null);
+
   // Derive the active session's messages
   const activeSession = chatSessions.find((s) => s.id === activeChatId);
   const activeMessages = activeSession?.messages ?? [];
+
+  /* ── Helpers ──────────────────────────────────────── */
+
+  /** Simulate an AI response with cancel support */
+  const simulateAiReply = useCallback(
+    (chatId: string) => {
+      setIsTyping(true);
+      generatingChatIdRef.current = chatId;
+
+      aiTimeoutRef.current = setTimeout(() => {
+        const aiMsg: Message = {
+          id: generateId(),
+          role: "assistant",
+          content: fakeAIResponses[responseIndex % fakeAIResponses.length],
+        };
+        setChatSessions((prev) =>
+          prev.map((s) =>
+            s.id === chatId ? { ...s, messages: [...s.messages, aiMsg] } : s
+          )
+        );
+        setResponseIndex((i) => i + 1);
+        setIsTyping(false);
+        aiTimeoutRef.current = null;
+        generatingChatIdRef.current = null;
+      }, 1500);
+    },
+    [responseIndex]
+  );
 
   /* ── Handlers ─────────────────────────────────────── */
 
@@ -65,13 +98,10 @@ export default function Page() {
     (content: string) => {
       const userMsg: Message = { id: generateId(), role: "user", content };
 
-      // Use a functional update for setActiveChatId to get the latest state.
-      // This prevents a race condition if the user sends messages quickly.
       setActiveChatId((currentActiveId) => {
         let chatIdToUpdate: string;
 
         if (currentActiveId === null) {
-          // Starting a new chat session
           const newId = generateId();
           chatIdToUpdate = newId;
           const newSession: ChatSession = {
@@ -82,7 +112,6 @@ export default function Page() {
           };
           setChatSessions((prev) => [newSession, ...prev]);
         } else {
-          // Appending to the active session
           chatIdToUpdate = currentActiveId;
           setChatSessions((prev) =>
             prev.map((s) =>
@@ -93,30 +122,72 @@ export default function Page() {
           );
         }
 
-        // Simulate AI reply
-        setIsTyping(true);
-        setTimeout(() => {
-          const aiMsg: Message = {
-            id: generateId(),
-            role: "assistant",
-            content: fakeAIResponses[responseIndex % fakeAIResponses.length],
-          };
-          setChatSessions((prev) =>
-            prev.map((s) =>
-              s.id === chatIdToUpdate
-                ? { ...s, messages: [...s.messages, aiMsg] }
-                : s
-            )
-          );
-          setResponseIndex((i) => i + 1);
-          setIsTyping(false);
-        }, 1500);
-
+        simulateAiReply(chatIdToUpdate);
         return chatIdToUpdate;
       });
     },
-    [responseIndex]
+    [simulateAiReply]
   );
+
+  /**
+   * Stop Generating:
+   * Clears the pending AI timeout so no AI message is appended.
+   * In a real integration, you'd call abortController.abort() here
+   * to cancel a streaming fetch request mid-response.
+   */
+  const handleStop = useCallback(() => {
+    if (aiTimeoutRef.current) {
+      clearTimeout(aiTimeoutRef.current);
+      aiTimeoutRef.current = null;
+    }
+    setIsTyping(false);
+    generatingChatIdRef.current = null;
+  }, []);
+
+  /**
+   * Regenerate Response:
+   * Removes the last AI message from the active session and re-triggers
+   * the AI reply for the same user query.
+   */
+  const handleRegenerate = useCallback(() => {
+    if (!activeChatId) return;
+
+    // Remove the last AI message
+    setChatSessions((prev) =>
+      prev.map((s) => {
+        if (s.id !== activeChatId) return s;
+        const msgs = [...s.messages];
+        // Find and remove the last assistant message
+        for (let i = msgs.length - 1; i >= 0; i--) {
+          if (msgs[i].role === "assistant") {
+            msgs.splice(i, 1);
+            break;
+          }
+        }
+        return { ...s, messages: msgs };
+      })
+    );
+
+    // Trigger a new AI reply
+    simulateAiReply(activeChatId);
+  }, [activeChatId, simulateAiReply]);
+
+  /**
+   * Feedback:
+   * Updates the feedback field on a specific message.
+   * In production, you'd POST this to an analytics endpoint.
+   */
+  const handleFeedback = useCallback((messageId: string, feedback: Feedback) => {
+    setChatSessions((prev) =>
+      prev.map((s) => ({
+        ...s,
+        messages: s.messages.map((m) =>
+          m.id === messageId ? { ...m, feedback } : m
+        ),
+      }))
+    );
+    console.log(`[Feedback] Message ${messageId}: ${feedback ?? "cleared"}`);
+  }, []);
 
   return (
     <div className="flex h-dvh w-full bg-ink-deeper overflow-hidden">
@@ -138,6 +209,9 @@ export default function Page() {
           isTyping={isTyping}
           isSidebarOpen={sidebarOpen}
           onSend={handleSend}
+          onStop={handleStop}
+          onRegenerate={handleRegenerate}
+          onFeedback={handleFeedback}
           onMenuToggle={() => setSidebarOpen((o) => !o)}
         />
       </div>

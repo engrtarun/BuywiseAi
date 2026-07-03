@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import TextareaAutosize from "react-textarea-autosize";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Square } from "lucide-react";
 
 const placeholders = [
   "BuyWise anything...",
@@ -15,10 +15,12 @@ const placeholders = [
 
 interface ChatInputProps {
   onSend: (message: string) => void;
+  onStop?: () => void;
   disabled: boolean;
+  isGenerating: boolean;
 }
 
-export function ChatInput({ onSend, disabled }: ChatInputProps) {
+export function ChatInput({ onSend, onStop, disabled, isGenerating }: ChatInputProps) {
   const [inputText, setInputText] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -48,7 +50,25 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
 
   return (
     <div className="shrink-0 bg-ink-deeper border-t border-line-ondark px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-4 z-20">
-      <div className="w-full max-w-3xl mx-auto">
+      <div className="w-full max-w-3xl mx-auto flex flex-col gap-2">
+
+        {/* Stop Generating button — shown above input while AI is responding */}
+        {isGenerating && onStop && (
+          <button
+            onClick={onStop}
+            className="
+              self-center flex items-center gap-2 px-4 py-2 rounded-full
+              bg-ink-deep border border-line-ondark text-text-ondark text-[13px] font-sans
+              hover:border-chili/50 hover:text-chili active:scale-[0.97]
+              transition-all duration-200 touch-manipulation shadow-sm
+              animate-in fade-in slide-in-from-bottom-1 duration-200
+            "
+          >
+            <Square className="size-3.5 fill-current" />
+            Stop generating
+          </button>
+        )}
+
         <div className="flex items-end gap-2 bg-ink-deep rounded-3xl border border-line-ondark p-1 pr-1.5 focus-within:border-marigold/50 transition-colors shadow-sm">
 
           <div className="relative flex-1 flex min-h-[44px] sm:min-h-[48px]">
@@ -64,8 +84,8 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
                       ${i === placeholderIndex
                         ? "opacity-100 translate-y-0"
                         : i === (placeholderIndex - 1 + placeholders.length) % placeholders.length
-                          ? "opacity-0 -translate-y-3" // previous one slides up
-                          : "opacity-0 translate-y-3" // next ones wait below
+                          ? "opacity-0 -translate-y-3"
+                          : "opacity-0 translate-y-3"
                       }
                     `}
                   >
@@ -81,7 +101,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="" // Handled manually above
+              placeholder=""
               minRows={1}
               maxRows={5}
               className="w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-ondark outline-none font-sans resize-none z-10 self-center"

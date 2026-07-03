@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Message } from "./types";
+import { Message, Feedback } from "./types";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
 import { WelcomeScreen } from "./WelcomeScreen";
@@ -58,10 +58,22 @@ interface ChatWindowProps {
   isTyping: boolean;
   isSidebarOpen: boolean;
   onSend: (content: string) => void;
+  onStop: () => void;
+  onRegenerate: () => void;
+  onFeedback: (id: string, feedback: Feedback) => void;
   onMenuToggle: () => void;
 }
 
-export function ChatWindow({ messages, isTyping, isSidebarOpen, onSend, onMenuToggle }: ChatWindowProps) {
+export function ChatWindow({
+  messages,
+  isTyping,
+  isSidebarOpen,
+  onSend,
+  onStop,
+  onRegenerate,
+  onFeedback,
+  onMenuToggle,
+}: ChatWindowProps) {
   const showWelcome = messages.length === 0 && !isTyping;
 
   return (
@@ -70,9 +82,14 @@ export function ChatWindow({ messages, isTyping, isSidebarOpen, onSend, onMenuTo
       {showWelcome ? (
         <WelcomeScreen onSuggestionClick={onSend} />
       ) : (
-        <MessageList messages={messages} isTyping={isTyping} />
+        <MessageList
+          messages={messages}
+          isTyping={isTyping}
+          onRegenerate={onRegenerate}
+          onFeedback={onFeedback}
+        />
       )}
-      <ChatInput onSend={onSend} disabled={isTyping} />
+      <ChatInput onSend={onSend} onStop={onStop} disabled={isTyping} isGenerating={isTyping} />
     </div>
   );
 }
