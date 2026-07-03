@@ -3,6 +3,7 @@
 import React, { useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatSession } from "./types";
+import { useSidebarResize } from "./useSidebarResize";
 
 /* ── Inline SVG Icons (animatable via CSS) ───────────── */
 
@@ -57,6 +58,29 @@ function TrashIcon({ className }: { className?: string }) {
     >
       <path d="M1.75 3.5h10.5" />
       <path d="M4.667 3.5V2.333a1.167 1.167 0 0 1 1.166-1.166h2.334a1.167 1.167 0 0 1 1.166 1.166V3.5m1.75 0v8.167a1.167 1.167 0 0 1-1.166 1.166H4.083a1.167 1.167 0 0 1-1.166-1.166V3.5h8.166Z" />
+    </svg>
+  );
+}
+
+/** Chevron icon that rotates based on collapsed state */
+function CollapseChevron({ collapsed, className }: { collapsed: boolean; className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{
+        transform: collapsed ? "rotate(180deg)" : "rotate(0deg)",
+        transition: "transform 250ms ease-in-out",
+      }}
+    >
+      <polyline points="10 3 5 8 10 13" />
     </svg>
   );
 }
@@ -136,6 +160,67 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete }: ChatHistoryI
   );
 }
 
+/* ── Sidebar content (shared between mobile & desktop) ── */
+
+function SidebarContent({
+  chatHistory,
+  activeChatId,
+  onNewChat,
+  onSelectChat,
+  onDeleteChat,
+  onClose,
+}: {
+  chatHistory: ChatSession[];
+  activeChatId: string | null;
+  onNewChat: () => void;
+  onSelectChat: (id: string) => void;
+  onDeleteChat: (id: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      {/* Brand header */}
+      <div className="shrink-0 px-4 pt-5 pb-4 border-b border-white/[0.06]">
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="size-8 rounded-lg bg-marigold flex items-center justify-center">
+            <span className="text-ink-deeper font-heading font-extrabold text-sm">B</span>
+          </div>
+          <span className="font-heading font-bold text-[15px] text-text-ondark tracking-tight">
+            BuyWise AI
+          </span>
+        </div>
+        <NewChatButton onClick={() => { onNewChat(); onClose(); }} />
+      </div>
+
+      {/* Chat history list */}
+      <div className="flex-1 min-h-0 px-2 py-3">
+        <p className="px-2 mb-2 text-[11px] font-mono text-text-dim-ondark uppercase tracking-wider">
+          Recent chats
+        </p>
+        <ScrollArea className="h-full">
+          <div className="flex flex-col gap-0.5">
+            {chatHistory.length === 0 ? (
+              <p className="px-3 py-4 text-[12px] text-text-dim-ondark/60 text-center font-sans italic">
+                No chats yet. Start one!
+              </p>
+            ) : (
+              chatHistory.map((session) => (
+                <ChatHistoryItem
+                  key={session.id}
+                  session={session}
+                  isActive={session.id === activeChatId}
+                  onSelect={(id) => { onSelectChat(id); onClose(); }}
+                  onDelete={onDeleteChat}
+                />
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+    </>
+  );
+}
+
 /* ── Main Sidebar ─────────────────────────────────────── */
 
 interface SidebarProps {
@@ -157,7 +242,9 @@ export function Sidebar({
   isOpen,
   onClose,
 }: SidebarProps) {
-  // Lock body scroll when sidebar is open on mobile
+  const { width, isCollapsed, isDragging, toggleCollapse, handleProps } = useSidebarResize();
+
+  // Lock body scroll when mobile sidebar is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -169,9 +256,15 @@ export function Sidebar({
     };
   }, [isOpen]);
 
+  const contentProps = { chatHistory, activeChatId, onNewChat, onSelectChat, onDeleteChat, onClose };
+
   return (
     <>
-      {/* ── Mobile overlay backdrop ── */}
+      {/* ═══════════════════════════════════════════════════
+          MOBILE SIDEBAR (slide-in drawer, unchanged)
+          ═══════════════════════════════════════════════════ */}
+
+      {/* Backdrop */}
       <div
         className={`
           fixed inset-0 z-40 bg-black/50 backdrop-blur-sm
@@ -183,7 +276,7 @@ export function Sidebar({
         aria-hidden={!isOpen}
       />
 
-      {/* ── Sidebar panel ── */}
+      {/* Mobile panel */}
       <aside
         className={`
           fixed top-0 left-0 bottom-0 z-50
@@ -191,49 +284,77 @@ export function Sidebar({
           bg-[#091e1a]/95 backdrop-blur-md
           border-r border-line-ondark
           transition-transform duration-300 ease-in-out
-          md:relative md:z-auto md:translate-x-0 md:shrink-0 md:w-[272px] md:max-w-none
+          md:hidden
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        {/* Brand header */}
-        <div className="shrink-0 px-4 pt-5 pb-4 border-b border-white/[0.06]">
-          <div className="flex items-center gap-2.5 mb-4">
-            <div className="size-8 rounded-lg bg-marigold flex items-center justify-center">
-              <span className="text-ink-deeper font-heading font-extrabold text-sm">B</span>
-            </div>
-            <span className="font-heading font-bold text-[15px] text-text-ondark tracking-tight">
-              BuyWise AI
-            </span>
-          </div>
-          <NewChatButton onClick={() => { onNewChat(); onClose(); }} />
+        <SidebarContent {...contentProps} />
+      </aside>
+
+      {/* ═══════════════════════════════════════════════════
+          DESKTOP SIDEBAR (resizable + collapsible)
+          ═══════════════════════════════════════════════════ */}
+
+      <aside
+        className="hidden md:flex relative shrink-0"
+        style={{
+          width: isCollapsed ? 0 : width,
+          transition: isDragging ? "none" : "width 200ms ease-in-out",
+        }}
+      >
+        {/* Sidebar content — hidden when collapsed */}
+        <div
+          className={`
+            h-full flex flex-col overflow-hidden
+            bg-[#091e1a]/95 backdrop-blur-md border-r border-line-ondark
+            ${isCollapsed ? "w-0" : "w-full"}
+          `}
+        >
+          <SidebarContent {...contentProps} />
         </div>
 
-        {/* Chat history list */}
-        <div className="flex-1 min-h-0 px-2 py-3">
-          <p className="px-2 mb-2 text-[11px] font-mono text-text-dim-ondark uppercase tracking-wider">
-            Recent chats
-          </p>
-          <ScrollArea className="h-full">
-            <div className="flex flex-col gap-0.5">
-              {chatHistory.length === 0 ? (
-                <p className="px-3 py-4 text-[12px] text-text-dim-ondark/60 text-center font-sans italic">
-                  No chats yet. Start one!
-                </p>
-              ) : (
-                chatHistory.map((session) => (
-                  <ChatHistoryItem
-                    key={session.id}
-                    session={session}
-                    isActive={session.id === activeChatId}
-                    onSelect={(id) => { onSelectChat(id); onClose(); }}
-                    onDelete={onDeleteChat}
-                  />
-                ))
-              )}
-            </div>
-          </ScrollArea>
+        {/* Resize handle */}
+        <div
+          {...handleProps}
+          className={`
+            absolute top-0 -right-[3px] bottom-0 w-[6px] z-10
+            cursor-col-resize group
+          `}
+        >
+          {/* Visible line */}
+          <div
+            className={`
+              absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[2px] rounded-full
+              transition-all duration-150
+              ${isDragging
+                ? "bg-marigold shadow-[0_0_8px_rgba(232,163,61,0.4)]"
+                : "bg-transparent group-hover:bg-marigold/50"
+              }
+            `}
+          />
         </div>
       </aside>
+
+      {/* Desktop collapse/expand toggle — floats at the edge */}
+      <button
+        onClick={toggleCollapse}
+        className={`
+          hidden md:flex
+          fixed z-30 top-1/2 -translate-y-1/2
+          size-7 items-center justify-center
+          rounded-full bg-ink-deep border border-line-ondark
+          text-text-dim-ondark hover:text-marigold hover:border-marigold/40
+          shadow-md transition-all duration-200
+          hover:scale-110
+        `}
+        style={{
+          left: isCollapsed ? 4 : width - 4,
+          transition: isDragging ? "color 200ms, border-color 200ms" : "all 200ms ease-in-out",
+        }}
+        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+      >
+        <CollapseChevron collapsed={isCollapsed} />
+      </button>
     </>
   );
 }
