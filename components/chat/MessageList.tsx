@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "./MessageBubble";
-import { TypingIndicator } from "./TypingIndicator";
+import { ThinkingIndicator } from "./ThinkingIndicator";
 import { ErrorMessageCard } from "./ErrorMessageCard";
 import { Message, Feedback } from "./types";
 import { ArrowDown } from "lucide-react";
@@ -76,7 +76,7 @@ export function MessageList({ messages, isTyping, onRegenerate, onRetry, onFeedb
               />
             )
           )}
-          {isTyping && <TypingIndicator />}
+          {isTyping && <ThinkingIndicator />}
           <div ref={messagesEndRef} className="h-4" />
         </div>
       </ScrollArea>
