@@ -99,7 +99,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
               handleSend();
             }}
             aria-label="Send message"
-            className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-marigold text-ink-deeper active:scale-95 transition-all shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || disabled ? "opacity-40" : "hover:bg-marigold-dark"
+            className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-marigold text-ink-deeper transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || disabled ? "opacity-40" : "hover:scale-105 hover:brightness-110 active:scale-95"
               }`}
           >
             <ArrowUp className="size-5 stroke-[2.5]" />

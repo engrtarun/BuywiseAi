@@ -40,7 +40,7 @@ export function MessageBubble({ message }: { message: Message }) {
             p: ({ node, ...props }) => <p className="mb-3 last:mb-0" {...props} />,
             a: ({ node, ...props }) => (
               <a
-                className="text-marigold hover:underline font-medium transition-colors"
+                className="text-marigold hover:text-marigold/80 hover:underline font-medium transition-colors duration-200"
                 target="_blank"
                 rel="noopener noreferrer"
                 {...props}

@@ -193,6 +193,7 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete }: ChatHistoryI
         }}
         className="
           opacity-0 group-hover:opacity-100
+          pointer-events-none group-hover:pointer-events-auto
           shrink-0 p-1 rounded-md
           text-text-dim-ondark hover:text-chili hover:bg-white/[0.06]
           transition-all duration-200
@@ -243,7 +244,7 @@ function SidebarContent({
             <button 
               onClick={onToggleCollapse}
               className={`
-                flex items-center justify-center rounded-lg hover:bg-white/[0.08] transition-colors
+                flex items-center justify-center rounded-lg hover:bg-white/[0.08] transition-all duration-200 hover:scale-105 active:scale-95
                 ${isCollapsed ? "size-10" : "size-8 shrink-0"}
               `}
               aria-label="Toggle Sidebar"
@@ -311,7 +312,7 @@ function SidebarContent({
       <div className={`shrink-0 p-3 mt-auto ${isCollapsed ? "flex justify-center" : ""}`}>
         <Tooltip text="User Profile" isCollapsed={isCollapsed}>
           <button className={`
-            flex items-center gap-3 rounded-xl hover:bg-white/[0.06] transition-colors p-2
+            flex items-center gap-3 rounded-xl hover:bg-white/[0.08] transition-all duration-200 p-2 hover:scale-[1.02] active:scale-[0.98]
             ${isCollapsed ? "justify-center w-auto" : "w-full"}
           `}>
             <Avatar className="size-8 shrink-0">
@@ -428,7 +429,7 @@ export function Sidebar({
         <div
           {...handleProps}
           className={`
-            absolute top-0 -right-[3px] bottom-0 w-[6px] z-10
+            absolute top-0 -right-[6px] bottom-0 w-[12px] z-10
             cursor-col-resize group
           `}
         >

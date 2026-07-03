@@ -24,7 +24,7 @@ export function HamburgerButton({ isOpen, onClick }: HamburgerButtonProps) {
   return (
     <button
       onClick={onClick}
-      className="md:hidden relative size-9 flex items-center justify-center rounded-lg hover:bg-white/[0.06] active:scale-95 transition-all touch-manipulation"
+      className="md:hidden relative size-9 flex items-center justify-center rounded-lg hover:bg-white/[0.08] active:scale-95 transition-all touch-manipulation"
       aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
     >
       {/* Top bar */}
