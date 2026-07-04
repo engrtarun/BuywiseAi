@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { X, Moon, Sun, Bell, User as UserIcon, Lock, Trash2, ArrowRight } from "lucide-react";
 
@@ -8,14 +8,33 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   profile: any;
+  onEditProfile?: () => void;
 }
 
-export function SettingsModal({ isOpen, onClose, profile }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, profile, onEditProfile }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<"THEME" | "NOTIFICATIONS" | "ACCOUNT">("THEME");
 
-  // Mock states
+  // Notifications state with localStorage persistence
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [dealNotifs, setDealNotifs] = useState(true);
+  const [orderNotifs, setOrderNotifs] = useState(true);
+
+  // Initialize from localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedEmail = localStorage.getItem("setting_emailNotifs");
+      const storedDeal = localStorage.getItem("setting_dealNotifs");
+      const storedOrder = localStorage.getItem("setting_orderNotifs");
+      if (storedEmail !== null) setEmailNotifs(storedEmail === "true");
+      if (storedDeal !== null) setDealNotifs(storedDeal === "true");
+      if (storedOrder !== null) setOrderNotifs(storedOrder === "true");
+    }
+  }, []);
+
+  // Update localStorage when changed
+  const handleEmailToggle = (val: boolean) => { setEmailNotifs(val); localStorage.setItem("setting_emailNotifs", String(val)); };
+  const handleDealToggle = (val: boolean) => { setDealNotifs(val); localStorage.setItem("setting_dealNotifs", String(val)); };
+  const handleOrderToggle = (val: boolean) => { setOrderNotifs(val); localStorage.setItem("setting_orderNotifs", String(val)); };
   
   if (!isOpen || typeof document === 'undefined') return null;
 
@@ -102,10 +121,10 @@ export function SettingsModal({ isOpen, onClose, profile }: SettingsModalProps) 
                     <span className="text-xs text-text-dim-ondark">Receive daily summaries of your recommendations.</span>
                   </div>
                   <button 
-                    onClick={() => setEmailNotifs(!emailNotifs)}
-                    className={`w-12 h-6 rounded-full transition-colors relative ${emailNotifs ? 'bg-brand-accent' : 'bg-white/20'}`}
+                    onClick={() => handleEmailToggle(!emailNotifs)}
+                    className={`w-14 h-7 rounded-full transition-colors relative flex items-center shrink-0 ${emailNotifs ? 'bg-brand-accent' : 'bg-white/20'}`}
                   >
-                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${emailNotifs ? 'left-7' : 'left-1'}`} />
+                    <div className={`absolute w-5 h-5 rounded-full bg-white transition-all shadow-sm ${emailNotifs ? 'left-8' : 'left-1'}`} />
                   </button>
                 </div>
 
@@ -115,10 +134,23 @@ export function SettingsModal({ isOpen, onClose, profile }: SettingsModalProps) 
                     <span className="text-xs text-text-dim-ondark">Get notified when saved items go on sale.</span>
                   </div>
                   <button 
-                    onClick={() => setDealNotifs(!dealNotifs)}
-                    className={`w-12 h-6 rounded-full transition-colors relative ${dealNotifs ? 'bg-brand-accent' : 'bg-white/20'}`}
+                    onClick={() => handleDealToggle(!dealNotifs)}
+                    className={`w-14 h-7 rounded-full transition-colors relative flex items-center shrink-0 ${dealNotifs ? 'bg-brand-accent' : 'bg-white/20'}`}
                   >
-                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${dealNotifs ? 'left-7' : 'left-1'}`} />
+                    <div className={`absolute w-5 h-5 rounded-full bg-white transition-all shadow-sm ${dealNotifs ? 'left-8' : 'left-1'}`} />
+                  </button>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-sm">Order Updates</span>
+                    <span className="text-xs text-text-dim-ondark">Shipping and delivery status updates.</span>
+                  </div>
+                  <button 
+                    onClick={() => handleOrderToggle(!orderNotifs)}
+                    className={`w-14 h-7 rounded-full transition-colors relative flex items-center shrink-0 ${orderNotifs ? 'bg-brand-accent' : 'bg-white/20'}`}
+                  >
+                    <div className={`absolute w-5 h-5 rounded-full bg-white transition-all shadow-sm ${orderNotifs ? 'left-8' : 'left-1'}`} />
                   </button>
                 </div>
               </div>
@@ -139,6 +171,17 @@ export function SettingsModal({ isOpen, onClose, profile }: SettingsModalProps) 
                 </div>
 
                 <div className="flex flex-col gap-3 pt-4 border-t border-line-ondark">
+                  <button 
+                    onClick={onEditProfile}
+                    className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-left group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <UserIcon className="size-4 text-text-dim-ondark" />
+                      <span className="font-bold text-sm">Edit Profile</span>
+                    </div>
+                    <ArrowRight className="size-4 text-text-dim-ondark group-hover:translate-x-1 transition-transform" />
+                  </button>
+
                   <button className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-left group">
                     <div className="flex items-center gap-3">
                       <Lock className="size-4 text-text-dim-ondark" />

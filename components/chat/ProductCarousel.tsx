@@ -18,6 +18,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
   const isDragging = useRef(false);
   const startX = useRef(0);
   const scrollLeft = useRef(0);
+  const hasDragged = useRef(false);
 
   const checkArrows = useCallback(() => {
     if (!scrollContainerRef.current) return;
@@ -42,6 +43,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
   // Mouse drag handlers for desktop
   const handleMouseDown = (e: React.MouseEvent) => {
     isDragging.current = true;
+    hasDragged.current = false;
     startX.current = e.pageX - (scrollContainerRef.current?.offsetLeft || 0);
     scrollLeft.current = scrollContainerRef.current?.scrollLeft || 0;
   };
@@ -59,7 +61,20 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
     e.preventDefault();
     const x = e.pageX - scrollContainerRef.current.offsetLeft;
     const walk = (x - startX.current) * 2; // Scroll-fast multiplier
+    
+    // Check threshold to distinguish click vs drag
+    if (Math.abs(walk) > 5) {
+      hasDragged.current = true;
+    }
+    
     scrollContainerRef.current.scrollLeft = scrollLeft.current - walk;
+  };
+
+  const handleClickCapture = (e: React.MouseEvent) => {
+    if (hasDragged.current) {
+      e.stopPropagation();
+      hasDragged.current = false;
+    }
   };
 
   return (
@@ -88,6 +103,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
         onMouseLeave={handleMouseLeave}
         onMouseUp={handleMouseUp}
         onMouseMove={handleMouseMove}
+        onClickCapture={handleClickCapture}
         className="
           flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory 
           scrollbar-hide select-none cursor-grab active:cursor-grabbing

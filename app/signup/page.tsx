@@ -26,6 +26,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
 
   // Multi-step flow state
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [direction, setDirection] = useState(1); // 1 for forward, -1 for backward
   const [loading, setLoading] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
 
@@ -97,6 +98,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
 
   const handleNextStep = async () => {
     setInlineError(null);
+    setDirection(1);
 
     if (step === 1) {
       if (!name.trim()) {
@@ -176,6 +178,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
 
   const handlePrevStep = () => {
     setInlineError(null);
+    setDirection(-1);
     if (step > 1) {
       setStep((prev) => (prev - 1) as 1 | 2 | 3 | 4);
     }
@@ -319,6 +322,28 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
 
   const strength = getPasswordStrength();
 
+  // Animation variants
+  const variants = {
+    enter: (direction: number) => {
+      return {
+        x: direction > 0 ? 50 : -50,
+        opacity: 0
+      };
+    },
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1
+    },
+    exit: (direction: number) => {
+      return {
+        zIndex: 0,
+        x: direction < 0 ? 50 : -50,
+        opacity: 0
+      };
+    }
+  };
+
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-ink-deeper px-4 py-12 text-text-ondark">
       <div 
@@ -352,16 +377,18 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
 
         {/* Main Content Area */}
         <div className="relative overflow-hidden min-h-[260px] flex items-center justify-center">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" custom={direction}>
             {/* Step 1: Name */}
             {step === 1 && (
               <motion.div 
                 key="step1"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: shake ? [-10, 10, -10, 10, 0] : 0 }}
-                exit={{ opacity: 0, x: 20 }}
+                custom={direction}
+                variants={variants}
+                initial="enter"
+                animate="center"
+                exit="exit"
                 transition={{ duration: 0.3 }}
-                className="w-full flex flex-col gap-4 absolute"
+                className={`w-full flex flex-col gap-4 absolute ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
               >
               <div className="flex flex-col gap-2">
                 <h1 className="font-heading font-extrabold text-2xl tracking-tight">
@@ -391,11 +418,13 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
           {step === 2 && (
             <motion.div 
               key="step2"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: shake ? [-10, 10, -10, 10, 0] : 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
               transition={{ duration: 0.3 }}
-              className="w-full flex flex-col gap-4 absolute"
+              className={`w-full flex flex-col gap-4 absolute ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
             >
               <div className="flex flex-col gap-2">
                 <h1 className="font-heading font-extrabold text-2xl tracking-tight">
@@ -460,11 +489,13 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
           {step === 3 && (
             <motion.div 
               key="step3"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: shake ? [-10, 10, -10, 10, 0] : 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
               transition={{ duration: 0.3 }}
-              className="w-full flex flex-col gap-4 absolute"
+              className={`w-full flex flex-col gap-4 absolute ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
             >
               <div className="flex flex-col gap-2">
                 <h1 className="font-heading font-extrabold text-2xl tracking-tight">
@@ -559,11 +590,13 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
           {step === 4 && (
             <motion.div 
               key="step4"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: shake ? [-10, 10, -10, 10, 0] : 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
               transition={{ duration: 0.3 }}
-              className="w-full flex flex-col gap-4 absolute"
+              className={`w-full flex flex-col gap-4 absolute ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
             >
               <div className="flex flex-col gap-2">
                 <h1 className="font-heading font-extrabold text-2xl tracking-tight">
@@ -594,7 +627,12 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
                     onChange={(e) => handleOtpChange(e.target.value, idx)}
                     onKeyDown={(e) => handleOtpKeyDown(e, idx)}
                     onPaste={idx === 0 ? handleOtpPaste : undefined}
-                    className="size-11 sm:size-12 rounded-xl border border-line-ondark bg-ink-deeper/50 text-center font-heading text-lg font-bold text-marigold focus:border-marigold focus:ring-2 focus:ring-marigold/20 outline-none transition-all disabled:opacity-50"
+                    className={`size-11 sm:size-12 rounded-xl bg-ink-deeper/50 text-center font-heading text-lg font-bold outline-none transition-all disabled:opacity-50
+                      ${shake 
+                        ? 'border-2 border-chili text-chili focus:border-chili focus:ring-2 focus:ring-chili/20' 
+                        : 'border border-line-ondark text-marigold focus:border-marigold focus:ring-2 focus:ring-marigold/20'
+                      }
+                    `}
                     disabled={loading}
                     autoFocus={idx === 0}
                   />

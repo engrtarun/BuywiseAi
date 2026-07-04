@@ -28,6 +28,14 @@ export function CheckoutFlow({ isOpen, onClose, onSuccess, items }: CheckoutFlow
   const [isProcessing, setIsProcessing] = useState(false);
   const [address, setAddress] = useState({ name: "", line1: "", city: "", pin: "", phone: "" });
   const [paymentMethod, setPaymentMethod] = useState<"UPI" | "CARD" | "COD">("UPI");
+  
+  // Mock payment details state
+  const [upiId, setUpiId] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
+  
+  // Mock checkout only — integrate real payment gateway (Razorpay/Stripe) here for production.
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -216,6 +224,24 @@ export function CheckoutFlow({ isOpen, onClose, onSuccess, items }: CheckoutFlow
                 </div>
               </button>
 
+              <div className={`overflow-hidden transition-all duration-300 ${paymentMethod === "UPI" ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
+                <div className="pt-2 pb-4 px-1">
+                  <label className="block text-xs text-text-secondary mb-1.5 ml-1">Enter your UPI ID</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      placeholder="e.g. 9876543210@ybl" 
+                      value={upiId}
+                      onChange={e => setUpiId(e.target.value)}
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-accent/50" 
+                    />
+                    <button className="px-4 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-bold transition-colors">
+                      Verify
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <button 
                 onClick={() => setPaymentMethod("CARD")}
                 className={`w-full p-4 border rounded-xl flex items-center gap-3 transition-colors ${paymentMethod === "CARD" ? "border-brand-accent bg-brand-accent/10" : "border-white/10 bg-white/5"}`}
@@ -231,6 +257,55 @@ export function CheckoutFlow({ isOpen, onClose, onSuccess, items }: CheckoutFlow
                   {paymentMethod === "CARD" && <div className="size-2.5 rounded-full bg-brand-accent" />}
                 </div>
               </button>
+              
+              <div className={`overflow-hidden transition-all duration-300 ${paymentMethod === "CARD" ? "max-h-48 opacity-100" : "max-h-0 opacity-0"}`}>
+                <div className="pt-2 pb-4 px-1 flex flex-col gap-3">
+                  <div>
+                    <label className="block text-xs text-text-secondary mb-1.5 ml-1">Card Number</label>
+                    <input 
+                      type="text" 
+                      placeholder="0000 0000 0000 0000" 
+                      maxLength={19}
+                      value={cardNumber}
+                      onChange={e => {
+                        // Basic formatting for realism
+                        const val = e.target.value.replace(/\D/g, '');
+                        const formatted = val.match(/.{1,4}/g)?.join(' ') || val;
+                        setCardNumber(formatted);
+                      }}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-accent/50" 
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <label className="block text-xs text-text-secondary mb-1.5 ml-1">Expiry Date</label>
+                      <input 
+                        type="text" 
+                        placeholder="MM/YY" 
+                        maxLength={5}
+                        value={cardExpiry}
+                        onChange={e => {
+                          let val = e.target.value.replace(/\D/g, '');
+                          if (val.length > 2) val = `${val.slice(0, 2)}/${val.slice(2, 4)}`;
+                          setCardExpiry(val);
+                        }}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-accent/50" 
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs text-text-secondary mb-1.5 ml-1">CVV</label>
+                      <input 
+                        type="password" 
+                        placeholder="•••" 
+                        maxLength={4}
+                        value={cardCvv}
+                        onChange={e => setCardCvv(e.target.value.replace(/\D/g, ''))}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-brand-accent/50" 
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <button 
                 onClick={() => setPaymentMethod("COD")}

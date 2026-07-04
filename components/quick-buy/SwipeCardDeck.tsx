@@ -87,27 +87,27 @@ export function SwipeCardDeck({ products, onSave, onOpenSettings, hasMore, onPre
         
         <div className="flex flex-col gap-3 w-full max-w-[280px] relative z-10">
           <button
-            onClick={handleReset}
+            onClick={() => router.push('/chat')}
             className="w-full py-4 rounded-xl bg-brand-accent text-bg-main font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-brand-accent/20 flex items-center justify-center gap-2"
           >
-            <RefreshCcw className="size-5" />
-            Refresh Wardrobe
+            <MessageSquare className="size-5" />
+            Back to AI Chat
           </button>
           
           <div className="flex items-center gap-3 w-full">
             <button
+              onClick={handleReset}
+              className="flex-1 py-3.5 rounded-xl bg-white/5 border border-white/10 text-text-primary-light font-bold hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm"
+            >
+              <RefreshCcw className="size-4" />
+              Refresh
+            </button>
+            <button
               onClick={onOpenSettings}
-              className="flex-1 py-3.5 rounded-xl bg-white/5 border border-white/10 text-text-primary-light font-bold hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-2"
+              className="flex-1 py-3.5 rounded-xl bg-white/5 border border-white/10 text-text-primary-light font-bold hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm"
             >
               <SlidersHorizontal className="size-4" />
               Settings
-            </button>
-            <button
-              onClick={() => router.push('/chat')}
-              className="flex-1 py-3.5 rounded-xl bg-white/5 border border-white/10 text-text-primary-light font-bold hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-2"
-            >
-              <MessageSquare className="size-4" />
-              Chat
             </button>
           </div>
         </div>

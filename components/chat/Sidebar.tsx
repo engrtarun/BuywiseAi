@@ -933,6 +933,10 @@ function SidebarContent({
           isOpen={showSettingsModal}
           onClose={() => setShowSettingsModal(false)}
           profile={profile}
+          onEditProfile={() => {
+            setShowSettingsModal(false);
+            setShowProfileModal(true);
+          }}
         />
 
         <Popover>
