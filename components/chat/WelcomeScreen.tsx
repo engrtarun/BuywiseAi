@@ -3,12 +3,14 @@
 import React from "react";
 import { Sparkles, Search, Gift, Smartphone, Laptop, Scale } from "lucide-react";
 import { LoginRequiredScreen } from "./LoginRequiredScreen";
+import { DailyLimitReachedCard } from "./DailyLimitReachedCard";
 
 interface WelcomeScreenProps {
   onSuggestionClick: (text: string) => void;
   isGuest?: boolean;
   guestMessagesRemaining?: number;
   guestLimitReached?: boolean;
+  dailyLimitReached?: boolean;
   onLoginClick?: () => void;
 }
 
@@ -39,9 +41,13 @@ const suggestions = [
   },
 ];
 
-export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessagesRemaining = 0, guestLimitReached = false, onLoginClick }: WelcomeScreenProps) {
+export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessagesRemaining = 0, guestLimitReached = false, dailyLimitReached = false, onLoginClick }: WelcomeScreenProps) {
   if (guestLimitReached) {
     return <LoginRequiredScreen onLoginClick={onLoginClick} />;
+  }
+  
+  if (dailyLimitReached) {
+    return <DailyLimitReachedCard />;
   }
 
   return (

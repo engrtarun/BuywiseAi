@@ -57,10 +57,12 @@ interface ChatWindowProps {
   onRetry: () => void;
   onFeedback: (id: string, feedback: Feedback) => void;
   onMenuToggle: () => void;
-  /* Guest mode props */
   isGuest?: boolean;
   guestMessagesRemaining?: number;
   guestLimitReached?: boolean;
+  dailyLimitReached?: boolean;
+  dailyMessagesRemaining?: number;
+  dailyLimit?: number;
   onLoginClick?: () => void;
   cooldownUntil?: number | null;
   isTemporaryChat?: boolean;
@@ -81,6 +83,9 @@ export function ChatWindow({
   isGuest = false,
   guestMessagesRemaining = 0,
   guestLimitReached = false,
+  dailyLimitReached = false,
+  dailyMessagesRemaining,
+  dailyLimit,
   onLoginClick,
   cooldownUntil = null,
   isTemporaryChat = false,
@@ -105,6 +110,7 @@ export function ChatWindow({
           isGuest={isGuest}
           guestMessagesRemaining={guestMessagesRemaining}
           guestLimitReached={guestLimitReached}
+          dailyLimitReached={dailyLimitReached}
           onLoginClick={onLoginClick}
         />
       ) : (
@@ -124,6 +130,10 @@ export function ChatWindow({
         disabled={isTyping}
         isGenerating={isTyping}
         guestLimitReached={guestLimitReached}
+        dailyLimitReached={dailyLimitReached}
+        dailyMessagesRemaining={dailyMessagesRemaining}
+        dailyLimit={dailyLimit}
+        isGuest={isGuest}
         cooldownUntil={cooldownUntil}
         onLoginClick={onLoginClick}
       />

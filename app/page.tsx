@@ -6,6 +6,7 @@ import { Message, ChatSession, Feedback } from "@/components/chat/types";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { Sidebar } from "@/components/chat/Sidebar";
 import { useGuestAccess } from "@/hooks/useGuestAccess";
+import { useDailyMessageLimit } from "@/hooks/useDailyMessageLimit";
 import { createClient } from "@/lib/supabase/client";
 
 import {
@@ -57,6 +58,15 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
     messagesRemaining,
     incrementGuestMessageCount,
   } = useGuestAccess();
+
+  // Daily message limit hook
+  const {
+    dailyLimitReached,
+    dailyMessagesRemaining,
+    incrementDailyCount,
+    isInitializing: isDailyLimitInitializing,
+    DAILY_LIMIT,
+  } = useDailyMessageLimit();
 
   // Ref for the AbortController to cancel fetch requests
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -293,6 +303,12 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
       if (isGuest && !canSendMessage) {
         return; // Block the message
       }
+
+      /* ── Daily limit gate (for authenticated users) ──────── */
+      if (!isGuest && dailyLimitReached) {
+        return;
+      }
+
       const userMsg: Message = { id: generateId(), role: "user", content };
 
       let chatIdToUpdate: string;
@@ -397,12 +413,14 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
       } catch (err) {
         console.error("Failed to send message and save to Supabase:", err);
       }
-      /* Increment guest message counter (no-op for non-guests) */
+      /* Increment message counters */
       if (isGuest) {
         incrementGuestMessageCount();
+      } else {
+        incrementDailyCount();
       }
     },
-    [activeChatId, chatSessions, getAiReply, isGuest, canSendMessage, incrementGuestMessageCount, isTemporaryChat]
+    [activeChatId, chatSessions, getAiReply, isGuest, canSendMessage, incrementGuestMessageCount, isTemporaryChat, dailyLimitReached, incrementDailyCount]
   );
 
   /**
@@ -487,7 +505,7 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
     console.log(`[Feedback] Message ${messageId}: ${feedback ?? "cleared"}`);
   }, []);
 
-  if (isLoading) {
+  if (isLoading || isDailyLimitInitializing) {
     return (
       <div className="flex h-dvh w-full items-center justify-center bg-bg-main text-text-primary-light">
         <div className="flex flex-col items-center gap-3">

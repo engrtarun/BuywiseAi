@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import TextareaAutosize from "react-textarea-autosize";
-import { ArrowUp, Square, LogIn } from "lucide-react";
+import { ArrowUp, Square, LogIn, Clock } from "lucide-react";
 
 const placeholders = [
   "BuyWise anything...",
@@ -21,9 +21,25 @@ interface ChatInputProps {
   guestLimitReached?: boolean;
   cooldownUntil?: number | null;
   onLoginClick?: () => void;
+  isGuest?: boolean;
+  dailyLimitReached?: boolean;
+  dailyMessagesRemaining?: number;
+  dailyLimit?: number;
 }
 
-export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitReached = false, cooldownUntil = null, onLoginClick }: ChatInputProps) {
+export function ChatInput({ 
+  onSend, 
+  onStop, 
+  disabled, 
+  isGenerating, 
+  guestLimitReached = false, 
+  cooldownUntil = null, 
+  onLoginClick,
+  isGuest = false,
+  dailyLimitReached = false,
+  dailyMessagesRemaining,
+  dailyLimit
+}: ChatInputProps) {
   const [inputText, setInputText] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -61,7 +77,7 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitRe
   }, [cooldownUntil]);
 
   const handleSend = () => {
-    if (guestLimitReached || timeLeft > 0) return;
+    if (guestLimitReached || dailyLimitReached || timeLeft > 0) return;
     const content = inputText.trim();
     if (!content || disabled) return;
 
@@ -76,24 +92,31 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitRe
     }
   };
 
-  if (guestLimitReached) {
+  if (guestLimitReached || dailyLimitReached) {
     return (
       <div className="shrink-0 bg-bg-main border-t border-border-light px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-4 z-20 transition-opacity duration-300">
         <div className="w-full max-w-3xl mx-auto">
-          <button
-            onClick={onLoginClick}
-            className="
-              w-full flex items-center justify-between gap-3 px-4 py-3.5 
-              rounded-2xl bg-white/[0.03] border border-marigold/30 
-              text-text-secondary text-[15px] cursor-pointer hover:bg-white/[0.05] 
-              transition-colors group
-            "
-          >
-            <span className="font-sans">Log in to continue chatting...</span>
-            <div className="size-8 rounded-full bg-brand-accent flex items-center justify-center shrink-0 text-ink-deeper shadow-md shadow-marigold/20 group-hover:scale-105 transition-transform">
-              <LogIn className="size-4" />
+          {guestLimitReached ? (
+            <button
+              onClick={onLoginClick}
+              className="
+                w-full flex items-center justify-between gap-3 px-4 py-3.5 
+                rounded-2xl bg-white/[0.03] border border-marigold/30 
+                text-text-secondary text-[15px] cursor-pointer hover:bg-white/[0.05] 
+                transition-colors group
+              "
+            >
+              <span className="font-sans">Log in to continue chatting...</span>
+              <div className="size-8 rounded-full bg-brand-accent flex items-center justify-center shrink-0 text-ink-deeper shadow-md shadow-marigold/20 group-hover:scale-105 transition-transform">
+                <LogIn className="size-4" />
+              </div>
+            </button>
+          ) : (
+            <div className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl bg-marigold/10 border border-marigold/20 text-marigold text-[15px]">
+              <Clock className="size-4" />
+              <span className="font-sans font-medium">Daily limit reached. Resets at midnight IST.</span>
             </div>
-          </button>
+          )}
         </div>
       </div>
     );
@@ -183,6 +206,15 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitRe
             )}
           </button>
         </div>
+
+        {/* Daily Usage Indicator */}
+        {!isGuest && dailyMessagesRemaining !== undefined && dailyLimit !== undefined && (
+          <div className="text-center mt-1">
+            <span className="text-[11px] font-mono text-text-dim-ondark opacity-60">
+              {dailyLimit - dailyMessagesRemaining}/{dailyLimit} messages today
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
