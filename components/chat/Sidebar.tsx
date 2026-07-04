@@ -12,6 +12,7 @@ import { useSidebarResize } from "./useSidebarResize";
 import { useTheme } from "@/hooks/useTheme";
 import { THEME_PRESETS } from "@/lib/themes";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { SettingsModal } from "./SettingsModal";
 
 /* ── Inline SVG Icons (animatable via CSS) ───────────── */
 
@@ -630,6 +631,7 @@ function SidebarContent({
   const [loadingProfile, setLoadingProfile] = React.useState(true);
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [showProfileModal, setShowProfileModal] = React.useState(false);
+  const [showSettingsModal, setShowSettingsModal] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const [menuRect, setMenuRect] = React.useState<DOMRect | null>(null);
@@ -844,7 +846,7 @@ function SidebarContent({
               type="button"
               onClick={() => {
                 setMenuOpen(false);
-                alert("Settings page placeholder");
+                setShowSettingsModal(true);
               }}
               className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
             >
@@ -925,6 +927,12 @@ function SidebarContent({
           onClose={() => setShowProfileModal(false)} 
           profile={profile} 
           onSave={(updates) => setProfile(prev => prev ? { ...prev, ...updates } : { full_name: null, avatar_url: null, email: null, ...updates })}
+        />
+
+        <SettingsModal
+          isOpen={showSettingsModal}
+          onClose={() => setShowSettingsModal(false)}
+          profile={profile}
         />
 
         <Popover>

@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Product } from "@/types/product";
-import { Star, ExternalLink } from "lucide-react";
+import { Star, ExternalLink, ShoppingCart } from "lucide-react";
+import { CheckoutFlow, CheckoutItem } from "../checkout/CheckoutFlow";
 
 interface ProductCardProps {
   product: Product;
@@ -30,6 +31,10 @@ function renderStars(rating: number) {
 
 export function ProductCard({ product }: ProductCardProps) {
   const isAmazon = product.platform === "Amazon";
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  
+  // Clean price string for calculation
+  const numericPrice = parseFloat(product.price.replace(/[^0-9.]/g, '')) || 0;
   
   return (
     <div className="
@@ -97,17 +102,39 @@ export function ProductCard({ product }: ProductCardProps) {
             </span>
           </div>
 
-          <a
-            href={product.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center size-8 sm:size-9 rounded-full bg-white/5 border border-white/10 hover:bg-marigold hover:text-ink-deeper hover:border-marigold transition-colors text-text-ondark"
-            aria-label="View Product"
-          >
-            <ExternalLink className="size-3.5 sm:size-4" />
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href={product.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center size-8 sm:size-9 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-text-ondark"
+              aria-label="View Product"
+            >
+              <ExternalLink className="size-3.5 sm:size-4" />
+            </a>
+            
+            <button
+              onClick={() => setIsCheckoutOpen(true)}
+              className="flex items-center justify-center h-8 sm:h-9 px-3 rounded-full bg-brand-accent border border-brand-accent hover:bg-transparent hover:text-brand-accent transition-colors text-bg-main font-bold text-xs gap-1.5"
+            >
+              <ShoppingCart className="size-3.5" /> Buy
+            </button>
+          </div>
         </div>
       </div>
+      
+      <CheckoutFlow
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        items={[{
+          id: product.id,
+          name: product.name,
+          price: numericPrice,
+          image: product.image,
+          quantity: 1
+        }]}
+        onSuccess={() => setIsCheckoutOpen(false)}
+      />
     </div>
   );
 }

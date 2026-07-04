@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion, useMotionValue, useTransform, useAnimation, PanInfo, AnimatePresence } from "framer-motion";
 import { QuickBuyProduct } from "@/lib/quickBuyMockData";
 import { Star, Check, ShoppingCart, Zap, Heart, ArrowRight, Package } from "lucide-react";
-import confetti from "canvas-confetti";
+import { CheckoutFlow, CheckoutItem } from "../checkout/CheckoutFlow";
 
 interface SwipeableProductCardProps {
   product: QuickBuyProduct;
@@ -104,34 +104,24 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
     }
   };
 
-  const [showFlyingBox, setShowFlyingBox] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   const handleBuy = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    
-    // Confetti
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (rect.left + rect.width / 2) / window.innerWidth;
-    const y = (rect.top + rect.height / 2) / window.innerHeight;
-    
-    confetti({
-      particleCount: 80,
-      spread: 70,
-      origin: { x, y },
-      colors: ["#ffb067", "#f97316", "#2dd4bf"] // Amber, Orange, Mint
-    });
+    setIsCheckoutOpen(true);
+  };
 
-    // Notify parent to add to budget
+  const handleCheckoutSuccess = () => {
+    setIsCheckoutOpen(false);
     if (onBuy) onBuy(product.price);
-
-    // Show animations
+    
+    // Show toast & auto-swipe
     setShowToast(`🎉 Order Placed! ₹${product.price}`);
     setShowFlyingBox(true);
     
     setTimeout(() => {
       setShowToast(null);
       setShowFlyingBox(false);
-      // Auto-swipe after buy animation
       manualSwipe("right");
     }, 1200);
   };
@@ -259,15 +249,32 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
         <div className="flex-1 px-5 pt-3 pb-4 flex flex-col justify-between pointer-events-auto" style={{ transform: "translateZ(40px)" }}>
           
           {/* Info */}
-          <div>
+          <div className="relative">
+            {product.dealBadge && (
+              <div className="absolute -top-7 left-0 bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider">
+                {product.dealBadge}
+              </div>
+            )}
             <h3 className="text-xl font-heading font-extrabold text-text-primary-light line-clamp-1">
               {product.name}
             </h3>
-            <div className="text-2xl font-black text-brand-accent mt-0.5 tracking-tight">
-              ₹{product.price}
+            <div className="flex items-end gap-2 mt-0.5">
+              <div className="text-2xl font-black text-brand-accent tracking-tight">
+                ₹{product.price}
+              </div>
+              {product.originalPrice && (
+                <>
+                  <div className="text-sm font-bold text-text-secondary line-through mb-1">
+                    ₹{product.originalPrice}
+                  </div>
+                  <div className="text-xs font-bold text-green-400 mb-1.5">
+                    {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% off
+                  </div>
+                </>
+              )}
             </div>
             
-            {/* Rating Stars */}
+            {/* Rating Stars & Reviews */}
             <div className="flex items-center gap-1 mt-1.5">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star 
@@ -275,9 +282,14 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
                   className={`size-4 ${star <= Math.round(product.rating) ? "fill-brand-accent text-brand-accent" : "fill-bg-input text-border-light"}`} 
                 />
               ))}
-              <span className="text-sm font-sans text-text-secondary ml-1">
+              <span className="text-sm font-sans text-text-secondary ml-1 font-bold">
                 {product.rating}
               </span>
+              {product.reviewsCount && (
+                <span className="text-xs font-sans text-text-secondary/60 ml-1">
+                  ({product.reviewsCount.toLocaleString()})
+                </span>
+              )}
             </div>
           </div>
 
@@ -320,6 +332,19 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
         </div>
 
       </div>
+
+      <CheckoutFlow
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        items={[{
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          quantity: 1
+        }]}
+        onSuccess={handleCheckoutSuccess}
+      />
     </motion.div>
   );
 }

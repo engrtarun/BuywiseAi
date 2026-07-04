@@ -8,6 +8,9 @@ export interface QuickBuyProduct {
   type: string;
   rating: number;
   platform: string;
+  originalPrice?: number;
+  reviewsCount?: number;
+  dealBadge?: string;
 }
 
 export const mockQuickBuyProducts: QuickBuyProduct[] = [
@@ -20,7 +23,10 @@ export const mockQuickBuyProducts: QuickBuyProduct[] = [
     category: "Jackets",
     type: "Streetwear",
     rating: 4.5,
-    platform: "Myntra"
+    platform: "Myntra",
+    originalPrice: 3499,
+    reviewsCount: 1432,
+    dealBadge: "Best Seller"
   },
   {
     id: "p2",
@@ -31,7 +37,9 @@ export const mockQuickBuyProducts: QuickBuyProduct[] = [
     category: "T-Shirts",
     type: "Casual",
     rating: 4.8,
-    platform: "Amazon"
+    platform: "Amazon",
+    originalPrice: 899,
+    reviewsCount: 8560
   },
   {
     id: "p3",
@@ -42,7 +50,9 @@ export const mockQuickBuyProducts: QuickBuyProduct[] = [
     category: "Pants",
     type: "Casual",
     rating: 4.2,
-    platform: "Flipkart"
+    platform: "Flipkart",
+    originalPrice: 2499,
+    reviewsCount: 423
   },
   {
     id: "p4",
@@ -53,7 +63,10 @@ export const mockQuickBuyProducts: QuickBuyProduct[] = [
     category: "Hoodies",
     type: "Winterwear",
     rating: 4.6,
-    platform: "Myntra"
+    platform: "Myntra",
+    originalPrice: 2599,
+    reviewsCount: 2105,
+    dealBadge: "Limited Deal"
   },
   {
     id: "p5",
@@ -64,7 +77,9 @@ export const mockQuickBuyProducts: QuickBuyProduct[] = [
     category: "Shirts",
     type: "Casual",
     rating: 4.3,
-    platform: "Amazon"
+    platform: "Amazon",
+    originalPrice: 1499,
+    reviewsCount: 1204
   },
   {
     id: "p6",
@@ -75,7 +90,9 @@ export const mockQuickBuyProducts: QuickBuyProduct[] = [
     category: "Shorts",
     type: "Athletic",
     rating: 4.1,
-    platform: "Flipkart"
+    platform: "Flipkart",
+    originalPrice: 999,
+    reviewsCount: 312
   },
   {
     id: "p7",
@@ -86,7 +103,10 @@ export const mockQuickBuyProducts: QuickBuyProduct[] = [
     category: "Jackets",
     type: "Formal",
     rating: 4.7,
-    platform: "Myntra"
+    platform: "Myntra",
+    originalPrice: 4999,
+    reviewsCount: 890,
+    dealBadge: "Trending"
   },
   {
     id: "p8",
@@ -97,7 +117,9 @@ export const mockQuickBuyProducts: QuickBuyProduct[] = [
     category: "Shirts",
     type: "Casual",
     rating: 4.4,
-    platform: "Amazon"
+    platform: "Amazon",
+    originalPrice: 1299,
+    reviewsCount: 541
   },
   {
     id: "p9",
@@ -108,7 +130,9 @@ export const mockQuickBuyProducts: QuickBuyProduct[] = [
     category: "Pants",
     type: "Formal",
     rating: 4.2,
-    platform: "Flipkart"
+    platform: "Flipkart",
+    originalPrice: 1899,
+    reviewsCount: 220
   },
   {
     id: "p10",
@@ -119,7 +143,10 @@ export const mockQuickBuyProducts: QuickBuyProduct[] = [
     category: "T-Shirts",
     type: "Streetwear",
     rating: 4.9,
-    platform: "Myntra"
+    platform: "Myntra",
+    originalPrice: 1199,
+    reviewsCount: 3450,
+    dealBadge: "Top Rated"
   },
   {
     id: "p11",
@@ -130,7 +157,9 @@ export const mockQuickBuyProducts: QuickBuyProduct[] = [
     category: "Shirts",
     type: "Winterwear",
     rating: 4.6,
-    platform: "Amazon"
+    platform: "Amazon",
+    originalPrice: 1799,
+    reviewsCount: 165
   },
   {
     id: "p12",
@@ -141,6 +170,9 @@ export const mockQuickBuyProducts: QuickBuyProduct[] = [
     category: "Pants",
     type: "Athletic",
     rating: 4.5,
-    platform: "Flipkart"
+    platform: "Flipkart",
+    originalPrice: 1499,
+    reviewsCount: 830,
+    dealBadge: "Price Drop"
   }
 ];
