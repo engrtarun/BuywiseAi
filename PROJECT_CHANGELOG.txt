@@ -1,0 +1,57 @@
+================================================================================
+BuyWise AI - Project Changelog
+================================================================================
+
+PROJECT OVERVIEW
+--------------------------------------------------------------------------------
+Name: BuyWise AI
+Tech Stack: Next.js (App Router), React, TypeScript, Tailwind CSS, shadcn/ui, Supabase, Google Gemini API
+Description: An AI-powered smart shopping assistant that helps users discover, compare, and make informed purchasing decisions through an interactive, intelligent chat interface.
+
+--------------------------------------------------------------------------------
+CHRONOLOGICAL FEATURE LOG
+--------------------------------------------------------------------------------
+
+[INITIALIZATION & FOUNDATION]
+- Initialized Next.js project with Tailwind CSS and shadcn/ui integration.
+- Set up Supabase client for backend authentication and database operations.
+- Added custom typography (Sora, Inter, IBM Plex Mono) and defined a custom color palette (ink, marigold, chili) in Tailwind configuration.
+- Created robust UI primitive components (Buttons, Inputs, ScrollArea, Skeleton, Avatar, Badge).
+
+[AUTHENTICATION & ONBOARDING]
+- Built complete Multi-Step Signup Flow (`app/signup`) featuring password strength requirements and 6-digit OTP email verification via Supabase.
+- Implemented Login Flow (`app/login`) with Magic Link / OTP fallback for unverified accounts and Password Reset capabilities.
+- Added Google OAuth support to both Login and Signup screens.
+- Created `app/auth/callback/route.ts` to exchange OAuth codes for sessions and dynamically route users.
+- Built a Welcome Onboarding Screen (`app/welcome`) to capture a user's full name immediately after first-time Google signups.
+- Configured robust global route protection based on active Supabase sessions.
+
+[CHAT INTERFACE ARCHITECTURE]
+- Implemented the core `ChatWindow` component featuring a dynamic, auto-scrolling message list.
+- Added a `WelcomeScreen` inside the chat to provide AI suggestions and introductory prompts to new users.
+- Built the `ChatInput` component with auto-rotating placeholders, text area auto-growth, and submission handling.
+- Integrated `react-markdown` to safely render structured AI responses.
+- Implemented `Sidebar` component for chat history management, session switching, and new chat initialization.
+- Added a custom `useSidebarResize` hook to allow users to drag-to-resize the sidebar, as well as a fully collapsed icon-only state for maximizing chat space.
+
+[API & AI INTEGRATION]
+- Created `app/api/chat/route.ts` to securely communicate with the Google Generative AI SDK (Gemini).
+- Updated the AI model to `gemini-2.5-flash` for blazing fast responses.
+- Implemented context-aware chat memory by mapping frontend history to Gemini's expected role structure.
+- Hardened API route with robust error handling and payload validation.
+
+[UI POLISH & BUG FIXES]
+- Refactored `ChatWindow` header to integrate branding natively into the Sidebar (ChatGPT style) and simplified mobile views.
+- Resolved severe Modal and Dropdown clipping issues by refactoring `Tooltip` and `ProfileModal` to render safely at the `document.body` level using React Portals (`createPortal`).
+- Repaired "Help" flyout submenu: fixed 'dead zone' hover gaps with invisible CSS bridges, and converted broken text into functional links with `select-none` to prevent visual jitter.
+- Upgraded global event listeners (outside clicks) to use capture-phase `click` events, preventing race conditions with nested interactive menus.
+
+[AVATAR & PROFILE MANAGEMENT]
+- Integrated a fully functional Avatar Upload feature inside the "Edit Profile" modal.
+- Added hidden file input triggering, client-side image validation (size and type), and live Base64 rendering via `FileReader`.
+- Connected profile display names to the Sidebar UI, accurately reflecting global state updates immediately upon saving.
+
+[FRAMEWORK MIGRATION & MAINTENANCE]
+- Addressed strict Next.js 15+ "sync dynamic APIs" deprecation warnings.
+- Refactored core Client Component Pages (`app/page.tsx`, `app/login/page.tsx`, `app/signup/page.tsx`, `app/welcome/page.tsx`) to explicitly define `params` and `searchParams` as Promises in their signatures.
+- Implemented `React.use()` unwrapping for route props, eliminating console enumeration and length access proxy warnings from React DevTools.
