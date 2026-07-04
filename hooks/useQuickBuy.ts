@@ -110,7 +110,10 @@ export function useQuickBuy() {
   const getFilteredProducts = useCallback((): QuickBuyProduct[] => {
     if (!preferences) return [];
     
-    return allProducts.filter((product) => {
+    console.log('All mock products:', allProducts);
+    console.log('User prefs:', preferences);
+
+    const filtered = allProducts.filter((product) => {
       // Check budget
       if (preferences.maxBudget !== null && product.price > preferences.maxBudget) {
         return false;
@@ -129,7 +132,10 @@ export function useQuickBuy() {
       
       return true;
     });
-  }, [preferences]);
+
+    console.log('Filtered products:', filtered);
+    return filtered;
+  }, [preferences, allProducts]);
 
   // Derived saved items list
   const savedProducts = savedItemIds
