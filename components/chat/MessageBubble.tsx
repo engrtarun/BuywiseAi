@@ -20,7 +20,7 @@ const markdownComponents = {
   p: ({ node, ...props }: any) => <p className="mb-3 last:mb-0" {...props} />,
   a: ({ node, ...props }: any) => (
     <a
-      className="text-accent hover:text-accent/80 hover:underline font-medium transition-colors duration-200"
+      className="text-brand-accent hover:text-brand-accent/80 hover:underline font-medium transition-colors duration-200"
       target="_blank"
       rel="noopener noreferrer"
       {...props}
@@ -44,7 +44,7 @@ const markdownComponents = {
   ),
   blockquote: ({ node, ...props }: any) => (
     <blockquote
-      className="border-l-2 border-accent/50 pl-3 italic text-text-secondary mb-3 last:mb-0"
+      className="border-l-2 border-brand-accent/50 pl-3 italic text-text-secondary mb-3 last:mb-0"
       {...props}
     />
   ),
@@ -57,7 +57,7 @@ const markdownComponents = {
   code: ({ node, inline, ...props }: any) =>
     inline ? (
       <code
-        className="bg-[#EBE9DE] text-accent px-1.5 py-0.5 rounded font-mono text-[13px]"
+        className="bg-[#2f2f2f] text-brand-accent px-1.5 py-0.5 rounded font-mono text-[13px]"
         {...props}
       />
     ) : (
@@ -78,7 +78,7 @@ const markdownComponents = {
     </div>
   ),
   thead: ({ node, ...props }: any) => (
-    <thead className="bg-accent/[0.08] border-b border-accent/20" {...props} />
+    <thead className="bg-brand-accent/[0.08] border-b border-brand-accent/20" {...props} />
   ),
   tbody: ({ node, ...props }: any) => <tbody {...props} />,
   tr: ({ node, ...props }: any) => (
@@ -89,7 +89,7 @@ const markdownComponents = {
   ),
   th: ({ node, ...props }: any) => (
     <th
-      className="px-3.5 py-2.5 font-semibold text-accent text-[12px] sm:text-[13px] uppercase tracking-wider whitespace-nowrap border-r border-border-light last:border-r-0"
+      className="px-3.5 py-2.5 font-semibold text-brand-accent text-[12px] sm:text-[13px] uppercase tracking-wider whitespace-nowrap border-r border-border-light last:border-r-0"
       {...props}
     />
   ),
@@ -116,7 +116,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
       <div className="flex justify-end w-full">
         <div
           dir="auto"
-          className="bg-[#EBE9DE] text-text-primary-light rounded-2xl rounded-br-sm px-4 py-3 text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap break-words shadow-sm max-w-[85%] sm:max-w-[75%] md:max-w-[65%] font-sans font-medium"
+          className="bg-[#2f2f2f] text-text-primary-light rounded-2xl rounded-br-sm px-4 py-3 text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap break-words shadow-sm max-w-[85%] sm:max-w-[75%] md:max-w-[65%] font-sans font-medium"
         >
           {message.content}
         </div>

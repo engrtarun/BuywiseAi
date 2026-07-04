@@ -30,14 +30,14 @@
   --color-line-onlight: #DDD2B4;
 
   /* ── Claude-style theme palette ───────────── */
-  --color-bg-main: #F5F4EE;
+  --color-bg-main: #212121;
   --color-bg-sidebar: #1A1A18;
-  --color-bg-input: #FFFFFF;
-  --color-text-primary-light: #2D2D2A;
+  --color-bg-input: #2F2F2F;
+  --color-text-primary-light: #F5F4EE;
   --color-text-primary-dark: #F5F4EE;
   --color-text-secondary: #8A8A85;
-  --color-accent: #C96442;
-  --color-border-light: #E5E3D8;
+  --color-brand-accent: #C96442;
+  --color-border-light: #333333;
   --color-border-dark: #2E2E2B;
 
   /* ── shadcn semantic aliases ──────────────── */
@@ -102,14 +102,14 @@
   --line-onlight: #DDD2B4;
 
   /* ── Claude-style theme palette ───────────── */
-  --bg-main: #F5F4EE;
+  --bg-main: #212121;
   --bg-sidebar: #1A1A18;
-  --bg-input: #FFFFFF;
-  --text-primary-light: #2D2D2A;
+  --bg-input: #2F2F2F;
+  --text-primary-light: #F5F4EE;
   --text-primary-dark: #F5F4EE;
   --text-secondary: #8A8A85;
-  --accent: #C96442;
-  --border-light: #E5E3D8;
+  --brand-accent: #C96442;
+  --border-light: #333333;
   --border-dark: #2E2E2B;
 
   /* ── shadcn light theme ───────────────────── */

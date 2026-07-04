@@ -59,7 +59,7 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating }: ChatInputP
             className="
               self-center flex items-center gap-2 px-4 py-2 rounded-full
               bg-bg-input border border-border-light text-text-primary-light text-[13px] font-sans
-              hover:border-accent/50 hover:text-accent active:scale-[0.97]
+              hover:border-brand-accent/50 hover:text-brand-accent active:scale-[0.97]
               transition-all duration-200 touch-manipulation shadow-sm
               animate-in fade-in slide-in-from-bottom-1 duration-200
             "
@@ -69,7 +69,7 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating }: ChatInputP
           </button>
         )}
 
-        <div className="flex items-end gap-2 bg-bg-input rounded-3xl border border-border-light p-1 pr-1.5 focus-within:border-accent/50 transition-colors shadow-sm">
+        <div className="flex items-end gap-2 bg-bg-input rounded-3xl border border-border-light p-1 pr-1.5 focus-within:border-brand-accent/50 transition-colors shadow-sm">
 
           <div className="relative flex-1 flex min-h-[44px] sm:min-h-[48px]">
             {/* Custom Animated Placeholder */}
@@ -119,7 +119,7 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating }: ChatInputP
               handleSend();
             }}
             aria-label="Send message"
-            className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-accent text-white transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || disabled ? "opacity-40" : "hover:scale-105 hover:brightness-110 active:scale-95"
+            className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-brand-accent text-white transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || disabled ? "opacity-40" : "hover:scale-105 hover:brightness-110 active:scale-95"
               }`}
           >
             <ArrowUp className="size-5 stroke-[2.5]" />
