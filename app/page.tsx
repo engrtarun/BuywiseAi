@@ -13,6 +13,7 @@ import {
   listChatSessions,
   deleteChatSession,
   createChatSession,
+  generateChatTitle,
 } from "@/app/actions/chat";
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -247,9 +248,11 @@ export default function Page() {
 
       let chatIdToUpdate: string;
       let history: Message[] = [];
+      let isFirstMessage = false;
 
       try {
         if (activeChatId === null) {
+          isFirstMessage = true;
           // Starting a brand new chat session
           const newId = await createChatSession();
           chatIdToUpdate = newId;
@@ -291,7 +294,8 @@ export default function Page() {
           await apiSendMessage(activeChatId, "user", content);
 
           // If the session title was default "New Chat", rename it with the first message title
-          if (session && (session.title === "New Chat" || !session.title)) {
+          if (session && (session.title === "New Chat" || !session.title || session.messages.length === 0)) {
+            isFirstMessage = true;
             const newTitle = generateTitle(content);
             setChatSessions((prev) =>
               prev.map((s) => (s.id === activeChatId ? { ...s, title: newTitle } : s))
@@ -304,7 +308,27 @@ export default function Page() {
           }
         }
 
+        // Trigger AI reply first (so it generates immediately and doesn't wait for titling)
         getAiReply(chatIdToUpdate, history, content);
+
+        // Asynchronously generate chat title in the background if it's the first message
+        if (isFirstMessage) {
+          generateChatTitle(content).then(async (generatedTitle) => {
+            // Update local state immediately so sidebar title refreshes dynamically
+            setChatSessions((prev) =>
+              prev.map((s) => (s.id === chatIdToUpdate ? { ...s, title: generatedTitle } : s))
+            );
+            
+            // Persist the generated title to Supabase
+            const supabase = createClient();
+            await supabase
+              .from("chat_sessions")
+              .update({ title: generatedTitle })
+              .eq("id", chatIdToUpdate);
+          }).catch((err) => {
+            console.error("Background title generation failed:", err);
+          });
+        }
       } catch (err) {
         console.error("Failed to send message and save to Supabase:", err);
       }

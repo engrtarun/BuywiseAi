@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
 export interface ChatSession {
   id: string
@@ -175,4 +176,51 @@ export async function deleteChatSession(sessionId: string): Promise<void> {
   if (error) {
     throw new Error(`Failed to delete chat session: ${error.message}`)
   }
+}
+
+/**
+ * Generates a concise 3-6 word chat title using the Gemini API.
+ * Falls back to truncating the first message if the call fails or times out.
+ */
+export async function generateChatTitle(message: string): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.warn("generateChatTitle: GEMINI_API_KEY is not defined, using fallback truncation.");
+    return fallbackTitle(message);
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    // Use gemini-2.5-flash which is the fastest and cheapest model
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const prompt = `Summarize the following user message into a concise 3-6 word chat title. Return only the title text, no punctuation at the end, no quotes, no explanation.\n\nUser Message: "${message}"`;
+
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: {
+        maxOutputTokens: 20,
+      }
+    });
+
+    const response = await result.response;
+    const text = response.text().trim();
+    
+    // Clean up any outer quotes or trailing periods
+    let title = text.replace(/^["']|["']$/g, "").replace(/\.$/, "").trim();
+    if (title.length > 50) {
+      title = title.substring(0, 47) + "...";
+    }
+
+    return title || fallbackTitle(message);
+  } catch (err) {
+    console.error("generateChatTitle failed, falling back to truncation:", err);
+    return fallbackTitle(message);
+  }
+}
+
+function fallbackTitle(message: string): string {
+  const max = 40;
+  const trimmed = message.trim();
+  return trimmed.length > max ? trimmed.slice(0, max) + "…" : trimmed;
 }
