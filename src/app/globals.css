@@ -265,6 +265,22 @@
   display: none;
 }
 
+/* ── Food Mode Theme ──────────────────────────── */
+[data-app-mode="food"] {
+  --brand-accent: #FC8019; /* Swiggy Orange */
+  --marigold: #FC8019; /* Map marigold to orange for consistency if used directly */
+  --bg-main: #1a110a; /* Warmer dark background */
+  --bg-sidebar: #120b06;
+  --bg-input: #26160d;
+}
+
+/* Smooth color transitions for theme switching */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 0.4s;
+  transition-timing-function: ease;
+}
+
 @layer utilities {
   .h-dvh {
     height: 100dvh;

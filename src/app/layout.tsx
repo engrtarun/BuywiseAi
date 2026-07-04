@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, IBM_Plex_Mono } from "next/font/google";
 import { Sora } from "next/font/google";
 import { ThemeInitializer } from "@/components/ThemeInitializer";
+import { AppModeProvider } from "@/contexts/AppModeContext";
 import "./globals.css";
 
 const inter = Inter({
@@ -43,7 +44,11 @@ export default function RootLayout({
       <head>
         <ThemeInitializer />
       </head>
-      <body className="bg-ink-deeper">{children}</body>
+      <body className="bg-ink-deeper">
+        <AppModeProvider>
+          {children}
+        </AppModeProvider>
+      </body>
     </html>
   );
 }

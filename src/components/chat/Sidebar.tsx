@@ -13,6 +13,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { THEME_PRESETS } from "@/lib/themes";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SettingsModal } from "./SettingsModal";
+import { FoodModeToggle } from "@/components/shared/FoodModeToggle";
 
 /* ── Inline SVG Icons (animatable via CSS) ───────────── */
 
@@ -764,6 +765,10 @@ function SidebarContent({
         {/* Actions */}
         <div className={`flex flex-col gap-2 w-full ${isCollapsed ? "items-center" : ""}`}>
           <NewChatButton onClick={() => { onNewChat(); onClose(); }} isCollapsed={isCollapsed} />
+          
+          <div className="mt-2">
+            <FoodModeToggle isCollapsed={isCollapsed} />
+          </div>
           
           {/* Shopping Tools */}
           <div className="flex flex-col gap-1 w-full mt-2 mb-1">
