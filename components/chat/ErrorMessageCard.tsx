@@ -43,10 +43,11 @@ function RetryIcon({ className }: { className?: string }) {
 }
 
 interface ErrorMessageCardProps {
+  message?: string;
   onRetry: () => void;
 }
 
-export function ErrorMessageCard({ onRetry }: ErrorMessageCardProps) {
+export function ErrorMessageCard({ message, onRetry }: ErrorMessageCardProps) {
   return (
     <div className="w-full max-w-[85%] sm:max-w-[75%] md:max-w-[65%]">
       <div className="flex items-end gap-2 w-full">
@@ -67,7 +68,7 @@ export function ErrorMessageCard({ onRetry }: ErrorMessageCardProps) {
             <AlertIcon className="text-chili shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <p className="text-text-ondark text-[14px] mb-2">
-                Something went wrong while getting a response. Please try again.
+                {message || "Something went wrong while getting a response. Please try again."}
               </p>
               <button
                 onClick={onRetry}

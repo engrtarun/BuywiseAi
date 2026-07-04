@@ -65,7 +65,7 @@ export function MessageList({ messages, isTyping, onRegenerate, onRetry, onFeedb
         <div className="w-full max-w-3xl mx-auto flex flex-col gap-4 sm:gap-6 px-4 py-4">
           {messages.map((msg) =>
             msg.status === "error" ? (
-              <ErrorMessageCard key={msg.id} onRetry={onRetry} />
+              <ErrorMessageCard key={msg.id} message={msg.content} onRetry={onRetry} />
             ) : (
               <MessageBubble
                 key={msg.id}
