@@ -170,6 +170,10 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
     }
   }, [activeChatId]);
 
+  const handleRenameChat = useCallback((id: string, title: string) => {
+    setChatSessions((prev) => prev.map((s) => (s.id === id ? { ...s, title } : s)));
+  }, []);
+
   /**
    * handleSend — FIXED DUPLICATE BUG:
    *
@@ -310,6 +314,7 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
         onNewChat={handleNewChat}
         onSelectChat={handleSelectChat}
         onDeleteChat={handleDeleteChat}
+        onRenameChat={handleRenameChat}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Menu, Camera } from "lucide-react";
+import { Search, Menu, Camera, MoreVertical, Pencil } from "lucide-react";
 import { ChatSession } from "./types";
 import { useSidebarResize } from "./useSidebarResize";
 
@@ -419,47 +419,174 @@ interface ChatHistoryItemProps {
   isActive: boolean;
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
+  onRename?: (id: string, title: string) => void;
 }
 
-function ChatHistoryItem({ session, isActive, onSelect, onDelete }: ChatHistoryItemProps) {
+function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: ChatHistoryItemProps) {
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editTitle, setEditTitle] = React.useState(session.title);
+
+  React.useEffect(() => {
+    setEditTitle(session.title);
+  }, [session.title]);
+
+  const handleSave = async () => {
+    const trimmed = editTitle.trim();
+    if (!trimmed) {
+      handleCancel();
+      return;
+    }
+
+    setIsEditing(false);
+
+    if (trimmed === session.title) return;
+
+    if (onRename) {
+      onRename(session.id, trimmed);
+    }
+
+    // Call Supabase update
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("chat_sessions")
+        .update({ title: trimmed })
+        .eq("id", session.id);
+
+      if (error) {
+        console.error("Failed to rename chat in Supabase:", error.message);
+      }
+    } catch (err) {
+      console.error("Failed to rename chat:", err);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditTitle(session.title);
+  };
+
   return (
-    <button
-      onClick={() => onSelect(session.id)}
+    <div
+      onClick={() => {
+        if (!isEditing) {
+          onSelect(session.id);
+        }
+      }}
       className={`
-        group w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left
-        transition-all duration-200 relative
+        group w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left
+        transition-all duration-200 relative cursor-pointer select-none
         ${isActive
-          ? "bg-white/[0.08] border-l-2 border-l-marigold text-text-primary-dark"
-          : "bg-transparent border-l-2 border-l-transparent text-text-secondary hover:bg-white/[0.04] hover:text-text-primary-dark"
+          ? "bg-[#2a2a2a] text-text-primary-dark"
+          : "bg-transparent text-text-secondary hover:bg-[#232323] hover:text-text-primary-dark"
         }
       `}
     >
       <ChatBubbleIcon
-        className={`shrink-0 transition-all duration-300 ${
-          isActive ? "text-marigold scale-110" : "text-text-secondary group-hover:text-marigold/70"
+        className={`shrink-0 size-3.5 transition-all duration-300 ${
+          isActive ? "text-text-primary-dark opacity-60" : "text-text-secondary opacity-40 group-hover:opacity-75"
         }`}
       />
-      <span className="flex-1 text-[13px] truncate font-sans leading-tight">
-        {session.title}
-      </span>
-      <span
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(session.id);
-        }}
-        className="
-          opacity-0 group-hover:opacity-100
-          pointer-events-none group-hover:pointer-events-auto
-          shrink-0 p-1 rounded-md
-          text-text-secondary hover:text-chili hover:bg-white/[0.06]
-          transition-all duration-200
-          cursor-pointer
-        "
-        aria-label="Delete chat"
-      >
-        <TrashIcon className="transition-transform duration-200 hover:scale-110" />
-      </span>
-    </button>
+      
+      {isEditing ? (
+        <input
+          type="text"
+          value={editTitle}
+          onChange={(e) => setEditTitle(e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSave();
+            } else if (e.key === "Escape") {
+              handleCancel();
+            }
+          }}
+          onBlur={handleSave}
+          autoFocus
+          className="flex-1 bg-[#1A1A18] text-text-primary-dark text-[13px] font-sans px-1.5 py-0.5 rounded outline-none border border-brand-accent/50 min-w-0"
+        />
+      ) : (
+        <span className="flex-1 min-w-0 text-[13px] truncate font-sans leading-tight pr-14">
+          {session.title}
+        </span>
+      )}
+      
+      {!isEditing && (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+          {isActive && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(true);
+                setEditTitle(session.title);
+              }}
+              className="p-1 rounded-md text-text-secondary hover:text-text-primary-dark transition-colors"
+              aria-label="Rename chat"
+            >
+              <Pencil className="size-3.5" />
+            </button>
+          )}
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMenuOpen(!isMenuOpen);
+              }}
+              className={`
+                p-1 rounded-md text-text-secondary hover:text-text-primary-dark hover:bg-white/[0.06]
+                transition-all duration-200 cursor-pointer
+                ${isMenuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}
+              `}
+              aria-label="Chat actions"
+            >
+              <MoreVertical className="size-4" />
+            </button>
+
+            {isMenuOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-[60]" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMenuOpen(false);
+                  }}
+                />
+                
+                <div className="absolute right-0 mt-1.5 z-[70] bg-[#1A1A18] border border-border-dark rounded-xl p-1 shadow-xl flex flex-col gap-0.5 min-w-[120px] animate-in fade-in zoom-in-95 duration-100">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMenuOpen(false);
+                      setIsEditing(true);
+                      setEditTitle(session.title);
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none"
+                  >
+                    Rename
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMenuOpen(false);
+                      onDelete(session.id);
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-sans text-chili hover:bg-chili/10 transition-all font-semibold select-none"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -471,6 +598,7 @@ function SidebarContent({
   onNewChat,
   onSelectChat,
   onDeleteChat,
+  onRenameChat,
   onClose,
   isCollapsed,
   onToggleCollapse,
@@ -480,6 +608,7 @@ function SidebarContent({
   onNewChat: () => void;
   onSelectChat: (id: string) => void;
   onDeleteChat: (id: string) => void;
+  onRenameChat?: (id: string, title: string) => void;
   onClose: () => void;
   isCollapsed: boolean;
   onToggleCollapse?: () => void;
@@ -554,16 +683,7 @@ function SidebarContent({
       const clickedOutsideMenu = menuRef.current && !menuRef.current.contains(target);
       const clickedOutsideDropdown = !dropdownRef.current || !dropdownRef.current.contains(target);
       
-      console.log('Outside click handler fired!', {
-        target,
-        clickedOutsideMenu,
-        clickedOutsideDropdown,
-        menuRef: menuRef.current,
-        dropdownRef: dropdownRef.current
-      });
-      
       if (clickedOutsideMenu && clickedOutsideDropdown) {
-        console.log('Closing dropdown from outside click');
         setMenuOpen(false);
       }
     }
@@ -650,6 +770,7 @@ function SidebarContent({
                   isActive={session.id === activeChatId}
                   onSelect={(id) => { onSelectChat(id); onClose(); }}
                   onDelete={onDeleteChat}
+                  onRename={onRenameChat}
                 />
               ))
             )}
@@ -851,6 +972,7 @@ interface SidebarProps {
   onNewChat: () => void;
   onSelectChat: (id: string) => void;
   onDeleteChat: (id: string) => void;
+  onRenameChat?: (id: string, title: string) => void;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -861,6 +983,7 @@ export function Sidebar({
   onNewChat,
   onSelectChat,
   onDeleteChat,
+  onRenameChat,
   isOpen,
   onClose,
 }: SidebarProps) {
@@ -878,7 +1001,7 @@ export function Sidebar({
     };
   }, [isOpen]);
 
-  const contentProps = { chatHistory, activeChatId, onNewChat, onSelectChat, onDeleteChat, onClose };
+  const contentProps = { chatHistory, activeChatId, onNewChat, onSelectChat, onDeleteChat, onRenameChat, onClose };
 
   return (
     <>
