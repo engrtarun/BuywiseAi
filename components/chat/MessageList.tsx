@@ -5,7 +5,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "./MessageBubble";
 import { ThinkingIndicator } from "./ThinkingIndicator";
 import { ErrorMessageCard } from "./ErrorMessageCard";
-import { GuestLimitReachedCard } from "./GuestLimitReachedCard";
 import { Message, Feedback } from "./types";
 import { ArrowDown } from "lucide-react";
 
@@ -85,9 +84,6 @@ export function MessageList({ messages, isTyping, onRegenerate, onRetry, onFeedb
             )
           )}
           {isTyping && <ThinkingIndicator />}
-          {guestLimitReached && onLoginClick && (
-            <GuestLimitReachedCard onLoginClick={onLoginClick} />
-          )}
           <div ref={messagesEndRef} className="h-4" />
         </div>
       </ScrollArea>
@@ -95,7 +91,7 @@ export function MessageList({ messages, isTyping, onRegenerate, onRetry, onFeedb
       {showScrollButton && (
         <button
           onClick={scrollToBottom}
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-4 py-2 bg-ink-deep border border-line-ondark text-text-ondark text-[13px] font-mono rounded-full shadow-lg hover:border-marigold transition-all animate-in fade-in slide-in-from-bottom-2"
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-4 py-2 bg-ink-deep border border-line-ondark text-text-ondark text-[13px] font-mono rounded-full shadow-lg hover:border-marigold transition-all animate-in fade-in slide-in-from-bottom-2 cursor-pointer"
         >
           New message
           <ArrowDown className="size-4 text-marigold" />

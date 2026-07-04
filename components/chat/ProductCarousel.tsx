@@ -72,7 +72,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
           hidden md:flex items-center justify-center size-9 rounded-full 
           bg-ink-deep border border-line-ondark text-text-ondark
           hover:bg-marigold hover:text-ink-deeper hover:border-marigold hover:scale-110
-          shadow-lg shadow-black/40 transition-all duration-200
+          shadow-lg shadow-black/40 transition-all duration-200 cursor-pointer
           ${showLeftArrow ? "opacity-0 group-hover/carousel:opacity-100" : "opacity-0 pointer-events-none"}
         `}
         aria-label="Scroll left"
@@ -117,7 +117,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
           hidden md:flex items-center justify-center size-9 rounded-full 
           bg-ink-deep border border-line-ondark text-text-ondark
           hover:bg-marigold hover:text-ink-deeper hover:border-marigold hover:scale-110
-          shadow-lg shadow-black/40 transition-all duration-200
+          shadow-lg shadow-black/40 transition-all duration-200 cursor-pointer
           ${showRightArrow ? "opacity-0 group-hover/carousel:opacity-100" : "opacity-0 pointer-events-none"}
         `}
         aria-label="Scroll right"

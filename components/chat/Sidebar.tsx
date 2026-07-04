@@ -357,7 +357,7 @@ function NewChatButton({ onClick, isCollapsed }: NewChatButtonProps) {
           rounded-xl bg-marigold/10 border border-marigold/20
           text-marigold font-heading font-bold text-sm
           hover:bg-marigold/20 hover:border-marigold/40
-          active:scale-[0.98] transition-all duration-200 touch-manipulation
+          active:scale-[0.98] transition-all duration-200 touch-manipulation cursor-pointer
           ${isCollapsed ? "size-10 shrink-0" : "w-full px-4 py-3"}
         `}
         aria-label="New Chat"
@@ -385,7 +385,7 @@ function SearchField({ isCollapsed, onExpand, value, onChange }: SearchFieldProp
           className="
             group flex items-center justify-center size-10 shrink-0 rounded-xl
             bg-white/[0.04] border border-white/[0.08] text-text-ondark
-            hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-200
+            hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-200 cursor-pointer
           "
           aria-label="Search chats"
         >
@@ -427,7 +427,7 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete }: ChatHistoryI
       onClick={() => onSelect(session.id)}
       className={`
         group w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left
-        transition-all duration-200 relative
+        transition-all duration-200 relative cursor-pointer
         ${isActive
           ? "bg-white/[0.08] border-l-2 border-l-marigold text-text-ondark"
           : "bg-transparent border-l-2 border-l-transparent text-text-dim-ondark hover:bg-white/[0.04] hover:text-text-ondark"
@@ -593,7 +593,7 @@ function SidebarContent({
             <button 
               onClick={onToggleCollapse}
               className={`
-                flex items-center justify-center rounded-lg hover:bg-white/[0.08] transition-all duration-200 hover:scale-105 active:scale-95
+                hidden md:flex items-center justify-center rounded-lg hover:bg-white/[0.08] transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer
                 ${isCollapsed ? "size-10" : "size-8 shrink-0"}
               `}
               aria-label="Toggle Sidebar"
@@ -707,7 +707,7 @@ function SidebarContent({
                 setMenuOpen(false);
                 setShowProfileModal(true);
               }}
-              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none"
+              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
             >
               <UserIcon className="text-text-dim-ondark group-hover:text-marigold group-hover:scale-110 transition-all duration-300" />
               <span>Profile</span>
@@ -719,7 +719,7 @@ function SidebarContent({
                 setMenuOpen(false);
                 alert("Settings page placeholder");
               }}
-              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none"
+              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
             >
               <SettingsIcon className="text-text-dim-ondark group-hover:text-marigold group-hover:rotate-45 transition-all duration-300" />
               <span>Settings</span>
@@ -731,7 +731,7 @@ function SidebarContent({
             <div className="group/help relative">
               <button 
                 type="button"
-                className="group flex items-center justify-between w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none"
+                className="group flex items-center justify-between w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <HelpIcon className="text-text-dim-ondark group-hover:text-marigold group-hover:scale-110 transition-all duration-300" />
@@ -784,7 +784,7 @@ function SidebarContent({
             <button
               type="button"
               onClick={handleLogout}
-              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-chili hover:bg-chili/10 transition-all font-semibold select-none"
+              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-chili hover:bg-chili/10 transition-all font-semibold select-none cursor-pointer"
             >
               <LogOutIcon className="text-chili/70 group-hover:text-chili group-hover:-translate-x-0.5 transition-all duration-300" />
               <span>Log out</span>
@@ -804,7 +804,7 @@ function SidebarContent({
           <button 
             onClick={() => setMenuOpen(!menuOpen)}
             className={`
-              flex items-center gap-3 rounded-xl hover:bg-white/[0.08] transition-all duration-200 p-2 hover:scale-[1.02] active:scale-[0.98]
+              flex items-center gap-3 rounded-xl hover:bg-white/[0.08] transition-all duration-200 p-2 hover:scale-[1.02] active:scale-[0.98] cursor-pointer
               ${isCollapsed ? "justify-center w-auto" : "w-full"}
               ${menuOpen ? "bg-white/[0.08]" : ""}
             `}
@@ -889,7 +889,7 @@ export function Sidebar({
       {/* Backdrop */}
       <div
         className={`
-          fixed inset-0 z-40 bg-black/50 backdrop-blur-sm
+          fixed top-[61px] inset-x-0 bottom-0 z-40 bg-black/50 backdrop-blur-sm
           md:hidden
           transition-opacity duration-300
           ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}
@@ -901,7 +901,7 @@ export function Sidebar({
       {/* Mobile panel */}
       <aside
         className={`
-          fixed top-0 left-0 bottom-0 z-50
+          fixed top-[61px] left-0 bottom-0 z-50
           w-[80vw] max-w-[320px] flex flex-col
           bg-[#091e1a]/95 backdrop-blur-md
           border-r border-line-ondark

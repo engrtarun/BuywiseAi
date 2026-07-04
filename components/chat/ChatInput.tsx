@@ -3,6 +3,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import { ArrowUp, Square } from "lucide-react";
+import { GuestLimitReachedCard } from "./GuestLimitReachedCard";
 
 const placeholders = [
   "BuyWise anything...",
@@ -19,9 +20,11 @@ interface ChatInputProps {
   disabled: boolean;
   isGenerating: boolean;
   guestLimitReached?: boolean;
+  cooldownUntil?: number | null;
+  onLoginClick?: () => void;
 }
 
-export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitReached = false }: ChatInputProps) {
+export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitReached = false, cooldownUntil = null, onLoginClick }: ChatInputProps) {
   const [inputText, setInputText] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -34,8 +37,32 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitRe
     return () => clearInterval(interval);
   }, []);
 
+  // Handle cooldown timer
+  const [timeLeft, setTimeLeft] = useState(0);
+  useEffect(() => {
+    if (!cooldownUntil || cooldownUntil <= Date.now()) {
+      setTimeLeft(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const remaining = Math.ceil((cooldownUntil - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setTimeLeft(0);
+        clearInterval(interval);
+      } else {
+        setTimeLeft(remaining);
+      }
+    }, 100);
+
+    // Set initial value immediately
+    setTimeLeft(Math.ceil((cooldownUntil - Date.now()) / 1000));
+
+    return () => clearInterval(interval);
+  }, [cooldownUntil]);
+
   const handleSend = () => {
-    if (guestLimitReached) return;
+    if (guestLimitReached || timeLeft > 0) return;
     const content = inputText.trim();
     if (!content || disabled) return;
 
@@ -50,8 +77,18 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitRe
     }
   };
 
+  if (guestLimitReached) {
+    return (
+      <div className="shrink-0 bg-ink-deeper border-t border-line-ondark px-3 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] sm:px-4 sm:py-6 z-20 flex justify-center w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="w-full max-w-3xl flex justify-center">
+          {onLoginClick && <GuestLimitReachedCard onLoginClick={onLoginClick} />}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`shrink-0 bg-ink-deeper border-t border-line-ondark px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-4 z-20 transition-opacity duration-300 ${guestLimitReached ? "opacity-60" : ""}`}>
+    <div className="shrink-0 bg-ink-deeper border-t border-line-ondark px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-4 z-20 transition-opacity duration-300">
       <div className="w-full max-w-3xl mx-auto flex flex-col gap-2">
 
         {/* Stop Generating button — shown above input while AI is responding */}
@@ -62,7 +99,7 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitRe
               self-center flex items-center gap-2 px-4 py-2 rounded-full
               bg-ink-deep border border-line-ondark text-text-ondark text-[13px] font-sans
               hover:border-chili/50 hover:text-chili active:scale-[0.97]
-              transition-all duration-200 touch-manipulation shadow-sm
+              transition-all duration-200 touch-manipulation shadow-sm cursor-pointer
               animate-in fade-in slide-in-from-bottom-1 duration-200
             "
           >
@@ -103,11 +140,10 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitRe
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={guestLimitReached ? "Log in to continue chatting..." : ""}
+              placeholder=""
               minRows={1}
               maxRows={5}
-              disabled={guestLimitReached}
-              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-ondark outline-none font-sans resize-none z-10 self-center ${guestLimitReached ? "cursor-not-allowed placeholder:text-text-dim-ondark/80" : ""}`}
+              className="w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-ondark outline-none font-sans resize-none z-10 self-center"
             />
           </div>
 
@@ -122,10 +158,16 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitRe
               handleSend();
             }}
             aria-label="Send message"
-            className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-marigold text-ink-deeper transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || disabled || guestLimitReached ? "opacity-40 cursor-not-allowed" : "hover:scale-105 hover:brightness-110 active:scale-95"
+            className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-marigold text-ink-deeper transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || disabled || timeLeft > 0 ? "opacity-40 cursor-not-allowed" : "hover:scale-105 hover:brightness-110 active:scale-95 cursor-pointer"
               }`}
           >
-            <ArrowUp className="size-5 stroke-[2.5]" />
+            {timeLeft > 0 ? (
+              <span className="text-sm font-bold font-mono tracking-tighter">
+                {timeLeft}s
+              </span>
+            ) : (
+              <ArrowUp className="size-5 stroke-[2.5]" />
+            )}
           </button>
         </div>
       </div>

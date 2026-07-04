@@ -18,7 +18,7 @@ interface ChatHeaderProps {
 
 function ChatHeader({ isSidebarOpen, onMenuToggle }: ChatHeaderProps) {
   return (
-    <header className="shrink-0 z-20 flex items-center gap-3 bg-ink-deeper px-4 py-3 border-b border-line-ondark md:hidden">
+    <header className="shrink-0 z-[60] relative flex items-center gap-3 bg-ink-deeper px-4 py-3 border-b border-line-ondark md:hidden">
       <div className="w-full max-w-3xl mx-auto flex items-center gap-3">
         <HamburgerButton isOpen={isSidebarOpen} onClick={onMenuToggle} />
       </div>
@@ -43,6 +43,7 @@ interface ChatWindowProps {
   guestMessagesRemaining?: number;
   guestLimitReached?: boolean;
   onLoginClick?: () => void;
+  cooldownUntil?: number | null;
 }
 
 export function ChatWindow({
@@ -59,6 +60,7 @@ export function ChatWindow({
   guestMessagesRemaining = 0,
   guestLimitReached = false,
   onLoginClick,
+  cooldownUntil = null,
 }: ChatWindowProps) {
   const showWelcome = messages.length === 0 && !isTyping;
 
@@ -91,6 +93,8 @@ export function ChatWindow({
         disabled={isTyping}
         isGenerating={isTyping}
         guestLimitReached={guestLimitReached}
+        cooldownUntil={cooldownUntil}
+        onLoginClick={onLoginClick}
       />
     </div>
   );

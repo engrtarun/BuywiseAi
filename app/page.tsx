@@ -79,6 +79,7 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
 
   // Guest access hook
   const {
@@ -106,6 +107,7 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
   const getAiReply = useCallback(
     async (chatId: string, history: Message[], message: string) => {
       setIsTyping(true);
+      const startTime = Date.now();
       abortControllerRef.current = new AbortController();
 
       try {
@@ -157,6 +159,11 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
           appendErrorMessage(chatId, "generic");
         }
       } finally {
+        const endTime = Date.now();
+        const responseTimeSeconds = (endTime - startTime) / 1000;
+        const cooldownSeconds = Math.max(2, Math.min(15, responseTimeSeconds * 0.5));
+        setCooldownUntil(Date.now() + cooldownSeconds * 1000);
+
         setIsTyping(false);
         abortControllerRef.current = null;
       }
@@ -376,6 +383,7 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
           guestMessagesRemaining={messagesRemaining}
           guestLimitReached={guestLimitReached}
           onLoginClick={handleLoginClick}
+          cooldownUntil={cooldownUntil}
         />
       </div>
     </div>

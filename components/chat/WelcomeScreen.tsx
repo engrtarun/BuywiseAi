@@ -2,7 +2,6 @@
 
 import React from "react";
 import { Sparkles, Search, Gift, Smartphone, Laptop, Scale } from "lucide-react";
-import { GuestLimitReachedCard } from "./GuestLimitReachedCard";
 
 interface WelcomeScreenProps {
   onSuggestionClick: (text: string) => void;
@@ -75,12 +74,6 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
               </span>
             </div>
           )}
-          {/* Guest limit card */}
-          {guestLimitReached && onLoginClick && (
-            <div className="mt-6 flex justify-center w-full">
-              <GuestLimitReachedCard onLoginClick={onLoginClick} />
-            </div>
-          )}
         </div>
 
         {/* Suggestion chips */}
@@ -94,10 +87,6 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
                 onClick={() => {
                   if (!guestLimitReached) onSuggestionClick(s.text);
                 }}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  if (!guestLimitReached) onSuggestionClick(s.text);
-                }}
                 disabled={guestLimitReached}
                 className={`
                   w-full h-full group flex items-center gap-3 text-left
@@ -106,7 +95,7 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
                   backdrop-blur-sm
                   transition-all duration-200 ease-out
                   touch-manipulation
-                  ${guestLimitReached ? "opacity-50 cursor-not-allowed" : "hover:bg-white/[0.07] hover:border-marigold/30 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"}
+                  ${guestLimitReached ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-white/[0.07] hover:border-marigold/30 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"}
                 `}
               >
                 <div className="size-9 rounded-xl bg-marigold/10 flex items-center justify-center shrink-0 group-hover:bg-marigold/20 transition-colors">
