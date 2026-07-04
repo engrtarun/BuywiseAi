@@ -1,0 +1,50 @@
+buywise-ai/
+├── .next/
+├── node_modules/
+├── public/
+├── src/
+│   ├── app/
+│   │   ├── actions/                  # Server actions (e.g. chat.ts)
+│   │   ├── api/                      # API routing layer
+│   │   │   ├── chat/                 # Gemini Chat route handler
+│   │   │   ├── outfit-rating/        # Outfit rating API route handler
+│   │   │   └── quick-buy/            # Quick Buy API route handler
+│   │   │       └── actions/          # Quick Buy actions API route handler
+│   │   ├── auth/                     # Auth flow routing
+│   │   ├── chat/                     # Main Chat page interface
+│   │   ├── login/                    # Login page interface
+│   │   ├── profile/                  # User profile and preference form page
+│   │   ├── quick-buy/                # Quick Buy swiping deck interface
+│   │   ├── signup/                   # Signup registration page
+│   │   ├── virtual-wardrobe/         # Virtual Outfit Canvas and wardrobe page
+│   │   ├── welcome/                  # Onboarding page
+│   │   ├── favicon.ico
+│   │   ├── globals.css               # Global tailwind styles
+│   │   ├── layout.tsx                # Base HTML Shell and providers
+│   │   └── page.tsx                  # Home route redirect landing
+│   ├── components/
+│   │   ├── chat/                     # Chat UI components (Sidebar, Input, list, settings, etc.)
+│   │   ├── checkout/                 # Order checkout flow modals
+│   │   ├── quick-buy/                # Outfit canvases, swiping cards, preferences
+│   │   ├── shared/                   # Shared reusable layout pieces (e.g. FloatingChatBubble)
+│   │   ├── ui/                       # Atomic shadcn UI atoms (buttons, inputs, cards)
+│   │   └── ThemeInitializer.tsx      # Dark mode/theme synchronizer
+│   ├── hooks/
+│   │   ├── useDailyMessageLimit.ts
+│   │   ├── useGuestAccess.ts
+│   │   ├── useQuickBuy.ts
+│   │   └── useTheme.ts
+│   ├── lib/
+│   │   ├── supabase/                 # supabase client, server, and middleware logic
+│   │   ├── env.ts                    # strict environment variable schema validation
+│   │   ├── fallbackResponses.ts      # fallback chat AI messages
+│   │   ├── quickBuyMockData.ts       # mock products list
+│   │   ├── themes.ts                 # theme presets data
+│   │   └── utils.ts                  # helper utilities (e.g. cn classes merger)
+│   ├── types/
+│   │   ├── chat.ts
+│   │   └── product.ts
+│   └── proxy.ts                      # custom middleware routing interceptor
+├── components.json
+├── package.json
+└── tsconfig.json
