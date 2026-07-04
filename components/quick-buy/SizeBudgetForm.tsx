@@ -90,18 +90,39 @@ export function SizeBudgetForm({ initialPreferences, onSave }: SizeBudgetFormPro
 
           {/* Budget */}
           <div>
-            <label className="block text-sm font-medium text-text-primary-light mb-3">
-              Maximum Budget
-            </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary font-medium">₹</span>
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-text-primary-light">
+                Maximum Budget
+              </label>
+              <div className="text-brand-accent font-bold tracking-tight">
+                {maxBudget ? `₹${parseInt(maxBudget).toLocaleString('en-IN')}` : "Any"}
+              </div>
+            </div>
+            
+            <div className="space-y-4 bg-black/20 p-4 rounded-2xl border border-white/5">
+              {/* Slider */}
               <input
-                type="number"
-                value={maxBudget}
+                type="range"
+                min="500"
+                max="20000"
+                step="100"
+                value={maxBudget || 1500}
                 onChange={(e) => setMaxBudget(e.target.value)}
-                placeholder="1500"
-                className="w-full bg-bg-input border border-border-light rounded-xl pl-8 pr-4 py-3.5 text-text-primary-light font-sans text-lg focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent/50 transition-all"
+                className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-accent/50 transition-all hover:bg-white/20"
+                style={{ accentColor: '#ffb067' }} // Ensuring it picks up the amber accent
               />
+              
+              {/* Text Input */}
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary font-medium">₹</span>
+                <input
+                  type="number"
+                  value={maxBudget}
+                  onChange={(e) => setMaxBudget(e.target.value)}
+                  placeholder="1500"
+                  className="w-full bg-bg-input/50 border border-border-light rounded-xl pl-8 pr-4 py-3 text-text-primary-light font-sans text-[15px] focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent/50 transition-all"
+                />
+              </div>
             </div>
           </div>
 

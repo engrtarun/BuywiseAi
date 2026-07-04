@@ -23,7 +23,11 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
     saveItem, 
     removeSavedItem, 
     updateQuantity,
-    getFilteredProducts 
+    getFilteredProducts,
+    hasMore,
+    fetchNextPage,
+    totalSpent,
+    addExpense
   } = useQuickBuy();
 
   const [showSettings, setShowSettings] = useState(false);
@@ -99,18 +103,39 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
         </button>
         
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Quick Budget Display/Edit */}
-          <button
-            onClick={() => setShowSettings(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 transition-colors group"
-            title="Change Budget & Sizes"
-          >
-            <span className="text-xs font-medium text-text-secondary hidden sm:inline">Budget:</span>
-            <span className="text-sm font-bold text-brand-accent">
-              {preferences?.maxBudget ? `₹${preferences.maxBudget}` : "Any"}
-            </span>
-            <Settings2 className="size-3.5 text-text-secondary group-hover:text-text-primary-light" />
-          </button>
+          <div className="flex flex-col gap-1 relative group" title="Change Budget & Sizes">
+            <button
+              onClick={() => setShowSettings(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 transition-colors"
+            >
+              <span className="text-xs font-medium text-text-secondary hidden sm:inline">Budget:</span>
+              <span className="text-sm font-bold text-brand-accent">
+                {preferences?.maxBudget ? `₹${preferences.maxBudget}` : "Any"}
+              </span>
+              <Settings2 className="size-3.5 text-text-secondary group-hover:text-text-primary-light" />
+            </button>
+            
+            {/* Dynamic Budget Progress Bar */}
+            {preferences?.maxBudget ? (
+              <div className="w-full bg-black/40 h-[4px] rounded-full overflow-hidden absolute -bottom-1 left-0 shadow-inner">
+                {(() => {
+                  const max = preferences.maxBudget;
+                  const spent = totalSpent;
+                  const percentage = Math.min((spent / max) * 100, 100);
+                  let colorClass = "bg-green-500";
+                  if (percentage >= 80) colorClass = "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)] animate-pulse";
+                  else if (percentage >= 50) colorClass = "bg-brand-accent";
+                  
+                  return (
+                    <div 
+                      className={`h-full transition-all duration-500 ease-out ${colorClass}`}
+                      style={{ width: `${percentage}%` }}
+                    />
+                  );
+                })()}
+              </div>
+            ) : null}
+          </div>
           <button
             onClick={() => setShowSaved(true)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-text-primary-light transition-colors relative"
@@ -132,6 +157,9 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
           products={filteredProducts} 
           onSave={saveItem} 
           onOpenSettings={() => setShowSettings(true)}
+          hasMore={hasMore}
+          onPrefetch={fetchNextPage}
+          onBuy={addExpense}
         />
       )}
 

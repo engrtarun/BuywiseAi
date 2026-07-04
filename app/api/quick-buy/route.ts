@@ -5,6 +5,11 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
 
+    const page = Number(searchParams.get('page') ?? '1');
+    const limit = Number(searchParams.get('limit') ?? '12');
+    const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? limit : 12;
+
     const sizeParam = searchParams.get('size') || searchParams.get('sizes');
     const categoriesParam = searchParams.get('categories');
     const budgetParam = searchParams.get('budget') || searchParams.get('maxBudget') || searchParams.get('max_budget');
@@ -116,7 +121,22 @@ export async function GET(request: Request) {
       return matchesSize && matchesBudget && matchesCategory;
     });
 
-    return NextResponse.json({ success: true, data: filteredProducts });
+    const totalFiltered = filteredProducts.length;
+    const startIndex = (safePage - 1) * safeLimit;
+    const endIndex = startIndex + safeLimit;
+    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+    const hasMore = endIndex < totalFiltered;
+
+    return NextResponse.json({
+      success: true,
+      data: paginatedProducts,
+      pagination: {
+        page: safePage,
+        limit: safeLimit,
+        totalFiltered,
+        hasMore,
+      },
+    });
   } catch (error) {
     console.error("API Error:", error);
     return NextResponse.json({ success: false, error: 'Failed to fetch products' }, { status: 500 });

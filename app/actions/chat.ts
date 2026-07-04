@@ -38,19 +38,6 @@ function getCurrentISTDateString(now = new Date()): string {
   return istTime.toISOString().slice(0, 10)
 }
 
-function getCurrentISTDay(now = new Date()) {
-  const date = getCurrentISTDateString(now)
-  const [year, month, day] = date.split("-").map(Number)
-  const startUtcMs = Date.UTC(year, month - 1, day) - IST_OFFSET_MS
-  const endUtcMs = startUtcMs + 24 * 60 * 60 * 1000
-
-  return {
-    date,
-    startUtc: new Date(startUtcMs).toISOString(),
-    endUtc: new Date(endUtcMs).toISOString(),
-  }
-}
-
 function formatLimitResult(
   messageCount: number,
   date: string,
@@ -69,7 +56,7 @@ function formatLimitResult(
 
 async function incrementExistingLimitRow(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  row: { id: string; message_count: number },
+  row: { user_id: string; usage_date: string; message_count: number },
   todayIST: string
 ): Promise<MessageLimitResult> {
   let currentRow = row
@@ -88,9 +75,10 @@ async function incrementExistingLimitRow(
     const { data, error } = await supabase
       .from("daily_message_limits")
       .update({ message_count: nextCount })
-      .eq("id", currentRow.id)
+      .eq("user_id", currentRow.user_id)
+      .eq("usage_date", currentRow.usage_date)
       .eq("message_count", currentRow.message_count)
-      .select("id, message_count")
+      .select("user_id, usage_date, message_count")
       .maybeSingle()
 
     if (error) {
@@ -103,8 +91,9 @@ async function incrementExistingLimitRow(
 
     const { data: refreshedRow, error: refreshError } = await supabase
       .from("daily_message_limits")
-      .select("id, message_count")
-      .eq("id", currentRow.id)
+      .select("user_id, usage_date, message_count")
+      .eq("user_id", currentRow.user_id)
+      .eq("usage_date", currentRow.usage_date)
       .single()
 
     if (refreshError) {
@@ -124,29 +113,27 @@ export async function getDailyMessageLimitStatus(): Promise<MessageLimitResult> 
     error: authError,
   } = await supabase.auth.getUser()
 
-  const todayIST = getCurrentISTDay()
+  const todayIST = getCurrentISTDateString()
 
   if (authError || !user) {
-    return formatLimitResult(0, todayIST.date, true)
+    return formatLimitResult(0, todayIST, true)
   }
 
   const { data, error } = await supabase
     .from("daily_message_limits")
     .select("message_count")
     .eq("user_id", user.id)
-    .gte("created_at", todayIST.startUtc)
-    .lt("created_at", todayIST.endUtc)
-    .order("created_at", { ascending: false })
-    .limit(1)
+    .eq("usage_date", todayIST)
+    .maybeSingle()
 
   if (error) {
     throw new Error(`Failed to fetch daily message limit: ${error.message}`)
   }
 
-  const messageCount = data?.[0]?.message_count ?? 0
+  const messageCount = data?.message_count ?? 0
   return formatLimitResult(
     messageCount,
-    todayIST.date,
+    todayIST,
     messageCount < DAILY_MESSAGE_LIMIT,
     messageCount >= DAILY_MESSAGE_LIMIT
       ? "You've reached your daily limit of 25 messages. Please come back tomorrow!"
@@ -165,54 +152,49 @@ export async function checkAndIncrementMessageLimit(): Promise<MessageLimitResul
     throw new Error("Authentication failed: User is not logged in.")
   }
 
-  const todayIST = getCurrentISTDay()
+  const todayIST = getCurrentISTDateString()
 
   const { data: existingRow, error: selectError } = await supabase
     .from("daily_message_limits")
-    .select("id, message_count")
+    .select("user_id, usage_date, message_count")
     .eq("user_id", user.id)
-    .gte("created_at", todayIST.startUtc)
-    .lt("created_at", todayIST.endUtc)
-    .order("created_at", { ascending: false })
-    .limit(1)
+    .eq("usage_date", todayIST)
+    .maybeSingle()
 
   if (selectError) {
     throw new Error(`Failed to check daily message limit: ${selectError.message}`)
   }
 
-  const currentRow = existingRow?.[0]
-
-  if (!currentRow) {
+  if (!existingRow) {
     const { data: insertedRow, error: insertError } = await supabase
       .from("daily_message_limits")
       .insert({
         user_id: user.id,
+        usage_date: todayIST,
         message_count: 1,
       })
       .select("message_count")
       .single()
 
     if (!insertError) {
-      return formatLimitResult(insertedRow.message_count, todayIST.date, true)
+      return formatLimitResult(insertedRow.message_count, todayIST, true)
     }
 
     const { data: racedRow, error: racedSelectError } = await supabase
       .from("daily_message_limits")
-      .select("id, message_count")
+      .select("user_id, usage_date, message_count")
       .eq("user_id", user.id)
-      .gte("created_at", todayIST.startUtc)
-      .lt("created_at", todayIST.endUtc)
-      .order("created_at", { ascending: false })
-      .limit(1)
+      .eq("usage_date", todayIST)
+      .maybeSingle()
 
-    if (racedSelectError || !racedRow?.[0]) {
+    if (racedSelectError || !racedRow) {
       throw new Error(`Failed to create daily message limit: ${insertError.message}`)
     }
 
-    return incrementExistingLimitRow(supabase, racedRow[0], todayIST.date)
+    return incrementExistingLimitRow(supabase, racedRow, todayIST)
   }
 
-  return incrementExistingLimitRow(supabase, currentRow, todayIST.date)
+  return incrementExistingLimitRow(supabase, existingRow, todayIST)
 }
 
 /**
