@@ -358,7 +358,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
               <motion.div 
                 key="step1"
                 initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0, x: shake ? [-10, 10, -10, 10, 0] : 0 }}
+                animate={{ opacity: 1, x: shake ? [-10, 10, -10, 10, 0] : 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.3 }}
                 className="w-full flex flex-col gap-4 absolute"
@@ -392,7 +392,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
             <motion.div 
               key="step2"
               initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0, x: shake ? [-10, 10, -10, 10, 0] : 0 }}
+              animate={{ opacity: 1, x: shake ? [-10, 10, -10, 10, 0] : 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.3 }}
               className="w-full flex flex-col gap-4 absolute"
@@ -461,7 +461,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
             <motion.div 
               key="step3"
               initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0, x: shake ? [-10, 10, -10, 10, 0] : 0 }}
+              animate={{ opacity: 1, x: shake ? [-10, 10, -10, 10, 0] : 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.3 }}
               className="w-full flex flex-col gap-4 absolute"
@@ -560,7 +560,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
             <motion.div 
               key="step4"
               initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0, x: shake ? [-10, 10, -10, 10, 0] : 0 }}
+              animate={{ opacity: 1, x: shake ? [-10, 10, -10, 10, 0] : 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.3 }}
               className="w-full flex flex-col gap-4 absolute"
@@ -670,7 +670,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
           </Button>
         ) : (
           <Button
-            onClick={handleSubmitOtp}
+            onClick={() => handleSubmitOtp()}
             disabled={loading || otpCodes.join("").length !== 6}
             className="w-full h-12 bg-marigold text-ink-deeper hover:bg-marigold-dark rounded-xl font-sans font-bold text-sm tracking-wide transition-all duration-200 shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >

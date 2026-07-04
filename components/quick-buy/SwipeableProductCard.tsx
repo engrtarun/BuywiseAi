@@ -105,6 +105,7 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
   };
 
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [showFlyingBox, setShowFlyingBox] = useState(false);
 
   const handleBuy = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
