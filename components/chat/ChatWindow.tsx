@@ -67,6 +67,7 @@ interface ChatWindowProps {
   dailyLimitReached?: boolean;
   dailyMessagesRemaining?: number;
   dailyLimit?: number;
+  dailyLimitMessage?: string;
   onLoginClick?: () => void;
   cooldownUntil?: number | null;
   isTemporaryChat?: boolean;
@@ -90,6 +91,7 @@ export function ChatWindow({
   dailyLimitReached = false,
   dailyMessagesRemaining,
   dailyLimit,
+  dailyLimitMessage,
   onLoginClick,
   cooldownUntil = null,
   isTemporaryChat = false,
@@ -118,6 +120,7 @@ export function ChatWindow({
           guestMessagesRemaining={guestMessagesRemaining}
           guestLimitReached={guestLimitReached}
           dailyLimitReached={dailyLimitReached}
+          dailyLimitMessage={dailyLimitMessage}
           onLoginClick={onLoginClick}
         />
       ) : (
@@ -138,6 +141,7 @@ export function ChatWindow({
         isGenerating={isTyping}
         guestLimitReached={guestLimitReached}
         dailyLimitReached={dailyLimitReached}
+        dailyLimitMessage={dailyLimitMessage}
         dailyMessagesRemaining={dailyMessagesRemaining}
         dailyLimit={dailyLimit}
         isGuest={isGuest}

@@ -2,9 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { Sparkles, Clock } from "lucide-react";
-import { getCurrentISTDateString } from "@/hooks/useDailyMessageLimit";
 
-export function DailyLimitReachedCard() {
+interface DailyLimitReachedCardProps {
+  message?: string;
+}
+
+export function DailyLimitReachedCard({ message }: DailyLimitReachedCardProps) {
   const [countdown, setCountdown] = useState("");
 
   useEffect(() => {
@@ -55,7 +58,7 @@ export function DailyLimitReachedCard() {
           </h2>
           
           <p className="text-sm sm:text-[15px] text-text-dim-ondark font-sans leading-relaxed mb-6 max-w-sm mx-auto">
-            You&apos;ve reached today&apos;s message limit (25/25) for BuyWise AI. To ensure consistent quality for everyone, we cap daily interactions.
+            {message ?? "You've reached today's message limit (25/25) for BuyWise AI. To ensure consistent quality for everyone, we cap daily interactions."}
           </p>
 
           <div className="flex items-center justify-center gap-3 w-full px-4 py-3 rounded-xl bg-marigold/10 border border-marigold/20 text-marigold font-medium text-[15px] mb-2">

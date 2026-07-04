@@ -4,11 +4,14 @@ import { env } from "@/lib/env"
 import { createClient } from "@/lib/supabase/server"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
+const DAILY_MESSAGE_LIMIT = 25
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000
+
 export interface ChatSession {
   id: string
   user_id: string
   status: string
-  requirements: any
+  requirements: Record<string, unknown>
   created_at: string
   title?: string
 }
@@ -19,6 +22,179 @@ export interface ChatMessage {
   sender: "user" | "ai"
   message: string
   created_at: string
+}
+
+export interface MessageLimitResult {
+  allowed: boolean
+  message?: string
+  messageCount: number
+  dailyLimit: number
+  remaining: number
+  date: string
+}
+
+function getCurrentISTDateString(now = new Date()): string {
+  const istTime = new Date(now.getTime() + IST_OFFSET_MS)
+  return istTime.toISOString().slice(0, 10)
+}
+
+function formatLimitResult(
+  messageCount: number,
+  date: string,
+  allowed: boolean,
+  message?: string
+): MessageLimitResult {
+  return {
+    allowed,
+    message,
+    messageCount,
+    dailyLimit: DAILY_MESSAGE_LIMIT,
+    remaining: Math.max(0, DAILY_MESSAGE_LIMIT - messageCount),
+    date,
+  }
+}
+
+async function incrementExistingLimitRow(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  row: { user_id: string; usage_date: string; message_count: number },
+  todayIST: string
+): Promise<MessageLimitResult> {
+  let currentRow = row
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (currentRow.message_count >= DAILY_MESSAGE_LIMIT) {
+      return formatLimitResult(
+        currentRow.message_count,
+        todayIST,
+        false,
+        "You've reached your daily limit of 25 messages. Please come back tomorrow!"
+      )
+    }
+
+    const nextCount = currentRow.message_count + 1
+    const { data, error } = await supabase
+      .from("daily_message_limits")
+      .update({ message_count: nextCount })
+      .eq("user_id", currentRow.user_id)
+      .eq("usage_date", currentRow.usage_date)
+      .eq("message_count", currentRow.message_count)
+      .select("user_id, usage_date, message_count")
+      .maybeSingle()
+
+    if (error) {
+      throw new Error(`Failed to update daily message limit: ${error.message}`)
+    }
+
+    if (data) {
+      return formatLimitResult(data.message_count, todayIST, true)
+    }
+
+    const { data: refreshedRow, error: refreshError } = await supabase
+      .from("daily_message_limits")
+      .select("user_id, usage_date, message_count")
+      .eq("user_id", currentRow.user_id)
+      .eq("usage_date", currentRow.usage_date)
+      .single()
+
+    if (refreshError) {
+      throw new Error(`Failed to refresh daily message limit: ${refreshError.message}`)
+    }
+
+    currentRow = refreshedRow
+  }
+
+  throw new Error("Failed to update daily message limit after concurrent changes.")
+}
+
+export async function getDailyMessageLimitStatus(): Promise<MessageLimitResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  const todayIST = getCurrentISTDateString()
+
+  if (authError || !user) {
+    return formatLimitResult(0, todayIST, true)
+  }
+
+  const { data, error } = await supabase
+    .from("daily_message_limits")
+    .select("message_count")
+    .eq("user_id", user.id)
+    .eq("usage_date", todayIST)
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(`Failed to fetch daily message limit: ${error.message}`)
+  }
+
+  const messageCount = data?.message_count ?? 0
+  return formatLimitResult(
+    messageCount,
+    todayIST,
+    messageCount < DAILY_MESSAGE_LIMIT,
+    messageCount >= DAILY_MESSAGE_LIMIT
+      ? "You've reached your daily limit of 25 messages. Please come back tomorrow!"
+      : undefined
+  )
+}
+
+export async function checkAndIncrementMessageLimit(): Promise<MessageLimitResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    throw new Error("Authentication failed: User is not logged in.")
+  }
+
+  const todayIST = getCurrentISTDateString()
+
+  const { data: existingRow, error: selectError } = await supabase
+    .from("daily_message_limits")
+    .select("user_id, usage_date, message_count")
+    .eq("user_id", user.id)
+    .eq("usage_date", todayIST)
+    .maybeSingle()
+
+  if (selectError) {
+    throw new Error(`Failed to check daily message limit: ${selectError.message}`)
+  }
+
+  if (!existingRow) {
+    const { data: insertedRow, error: insertError } = await supabase
+      .from("daily_message_limits")
+      .insert({
+        user_id: user.id,
+        usage_date: todayIST,
+        message_count: 1,
+      })
+      .select("message_count")
+      .single()
+
+    if (!insertError) {
+      return formatLimitResult(insertedRow.message_count, todayIST, true)
+    }
+
+    const { data: racedRow, error: racedSelectError } = await supabase
+      .from("daily_message_limits")
+      .select("user_id, usage_date, message_count")
+      .eq("user_id", user.id)
+      .eq("usage_date", todayIST)
+      .maybeSingle()
+
+    if (racedSelectError || !racedRow) {
+      throw new Error(`Failed to create daily message limit: ${insertError.message}`)
+    }
+
+    return incrementExistingLimitRow(supabase, racedRow, todayIST)
+  }
+
+  return incrementExistingLimitRow(supabase, existingRow, todayIST)
 }
 
 /**

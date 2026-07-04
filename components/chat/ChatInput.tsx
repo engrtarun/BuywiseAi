@@ -23,6 +23,7 @@ interface ChatInputProps {
   onLoginClick?: () => void;
   isGuest?: boolean;
   dailyLimitReached?: boolean;
+  dailyLimitMessage?: string;
   dailyMessagesRemaining?: number;
   dailyLimit?: number;
 }
@@ -37,6 +38,7 @@ export function ChatInput({
   onLoginClick,
   isGuest = false,
   dailyLimitReached = false,
+  dailyLimitMessage,
   dailyMessagesRemaining,
   dailyLimit
 }: ChatInputProps) {
@@ -139,7 +141,7 @@ export function ChatInput({
           ) : (
             <div className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl bg-marigold/10 border border-marigold/20 text-marigold text-[15px]">
               <Clock className="size-4" />
-              <span className="font-sans font-medium">Daily limit reached. Resets at midnight IST.</span>
+              <span className="font-sans font-medium">{dailyLimitMessage ?? "You've reached your daily limit of 25 messages. Please come back tomorrow!"}</span>
             </div>
           )}
         </div>

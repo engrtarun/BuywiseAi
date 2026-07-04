@@ -17,6 +17,7 @@ import {
   deleteChatSession,
   createChatSession,
   generateChatTitle,
+  checkAndIncrementMessageLimit,
 } from "@/app/actions/chat";
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -63,10 +64,11 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
   const {
     dailyLimitReached,
     dailyMessagesRemaining,
-    incrementDailyCount,
+    applyLimitStatus,
     isInitializing: isDailyLimitInitializing,
     DAILY_LIMIT,
   } = useDailyMessageLimit();
+  const [dailyLimitMessage, setDailyLimitMessage] = useState<string | undefined>();
 
   // Ref for the AbortController to cancel fetch requests
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -309,6 +311,22 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
         return;
       }
 
+      let limitStatus;
+      if (!isGuest) {
+        try {
+          limitStatus = await checkAndIncrementMessageLimit();
+          applyLimitStatus(limitStatus);
+          setDailyLimitMessage(limitStatus.message);
+
+          if (!limitStatus.allowed) {
+            return;
+          }
+        } catch (err) {
+          console.error("Failed to check daily message limit:", err);
+          return;
+        }
+      }
+
       const userMsg: Message = { id: generateId(), role: "user", content };
 
       let chatIdToUpdate: string;
@@ -416,11 +434,9 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
       /* Increment message counters */
       if (isGuest) {
         incrementGuestMessageCount();
-      } else {
-        incrementDailyCount();
       }
     },
-    [activeChatId, chatSessions, getAiReply, isGuest, canSendMessage, incrementGuestMessageCount, isTemporaryChat, dailyLimitReached, incrementDailyCount]
+    [activeChatId, chatSessions, getAiReply, isGuest, canSendMessage, incrementGuestMessageCount, isTemporaryChat, dailyLimitReached, applyLimitStatus]
   );
 
   /**
@@ -546,6 +562,10 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
           isGuest={isGuest}
           guestMessagesRemaining={messagesRemaining}
           guestLimitReached={guestLimitReached}
+          dailyLimitReached={dailyLimitReached}
+          dailyMessagesRemaining={dailyMessagesRemaining}
+          dailyLimit={DAILY_LIMIT}
+          dailyLimitMessage={dailyLimitMessage}
           onLoginClick={handleLoginClick}
           cooldownUntil={cooldownUntil}
           isTemporaryChat={isTemporaryChat}
