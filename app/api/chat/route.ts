@@ -1,11 +1,12 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
+import { env } from "@/lib/env";
 
 // IMPORTANT: Set up your Gemini API key as an environment variable
 // Create a .env.local file in the project root and add the following line:
 // GEMINI_API_KEY=your_gemini_api_key
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
 /**
  * API route handler for processing chat messages.
@@ -23,10 +24,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
  */
 export async function POST(req: NextRequest) {
   try {
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error("Missing API key: GEMINI_API_KEY is not set");
-    }
-
+    // GEMINI_API_KEY is now guaranteed by env.ts validation at startup.
     let body;
     try {
       body = await req.json();

@@ -1,3 +1,4 @@
+import { env } from "@/lib/env"
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
@@ -6,13 +7,12 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const isValidUrl = url && url.startsWith("http");
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   const supabase = createServerClient(
-    isValidUrl ? url : "https://placeholder.supabase.co",
-    anonKey || "placeholder",
+    url,
+    anonKey,
     {
       cookies: {
         getAll() {

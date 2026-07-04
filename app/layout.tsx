@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, IBM_Plex_Mono } from "next/font/google";
 import { Sora } from "next/font/google";
-import Script from "next/script";
+import { ThemeInitializer } from "@/components/ThemeInitializer";
 import "./globals.css";
 
 const inter = Inter({
@@ -41,20 +41,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <Script
-          id="theme-initializer"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var theme = localStorage.getItem('buywise-theme') || 'buywise-green';
-                  document.documentElement.setAttribute('data-theme', theme);
-                } catch (e) {}
-              })();
-            `,
-          }}
-        />
+        <ThemeInitializer />
       </head>
       <body className="bg-ink-deeper">{children}</body>
     </html>
