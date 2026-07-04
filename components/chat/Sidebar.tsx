@@ -6,9 +6,12 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Menu, Camera } from "lucide-react";
+import { Search, Menu, Camera, Palette, Check } from "lucide-react";
 import { ChatSession } from "./types";
 import { useSidebarResize } from "./useSidebarResize";
+import { useTheme } from "@/hooks/useTheme";
+import { THEME_PRESETS } from "@/lib/themes";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 /* ── Inline SVG Icons (animatable via CSS) ───────────── */
 
@@ -201,7 +204,7 @@ function ProfileModal({
 
   return createPortal(
     <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-[#091e1a] border border-line-ondark w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+      <div className="bg-sidebar-bg border border-line-ondark w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between p-4 border-b border-line-ondark">
           <h2 className="font-heading font-bold text-lg text-text-ondark">Edit Profile</h2>
           <button 
@@ -499,6 +502,7 @@ function SidebarContent({
   const menuRef = React.useRef<HTMLDivElement>(null);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const [menuRect, setMenuRect] = React.useState<DOMRect | null>(null);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     async function loadUserProfile() {
@@ -658,7 +662,7 @@ function SidebarContent({
       </div>
 
       {/* Bottom User Avatar Section */}
-      <div className={`shrink-0 p-3 mt-auto relative ${isCollapsed ? "flex justify-center" : ""}`} ref={menuRef}>
+      <div className={`shrink-0 p-3 mt-auto flex flex-col gap-1.5 relative ${isCollapsed ? "items-center" : ""}`} ref={menuRef}>
         {/* Dropdown Menu Popover via Portal */}
         {menuOpen && typeof window !== 'undefined' && createPortal(
           <div 
@@ -669,7 +673,7 @@ function SidebarContent({
               bottom: isCollapsed ? window.innerHeight - (menuRect?.bottom ?? 0) : window.innerHeight - (menuRect?.top ?? 0) + 8,
               width: isCollapsed ? 240 : (menuRect?.width ?? 240),
             }}
-            className="z-[100] bg-[#0d2a24] border border-line-ondark rounded-2xl p-2 shadow-2xl flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-200"
+            className="z-[100] bg-dropdown-bg border border-line-ondark rounded-2xl p-2 shadow-2xl flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-200"
           >
             {/* User Info Header */}
             <div 
@@ -743,7 +747,7 @@ function SidebarContent({
               {/* Flyout submenu */}
               {console.log('Help submenu rendered') as any}
               <div className="
-                absolute left-full bottom-0 w-48 bg-[#0d2a24] border border-line-ondark rounded-xl p-1.5 shadow-xl
+                absolute left-full bottom-0 w-48 bg-dropdown-bg border border-line-ondark rounded-xl p-1.5 shadow-xl
                 opacity-0 -translate-x-2 pointer-events-none z-50
                 group-hover/help:opacity-100 group-hover/help:translate-x-0 group-hover/help:pointer-events-auto
                 transition-all duration-200 flex flex-col gap-1
@@ -799,6 +803,67 @@ function SidebarContent({
           profile={profile} 
           onSave={(updates) => setProfile(prev => prev ? { ...prev, ...updates } : { full_name: null, avatar_url: null, email: null, ...updates })}
         />
+
+        <Popover>
+          <Tooltip text="Change Theme" isCollapsed={isCollapsed}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={`
+                  flex items-center gap-3 rounded-xl hover:bg-white/[0.08] transition-all duration-200 p-2 hover:scale-[1.02] active:scale-[0.98] cursor-pointer text-left
+                  ${isCollapsed ? "justify-center size-8 p-0" : "w-full"}
+                `}
+              >
+                <Palette className="size-4 text-text-dim-ondark shrink-0" />
+                {!isCollapsed && (
+                  <span className="font-sans text-[13px] text-text-ondark flex-1 select-none">
+                    Change Theme
+                  </span>
+                )}
+              </button>
+            </PopoverTrigger>
+          </Tooltip>
+          <PopoverContent
+            side={isCollapsed ? "right" : "top"}
+            align={isCollapsed ? "end" : "start"}
+            sideOffset={12}
+            className="w-60 bg-dropdown-bg border border-line-ondark rounded-2xl p-2 shadow-2xl flex flex-col gap-1 z-[120]"
+          >
+            <h3 className="font-sans text-[11px] font-bold text-text-dim-ondark uppercase tracking-wider px-2 py-1 select-none">
+              Select Theme
+            </h3>
+            <div className="flex flex-col gap-1 mt-0.5">
+              {THEME_PRESETS.map((preset) => {
+                const isActive = theme === preset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    onClick={() => setTheme(preset.id)}
+                    className={`
+                      group flex items-center justify-between w-full p-2 rounded-xl text-left text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all cursor-pointer select-none
+                      ${isActive ? "bg-white/[0.08] border border-white/5" : "border border-transparent"}
+                    `}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {/* Color Swatch Preview */}
+                      <div
+                        className="size-5 rounded-md flex overflow-hidden border border-white/10 shrink-0"
+                        style={{ backgroundColor: preset.colors.background }}
+                      >
+                        <div className="w-1/2 h-full" style={{ backgroundColor: preset.colors.sidebar }} />
+                        <div className="w-1/2 h-full" style={{ backgroundColor: preset.colors.primary }} />
+                      </div>
+                      <span className="truncate font-medium">{preset.name}</span>
+                    </div>
+                    {isActive && (
+                      <Check className="size-3.5 text-marigold shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
 
         <Tooltip text="User Profile" isCollapsed={isCollapsed}>
           <button 
@@ -903,7 +968,7 @@ export function Sidebar({
         className={`
           fixed top-[61px] left-0 bottom-0 z-50
           w-[80vw] max-w-[320px] flex flex-col
-          bg-[#091e1a]/95 backdrop-blur-md
+          bg-sidebar-bg/95 backdrop-blur-md
           border-r border-line-ondark
           transition-transform duration-300 ease-in-out
           md:hidden
@@ -928,7 +993,7 @@ export function Sidebar({
         <div
           className={`
             h-full flex flex-col overflow-hidden w-full
-            bg-[#091e1a]/95 backdrop-blur-md border-r border-line-ondark
+            bg-sidebar-bg/95 backdrop-blur-md border-r border-line-ondark
           `}
         >
           <SidebarContent 

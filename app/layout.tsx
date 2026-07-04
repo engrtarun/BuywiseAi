@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, IBM_Plex_Mono } from "next/font/google";
 import { Sora } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const inter = Inter({
@@ -37,8 +38,27 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} ${sora.variable} ${ibmPlexMono.variable} antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <Script
+          id="theme-initializer"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('buywise-theme') || 'buywise-dark';
+                  document.documentElement.setAttribute('data-theme', theme);
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className="bg-ink-deeper">{children}</body>
     </html>
   );
 }
+
+
