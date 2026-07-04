@@ -10,7 +10,7 @@ interface SwipeableProductCardProps {
   product: QuickBuyProduct;
   onSwipeLeft: (id: string) => void;
   onSwipeRight: (id: string) => void;
-  onBuy?: (price: number) => void;
+  onBuy?: (product: QuickBuyProduct) => void;
   isTop: boolean;
   index: number;
 }
@@ -121,8 +121,8 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
       colors: ["#ffb067", "#f97316", "#2dd4bf"] // Amber, Orange, Mint
     });
 
-    // Notify parent to add to budget
-    if (onBuy) onBuy(product.price);
+    // Notify parent to add to budget and log order
+    if (onBuy) onBuy(product);
 
     // Show animations
     setShowToast(`🎉 Order Placed! ₹${product.price}`);

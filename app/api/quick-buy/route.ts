@@ -101,6 +101,9 @@ export async function GET(request: Request) {
       };
     });
 
+    const searchQuery = searchParams.get('query') || searchParams.get('q') || '';
+    const cleanSearchQuery = searchQuery.toLowerCase().trim();
+
     const filteredProducts = formattedProducts.filter((product: any) => {
       let matchesSize = true;
       let matchesBudget = true;
@@ -120,6 +123,20 @@ export async function GET(request: Request) {
 
       return matchesSize && matchesBudget && matchesCategory;
     });
+
+    if (cleanSearchQuery) {
+      filteredProducts.sort((a: any, b: any) => {
+        const aTitleMatch = a.name.toLowerCase().includes(cleanSearchQuery);
+        const aCategoryMatch = a.category.toLowerCase().includes(cleanSearchQuery);
+        const bTitleMatch = b.name.toLowerCase().includes(cleanSearchQuery);
+        const bCategoryMatch = b.category.toLowerCase().includes(cleanSearchQuery);
+
+        const aScore = (aTitleMatch ? 2 : 0) + (aCategoryMatch ? 1 : 0);
+        const bScore = (bTitleMatch ? 2 : 0) + (bCategoryMatch ? 1 : 0);
+
+        return bScore - aScore; // Descending order: highest score comes first
+      });
+    }
 
     const totalFiltered = filteredProducts.length;
     const startIndex = (safePage - 1) * safeLimit;

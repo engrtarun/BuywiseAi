@@ -275,11 +275,26 @@ export function useQuickBuy() {
     });
   }, []);
 
-  const addExpense = useCallback((amount: number) => {
+  const addExpense = useCallback((product: QuickBuyProduct) => {
     setTotalSpent((prev) => {
-      const next = prev + amount;
+      const next = prev + product.price;
       sessionStorage.setItem(TOTAL_SPENT_KEY, JSON.stringify(next));
       return next;
+    });
+
+    void fetch("/api/quick-buy/actions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        product_id: product.id,
+        product_name: product.name,
+        price: product.price,
+        image_url: (product as QuickBuyProduct & { image_url?: string }).image_url || product.image,
+        is_cart: false,
+        action_type: 'buy'
+      }),
+    }).catch((err) => {
+      console.error("Failed to persist Quick Buy buy action", err);
     });
   }, []);
 

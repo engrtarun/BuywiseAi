@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { product_id, product_name, price, image_url, is_cart } = body;
+    const { product_id, product_name, price, image_url, is_cart, action_type } = body;
 
     if (
       typeof product_id !== "string" ||
@@ -65,11 +65,40 @@ export async function POST(req: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json(
-        { error: "Unauthorized: Please log in to save this product." },
+        { error: "Unauthorized: Please log in to perform this action." },
         { status: 401 }
       );
     }
 
+    if (action_type === "buy") {
+      // Investor demo support: log order in the orders table
+      const { data, error } = await supabase
+        .from("orders")
+        .insert({
+          user_id: user.id,
+          product: {
+            id: product_id,
+            name: product_name,
+            price,
+            image_url,
+          },
+          payment_method: "Quick Buy (Swipe)",
+          status: "completed",
+        })
+        .select()
+        .single();
+
+      if (error) {
+        return NextResponse.json(
+          { error: error.message || "Failed to log order" },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ success: true, data });
+    }
+
+    // Default action (save to bookmarks/cart)
     const { data, error } = await supabase
       .from("user_saved_products")
       .insert({

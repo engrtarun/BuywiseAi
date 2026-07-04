@@ -20,10 +20,7 @@ import {
   checkAndIncrementMessageLimit,
 } from "@/app/actions/chat";
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// IMPORTANT: Set up your Gemini API key as an environment variable
-const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
 
 /* ── Helpers ──────────────────────────────────────────── */
 

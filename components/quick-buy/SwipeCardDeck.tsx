@@ -12,7 +12,7 @@ interface SwipeCardDeckProps {
   onOpenSettings: () => void;
   hasMore: boolean;
   onPrefetch: () => void;
-  onBuy?: (price: number) => void;
+  onBuy?: (product: QuickBuyProduct) => void;
 }
 
 export function SwipeCardDeck({ products, onSave, onOpenSettings, hasMore, onPrefetch, onBuy }: SwipeCardDeckProps) {

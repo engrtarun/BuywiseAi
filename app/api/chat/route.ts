@@ -2,6 +2,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";
+import { getFallbackChatResponse } from "@/lib/fallbackResponses";
 
 // IMPORTANT: Set up your Gemini API key as an environment variable
 // Create a .env.local file in the project root and add the following line:
@@ -23,12 +24,14 @@ const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
  *   AI's text response.
  */
 export async function POST(req: NextRequest) {
+  let userMessage = "";
+
   try {
     // GEMINI_API_KEY is now guaranteed by env.ts validation at startup.
-    let body;
+    let body: unknown;
     try {
       body = await req.json();
-    } catch (err: any) {
+    } catch {
       return NextResponse.json(
         { error: "Invalid request: JSON body is malformed or empty." },
         { status: 400 }
@@ -36,7 +39,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate message field
-    if (!body || typeof body.message !== "string" || !body.message.trim()) {
+    if (!isChatRequestBody(body) || !body.message.trim()) {
       return NextResponse.json(
         { error: "Invalid request: 'message' field is required and must be a non-empty string." },
         { status: 400 }
@@ -52,10 +55,11 @@ export async function POST(req: NextRequest) {
     }
 
     const { history = [], message } = body;
+    userMessage = message;
 
     // Map frontend conversation history ({ role: "assistant"|"user", content })
     // to the structure expected by the Gemini SDK ({ role: "model"|"user", parts: [{ text }] })
-    const formattedHistory = history.map((msg: any) => {
+    const formattedHistory = history.map((msg) => {
       const role = msg.role === "assistant" ? "model" : "user";
       return {
         role,
@@ -77,45 +81,56 @@ export async function POST(req: NextRequest) {
     const text = response.text();
 
     return NextResponse.json({ text });
-  } catch (error: any) {
-    let statusCode = 500;
-    let errorMessage = error.message || "Internal Server Error";
-    let retryDelay: number | undefined;
+  } catch (error: unknown) {
+    logGeminiFailure(error);
 
-    // Check for rate-limit / quota exceeded errors
-    if (
-      error.status === 429 ||
-      errorMessage.toLowerCase().includes("429") ||
-      errorMessage.toLowerCase().includes("too many requests") ||
-      errorMessage.toLowerCase().includes("quota exceeded")
-    ) {
-      statusCode = 429;
-      errorMessage = "Rate limit exceeded";
-      
-      // Try to parse retryDelay from the error object or message string
-      if (error.retryDelay) {
-        retryDelay = parseInt(error.retryDelay, 10);
-      } else {
-        const match = error.message?.match(/(\d+)\s*s/);
-        if (match) {
-          retryDelay = parseInt(match[1], 10);
-        }
-      }
-    }
-
-    if (process.env.NODE_ENV === "development") {
-      console.error("API route error:", error);
-    } else {
-      if (statusCode === 429) {
-        console.error("Gemini API rate limit hit:", statusCode);
-      } else {
-        console.error("API route error:", error.name, error.message);
-      }
-    }
-
-    return NextResponse.json(
-      { error: errorMessage, retryDelay },
-      { status: statusCode }
-    );
+    return NextResponse.json({
+      text: getFallbackChatResponse(userMessage),
+      fallback: true,
+    });
   }
+}
+
+interface ChatHistoryMessage {
+  role?: string;
+  content?: string;
+}
+
+interface ChatRequestBody {
+  message: string;
+  history?: ChatHistoryMessage[];
+}
+
+function isChatRequestBody(body: unknown): body is ChatRequestBody {
+  if (!body || typeof body !== "object") {
+    return false;
+  }
+
+  return "message" in body && typeof body.message === "string";
+}
+
+function logGeminiFailure(error: unknown) {
+  if (isRateLimitError(error)) {
+    console.error("Gemini API rate limit hit. Serving fallback response.", error);
+    return;
+  }
+
+  console.error("Gemini API failed. Serving fallback response.", error);
+}
+
+function isRateLimitError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const maybeError = error as { status?: unknown; message?: unknown };
+  const message = typeof maybeError.message === "string" ? maybeError.message.toLowerCase() : "";
+
+  return (
+    maybeError.status === 429 ||
+    message.includes("429") ||
+    message.includes("too many requests") ||
+    message.includes("quota exceeded") ||
+    message.includes("rate limit")
+  );
 }
