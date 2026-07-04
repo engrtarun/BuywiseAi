@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Product } from "./types";
+import { Product } from "@/types/product";
 import { Star, ExternalLink } from "lucide-react";
 
 interface ProductCardProps {

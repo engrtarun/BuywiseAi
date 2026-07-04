@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Message, Feedback } from "./types";
+import { Message, Feedback } from "@/types/chat";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
 import { WelcomeScreen } from "./WelcomeScreen";

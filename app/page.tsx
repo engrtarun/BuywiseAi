@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useRef, use, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Message, ChatSession, Feedback } from "@/components/chat/types";
+import { Message, ChatSession, Feedback } from "@/types/chat";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { Sidebar } from "@/components/chat/Sidebar";
 import { useGuestAccess } from "@/hooks/useGuestAccess";

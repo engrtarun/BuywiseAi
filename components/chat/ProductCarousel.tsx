@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect, useCallback } from "react";
-import { Product } from "./types";
+import { Product } from "@/types/product";
 import { ProductCard } from "./ProductCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 

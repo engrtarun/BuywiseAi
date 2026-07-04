@@ -5,7 +5,7 @@ import { QuickBuyProduct } from "@/lib/quickBuyMockData";
 
 export interface QuickBuyPreferences {
   sizes: string[];
-  categories: string[];
+  preferredCategories: string[];
   maxBudget: number | null;
 }
 
@@ -123,8 +123,8 @@ export function useQuickBuy() {
       }
 
       // Check categories (if any selected, product must match one)
-      if (preferences.categories?.length > 0) {
-        if (!preferences.categories.includes(product.category)) return false;
+      if (preferences.preferredCategories?.length > 0) {
+        if (!preferences.preferredCategories.includes(product.category)) return false;
       }
       
       return true;

@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Search, Menu, Camera, Palette, Check, MoreVertical, Pencil, Ghost } from "lucide-react";
-import { ChatSession } from "./types";
+import { ChatSession } from "@/types/chat";
 import { useSidebarResize } from "./useSidebarResize";
 import { useTheme } from "@/hooks/useTheme";
 import { THEME_PRESETS } from "@/lib/themes";

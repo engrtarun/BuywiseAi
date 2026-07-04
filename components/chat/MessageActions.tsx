@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Message, Feedback } from "./types";
+import { Message, Feedback } from "@/types/chat";
 
 /* ── Inline SVG Icons ─────────────────────────────────── */
 

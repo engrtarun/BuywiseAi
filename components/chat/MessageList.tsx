@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "./MessageBubble";
 import { ThinkingIndicator } from "./ThinkingIndicator";
 import { ErrorMessageCard } from "./ErrorMessageCard";
-import { Message, Feedback } from "./types";
+import { Message, Feedback } from "@/types/chat";
 import { ArrowDown } from "lucide-react";
 
 interface MessageListProps {

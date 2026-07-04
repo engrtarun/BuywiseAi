@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { QuickBuyPreferences } from "@/hooks/useQuickBuy";
-import { ArrowRight, Settings2, Search } from "lucide-react";
+import { ArrowRight, Settings2 } from "lucide-react";
+import { CategorySearchInput } from "./CategorySearchInput";
 
 interface SizeBudgetFormProps {
   initialPreferences: QuickBuyPreferences | null;
@@ -10,13 +11,16 @@ interface SizeBudgetFormProps {
 }
 
 const AVAILABLE_SIZES = ["S", "M", "L", "XL"];
-const AVAILABLE_CATEGORIES = ["T-Shirts", "Shirts", "Jackets", "Hoodies", "Pants", "Shorts", "Jeans", "Sweaters", "Coats", "Sneakers", "Accessories", "Activewear"];
+const AVAILABLE_CATEGORIES = [
+  "T-Shirts", "Shirts", "Jackets", "Hoodies", "Pants", "Shorts", "Jeans", 
+  "Sweaters", "Coats", "Sneakers", "Formal Shoes", "Accessories", "Activewear",
+  "Smartphones", "Laptops", "Headphones", "Watches", "Backpacks", "Sunglasses", "Gaming Consoles"
+];
 
 export function SizeBudgetForm({ initialPreferences, onSave }: SizeBudgetFormProps) {
   const [selectedSizes, setSelectedSizes] = useState<string[]>(initialPreferences?.sizes || []);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(initialPreferences?.categories || []);
+  const [preferredCategories, setPreferredCategories] = useState<string[]>(initialPreferences?.preferredCategories || []);
   const [maxBudget, setMaxBudget] = useState<string>(initialPreferences?.maxBudget ? String(initialPreferences.maxBudget) : "");
-  const [categorySearch, setCategorySearch] = useState("");
 
   const toggleSize = (size: string) => {
     setSelectedSizes((prev) =>
@@ -24,28 +28,16 @@ export function SizeBudgetForm({ initialPreferences, onSave }: SizeBudgetFormPro
     );
   };
 
-  const toggleCategory = (category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
-    );
-  };
-
   const handleSave = () => {
     const budgetNum = parseInt(maxBudget, 10);
     onSave({
       sizes: selectedSizes,
-      categories: selectedCategories,
+      preferredCategories,
       maxBudget: isNaN(budgetNum) ? null : budgetNum,
     });
   };
 
-  const isValid = selectedSizes.length > 0 && selectedCategories.length > 0 && maxBudget.trim() !== "";
-
-  const filteredCategories = useMemo(() => {
-    if (!categorySearch.trim()) return AVAILABLE_CATEGORIES;
-    const lowerSearch = categorySearch.toLowerCase();
-    return AVAILABLE_CATEGORIES.filter(c => c.toLowerCase().includes(lowerSearch));
-  }, [categorySearch]);
+  const isValid = selectedSizes.length > 0 && maxBudget.trim() !== "";
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 bg-bg-main relative z-50">
@@ -89,49 +81,12 @@ export function SizeBudgetForm({ initialPreferences, onSave }: SizeBudgetFormPro
             </div>
           </div>
 
-          {/* Categories */}
-          <div>
-            <div className="flex items-center justify-between mb-3 gap-4">
-              <label className="block text-sm font-medium text-text-primary-light shrink-0">
-                Product Categories
-              </label>
-              <div className="relative flex-1 max-w-[180px]">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-text-secondary" />
-                <input
-                  type="text"
-                  value={categorySearch}
-                  onChange={(e) => setCategorySearch(e.target.value)}
-                  placeholder="Search..."
-                  className="w-full bg-bg-input border border-border-light rounded-lg pl-8 pr-3 py-1.5 text-sm text-text-primary-light focus:outline-none focus:border-brand-accent transition-colors"
-                />
-              </div>
-            </div>
-            
-            <div className="flex flex-wrap gap-2.5 max-h-[140px] overflow-y-auto pr-2 custom-scrollbar">
-              {filteredCategories.length === 0 ? (
-                <div className="w-full py-4 text-center text-sm text-text-secondary">No categories found</div>
-              ) : (
-                filteredCategories.map((category) => {
-                  const isActive = selectedCategories.includes(category);
-                  return (
-                    <button
-                      key={category}
-                      onClick={() => toggleCategory(category)}
-                      className={`
-                        px-4 py-2 rounded-xl text-[14px] font-bold font-sans transition-all duration-200
-                        ${isActive 
-                          ? "bg-brand-accent text-bg-main shadow-lg shadow-brand-accent/20 scale-105 border-transparent" 
-                          : "bg-bg-input border border-border-light text-text-secondary hover:border-brand-accent/50 hover:text-text-primary-light"
-                        }
-                      `}
-                    >
-                      {category}
-                    </button>
-                  );
-                })
-              )}
-            </div>
-          </div>
+          {/* Category Search (Combobox) */}
+          <CategorySearchInput 
+            availableCategories={AVAILABLE_CATEGORIES}
+            selectedCategories={preferredCategories}
+            onChange={setPreferredCategories}
+          />
 
           {/* Budget */}
           <div>
