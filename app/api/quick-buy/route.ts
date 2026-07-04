@@ -22,7 +22,6 @@ export async function GET(request: Request) {
       // Demo ke liye har product ko random sizes assign karna
       const availableSizes = ['S', 'M', 'L', 'XL'];
       // Har product ko 2-3 random sizes de dete hain
-<<<<<<< HEAD
       const mockSizes = availableSizes.filter(() => Math.random() > 0.4); 
       if (mockSizes.length === 0) mockSizes.push('M'); // Safe fallback
 
@@ -35,24 +34,10 @@ export async function GET(request: Request) {
         sizes: mockSizes,
         category: product.category,
         platform: 'FakeStore'
-=======
-      const mockSizes = availableSizes.filter(() => Math.random() > 0.4);
-      if (mockSizes.length === 0) mockSizes.push('M'); // Safe fallback
-
-      return {
-        id: product.id,
-        name: product.title,
-        price: Math.round(product.price * 85), // Converting to INR approx
-        rating: product.rating?.rate || 4.2,
-        image_url: product.image,
-        sizes: mockSizes,
-        category: product.category
->>>>>>> ba774ba04fa5334d18ced74223a1bbde9d965b69
       };
     });
 
     // 4. Smart Filtering Logic (User ke size aur budget ke mutabiq)
-<<<<<<< HEAD
     // Actually, because we have client-side filtering in useQuickBuy, 
     // we can return all products and let the client handle it, OR we can pre-filter here.
     // The text file shows pre-filtering. Let's pre-filter based on query params if they exist,
@@ -67,21 +52,12 @@ export async function GET(request: Request) {
       if (searchParams.has('budget')) {
         matchesBudget = product.price <= maxBudget;
       }
-      
-=======
-    const filteredProducts = formattedProducts.filter((product) => {
-      const matchesSize = product.sizes.includes(userSize);
-      const matchesBudget = product.price <= maxBudget;
->>>>>>> ba774ba04fa5334d18ced74223a1bbde9d965b69
       return matchesSize && matchesBudget;
     });
 
     return NextResponse.json({ success: true, data: filteredProducts });
   } catch (error) {
-<<<<<<< HEAD
     console.error("API Error:", error);
-=======
->>>>>>> ba774ba04fa5334d18ced74223a1bbde9d965b69
     return NextResponse.json({ success: false, error: 'Failed to fetch clothes' }, { status: 500 });
   }
 }
