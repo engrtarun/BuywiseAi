@@ -47,6 +47,10 @@ export function useGuestAccess() {
 
     const checkAuthAndClearIfLoggedin = async () => {
       const supabase = createClient();
+      if (!supabase) {
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         console.log("[useGuestAccess] User is authenticated. Resetting guest state.");

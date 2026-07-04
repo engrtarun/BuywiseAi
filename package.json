@@ -44,9 +44,6 @@
     "typescript": "^5"
   },
   "overrides": {
-    "postcss": "^8.4.39",
-    "next": {
-      "postcss": "^8.4.39"
-    }
+    "postcss": "8.5.16"
   }
 }

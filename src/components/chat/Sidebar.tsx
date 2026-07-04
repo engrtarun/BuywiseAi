@@ -642,6 +642,11 @@ function SidebarContent({
 
   useEffect(() => {
     async function loadUserProfile() {
+      if (!supabase) {
+        setLoadingProfile(false);
+        return;
+      }
+
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {

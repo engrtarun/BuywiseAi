@@ -17,6 +17,7 @@
 import { z } from "zod";
 
 const isServer = typeof window === "undefined";
+const isProduction = process.env.NODE_ENV === "production";
 
 const clientEnvSchema = z
   .object({
@@ -47,7 +48,7 @@ const rawEnv = {
 
 const parsedResult = envSchema.safeParse(rawEnv);
 
-if (!parsedResult.success && isServer) {
+if (!parsedResult.success && isServer && isProduction) {
   const formatted = parsedResult.error.issues
     .map((issue) => `  - ${issue.path.join(".") || "(root)"}: ${issue.message}`)
     .join("\n");
