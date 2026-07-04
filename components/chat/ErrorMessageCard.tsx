@@ -52,29 +52,29 @@ export function ErrorMessageCard({ onRetry }: ErrorMessageCardProps) {
       <div className="flex items-end gap-2 w-full">
         {/* Avatar */}
         <Avatar className="size-7 sm:size-8 shrink-0">
-          <AvatarFallback className="bg-chili/20 text-chili font-heading font-bold text-[10px] sm:text-xs">
+          <AvatarFallback className="bg-accent/20 text-accent font-heading font-bold text-[10px] sm:text-xs">
             !
           </AvatarFallback>
         </Avatar>
 
         <div className="
-          bg-white/5 backdrop-blur-sm border border-chili/20 border-l-2 border-l-chili
-          text-text-ondark rounded-2xl rounded-bl-sm px-4 py-3
+          bg-[#EBE9DE] border border-accent/20 border-l-2 border-l-accent
+          text-text-primary-light rounded-2xl rounded-bl-sm px-4 py-3
           text-[14px] sm:text-[15px] leading-relaxed break-words shadow-sm
           font-sans w-full min-w-0
         ">
           <div className="flex items-start gap-2.5">
-            <AlertIcon className="text-chili shrink-0 mt-0.5" />
+            <AlertIcon className="text-accent shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <p className="text-text-ondark text-[14px] mb-2">
+              <p className="text-text-primary-light text-[14px] mb-2">
                 Something went wrong while getting a response. Please try again.
               </p>
               <button
                 onClick={onRetry}
                 className="
                   inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                  bg-chili/10 border border-chili/20 text-chili text-[13px] font-sans font-medium
-                  hover:bg-chili/20 hover:border-chili/30 active:scale-[0.97]
+                  bg-accent/10 border border-accent/20 text-accent text-[13px] font-sans font-medium
+                  hover:bg-accent/20 hover:border-accent/30 active:scale-[0.97]
                   transition-all duration-200 touch-manipulation
                 "
               >
