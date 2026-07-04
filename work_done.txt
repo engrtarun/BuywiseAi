@@ -1,0 +1,89 @@
+======================================================================
+              BUYWISE AI - DEVELOPMENT PROGRESS SUMMARY
+======================================================================
+
+This document summarizes the features, database integrations, and UI components
+implemented in the "feature/login-ui" (including the merged chat UI) and 
+"feature/supabase-db" branches.
+
+----------------------------------------------------------------------
+1. CHRONOLOGICAL SEQUENCE OF FEATURE IMPLEMENTATION (FROM GIT HISTORY)
+----------------------------------------------------------------------
+
+[Feature 1] Project Initialization & Design System Setup
+- Scaffolded Next.js (App Router) project structure.
+- Configured PostCSS and custom fonts (Inter, Sora, IBM Plex Mono).
+- Installed Tailwind CSS v4, Lucide icons, and loaded shadcn/ui primitives:
+  - Avatar, Badge, Button, Card, Input, Scroll-Area, Skeleton
+
+[Feature 2] Core Chat UI Layout & Responsiveness
+- Created the main chat container with full responsive support (mobile/desktop).
+- Implemented collapsible, resizable, and draggable Sidebar layout.
+- Added hook for drag-to-resize sidebar panel width with state persistence.
+
+[Feature 3] Modular Chat Window Components
+- Developed modular React components:
+  - ChatInput (with auto-rotating suggestions and Enter-to-submit).
+  - MessageBubble (with role check and markdown formatting).
+  - MessageList (showing message bubbles, skeletons, and typing states).
+  - WelcomeScreen (displaying introductory copy and prompt helpers).
+  - OfflineBanner (detecting offline connection status).
+- Integrated markdown rendering (react-markdown) and GitHub Flavored Markdown (remark-gfm).
+
+[Feature 4] Supabase SSR Client Config
+- Configured connection to Supabase Auth and Database via SSR helpers:
+  - lib/supabase/client.ts (browser-side queries)
+  - lib/supabase/server.ts (server-side actions with async cookies)
+  - proxy.ts (root interceptor/middleware config)
+
+[Feature 5] Database-Backed Chat Persistence
+- Implemented Server Actions in app/actions/chat.ts for database sync:
+  - createChatSession(): Generates active chat session in DB.
+  - getOrCreateActiveSession(): Restores or initiates user chat sessions.
+  - sendMessage(): Writes user inputs and AI replies to DB message history.
+  - getChatHistory(): Retrieves complete past messages sorted by timestamp.
+- Wired front-end state to load database history on mount and write messages.
+
+[Feature 6] Auth Pages & Sign-up Wizard
+- Completed Login Page (app/login/page.tsx) with email/password logins, reset password requests, and Google OAuth redirection.
+- Completed Signup Page (app/signup/page.tsx) featuring a multi-step user creation wizard:
+  - Step 1: User's name.
+  - Step 2: Email & Google OAuth options.
+  - Step 3: Password strength verification.
+  - Step 4: OTP Verification.
+- Configured Email Verification with support for both Brevo SMTP confirmation links and 6-digit OTP codes.
+
+[Feature 7] Profile Complete Page
+- Completed Welcome Page (app/welcome/page.tsx) that redirects new Google OAuth signups to collect and save their display name before accessing the app.
+
+[Feature 8] Pre-Render Route Protection
+- Configured lib/supabase/middleware.ts to enforce auth gates before pages render:
+  - Locked "/" and "/chat" to authenticated users, redirecting guests to "/login".
+  - Redirected logged-in users away from "/login" and "/signup" straight to "/chat".
+  - Protected "/welcome" to prevent logged-in users who have already set up their profile name from accessing it.
+
+[Feature 9] Unified /chat Page Route
+- Created app/chat/page.tsx to re-export the main page's ChatShell component, ensuring "/chat" resolves to the same page.
+
+[Feature 10] Active Profile Widget & Logout Popover
+- Replaced static "Guest User" placeholder in the bottom-left sidebar with a dynamic profile widget.
+- Fetches full name, email, and avatar URL on mount from profiles table (with fallback to session metadata).
+- Implemented a click-away popover showing user header, Settings (placeholder), and "Log out" button that signs out and redirects to "/login".
+
+----------------------------------------------------------------------
+2. WORK COMPLETED BY BRANCH
+----------------------------------------------------------------------
+
+[Branch: feature/supabase-db]
+- Complete server-side logic for Database connection and Chat CRUD.
+- Server Actions defined in app/actions/chat.ts.
+- Local storage to Supabase mapping in the chat shell.
+
+[Branch: feature/login-ui]
+- Auth UI Pages (/login, /signup, /welcome).
+- Supabase Authentication integration (email/password, OTP, Google OAuth).
+- Pre-render Route Guards in Next.js middleware/proxy.
+- Dynamic Profile popover widget in the Sidebar footer.
+- Successful integration of components/chat UI (merged from feature/chat-ui).
+
+======================================================================

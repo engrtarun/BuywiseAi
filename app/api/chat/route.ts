@@ -19,22 +19,52 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
  */
 export async function POST(req: NextRequest) {
   try {
-    const { history, message } = await req.json();
-
     if (!process.env.GEMINI_API_KEY) {
+      throw new Error("Missing API key: GEMINI_API_KEY is not set");
+    }
+
+    let body;
+    try {
+      body = await req.json();
+    } catch (err: any) {
       return NextResponse.json(
-        {
-          error: "Gemini API key is not configured.",
-          message: "Please set up your Gemini API key as an environment variable. Create a .env.local file in the project root and add the following line: GEMINI_API_KEY=your_gemini_api_key",
-        },
-        { status: 500 }
+        { error: "Invalid request: JSON body is malformed or empty." },
+        { status: 400 }
       );
     }
-    
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+    // Validate message field
+    if (!body || typeof body.message !== "string" || !body.message.trim()) {
+      return NextResponse.json(
+        { error: "Invalid request: 'message' field is required and must be a non-empty string." },
+        { status: 400 }
+      );
+    }
+
+    // Validate history if provided
+    if (body.history !== undefined && !Array.isArray(body.history)) {
+      return NextResponse.json(
+        { error: "Invalid request: 'history' must be an array if provided." },
+        { status: 400 }
+      );
+    }
+
+    const { history = [], message } = body;
+
+    // Map frontend conversation history ({ role: "assistant"|"user", content })
+    // to the structure expected by the Gemini SDK ({ role: "model"|"user", parts: [{ text }] })
+    const formattedHistory = history.map((msg: any) => {
+      const role = msg.role === "assistant" ? "model" : "user";
+      return {
+        role,
+        parts: [{ text: msg.content || "" }]
+      };
+    });
+
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const chat = model.startChat({
-      history: history,
+      history: formattedHistory,
       generationConfig: {
         maxOutputTokens: 1000,
       },
@@ -45,10 +75,10 @@ export async function POST(req: NextRequest) {
     const text = response.text();
 
     return NextResponse.json({ text });
-  } catch (error) {
-    console.error("[API/chat] Error:", error);
+  } catch (error: any) {
+    console.error("API route error:", error);
     return NextResponse.json(
-      { error: "An error occurred while processing the request." },
+      { error: error.message || "Internal Server Error" },
       { status: 500 }
     );
   }

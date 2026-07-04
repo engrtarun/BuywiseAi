@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Search, Menu } from "lucide-react";
@@ -229,6 +231,68 @@ function SidebarContent({
   onToggleCollapse?: () => void;
 }) {
   const [searchQuery, setSearchQuery] = React.useState("");
+  const router = useRouter();
+  const supabase = createClient();
+
+  const [profile, setProfile] = React.useState<{
+    full_name: string | null;
+    avatar_url: string | null;
+    email: string | null;
+  } | null>(null);
+  const [loadingProfile, setLoadingProfile] = React.useState(true);
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    async function loadUserProfile() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setLoadingProfile(false);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("full_name, avatar_url, email")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error fetching profile:", error);
+        }
+
+        setProfile({
+          full_name: data?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || "User",
+          avatar_url: data?.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+          email: data?.email || user.email || null,
+        });
+      } catch (err) {
+        console.error("Failed to load user profile:", err);
+      } finally {
+        setLoadingProfile(false);
+      }
+    }
+
+    loadUserProfile();
+  }, [supabase]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   const filteredHistory = chatHistory.filter((session) =>
     session.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -309,19 +373,75 @@ function SidebarContent({
       </div>
 
       {/* Bottom User Avatar Section */}
-      <div className={`shrink-0 p-3 mt-auto ${isCollapsed ? "flex justify-center" : ""}`}>
-        <Tooltip text="User Profile" isCollapsed={isCollapsed}>
-          <button className={`
-            flex items-center gap-3 rounded-xl hover:bg-white/[0.08] transition-all duration-200 p-2 hover:scale-[1.02] active:scale-[0.98]
-            ${isCollapsed ? "justify-center w-auto" : "w-full"}
-          `}>
-            <Avatar className="size-8 shrink-0">
-              <AvatarFallback className="bg-marigold/20 text-marigold text-xs font-bold">U</AvatarFallback>
-            </Avatar>
-            {!isCollapsed && (
-              <span className="font-sans text-[13px] text-text-ondark truncate">
-                Guest User
+      <div className="shrink-0 p-3 mt-auto relative" ref={menuRef}>
+        {/* Dropdown Menu Popover */}
+        {menuOpen && (
+          <div className="absolute bottom-full left-3 right-3 mb-2 bg-[#0d2a24] border border-line-ondark rounded-2xl p-3 shadow-2xl z-50 flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            {/* User Info Header */}
+            <div className="flex flex-col gap-0.5 px-2 pb-2 border-b border-white/[0.06]">
+              <span className="font-sans text-[13px] font-bold text-text-ondark truncate">
+                {profile?.full_name || "User"}
               </span>
+              <span className="font-mono text-[10px] text-text-dim-ondark truncate">
+                {profile?.email || ""}
+              </span>
+            </div>
+            
+            {/* Menu Items */}
+            <button 
+              onClick={() => {
+                setMenuOpen(false);
+                // Placeholder settings message or path
+                alert("Settings page placeholder");
+              }}
+              className="w-full text-left px-2 py-1.5 rounded-lg text-[12px] font-sans text-text-dim-ondark hover:text-marigold hover:bg-white/[0.04] transition-all"
+            >
+              Settings
+            </button>
+            <button
+              onClick={handleLogout}
+              className="w-full text-left px-2 py-1.5 rounded-lg text-[12px] font-sans text-chili hover:bg-chili/10 transition-all font-semibold"
+            >
+              Log out
+            </button>
+          </div>
+        )}
+
+        <Tooltip text="User Profile" isCollapsed={isCollapsed}>
+          <button 
+            onClick={() => setMenuOpen(!menuOpen)}
+            className={`
+              flex items-center gap-3 rounded-xl hover:bg-white/[0.08] transition-all duration-200 p-2 hover:scale-[1.02] active:scale-[0.98]
+              ${isCollapsed ? "justify-center w-auto" : "w-full"}
+              ${menuOpen ? "bg-white/[0.08]" : ""}
+            `}
+          >
+            {loadingProfile ? (
+              <div className="size-8 rounded-full bg-white/[0.08] animate-pulse shrink-0" />
+            ) : profile?.avatar_url ? (
+              <img 
+                src={profile.avatar_url} 
+                alt={profile.full_name || "Avatar"} 
+                className="size-8 rounded-full object-cover shrink-0 border border-white/[0.1]"
+              />
+            ) : (
+              <Avatar className="size-8 shrink-0">
+                <AvatarFallback className="bg-marigold/20 text-marigold text-xs font-bold">
+                  {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : "U"}
+                </AvatarFallback>
+              </Avatar>
+            )}
+            
+            {!isCollapsed && (
+              <div className="flex-1 min-w-0 text-left">
+                {loadingProfile ? (
+                  <div className="h-4 w-24 bg-white/[0.08] animate-pulse rounded" />
+                ) : (
+                  <span className="font-sans text-[13px] text-text-ondark truncate block">
+                    {profile?.full_name || "Guest User"}
+                  </span>
+                )}
+              </div>
             )}
           </button>
         </Tooltip>

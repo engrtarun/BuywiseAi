@@ -101,7 +101,7 @@ export default function Page() {
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error("API Error:", errorData);
+          console.error("API Error:", errorData.error || errorData);
           appendErrorMessage(chatId);
           return;
         }
