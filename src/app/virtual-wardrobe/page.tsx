@@ -21,7 +21,7 @@ export default function VirtualWardrobePage() {
           <ChevronLeft className="size-5" />
           <span className="font-bold text-sm">Back to Chat</span>
         </button>
-        <SoundMuteToggle />
+        <SoundMuteToggle showTooltip={false} />
       </div>
 
       <div className="pt-14 h-screen">

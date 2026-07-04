@@ -25,8 +25,9 @@ export function useSwipeFeedback() {
   }, []);
 
   const playAccept = useCallback(() => {
-    // Check if muted in localStorage
-    const isMuted = localStorage.getItem("buywise_muted") === "true";
+    // Check if muted in localStorage (default to true if not set)
+    const mutedStr = localStorage.getItem("buywise_muted");
+    const isMuted = mutedStr === null ? true : mutedStr === "true";
     if (isMuted) return;
 
     // Haptic feedback
@@ -55,8 +56,9 @@ export function useSwipeFeedback() {
   }, []);
 
   const playReject = useCallback(() => {
-    // Check if muted in localStorage
-    const isMuted = localStorage.getItem("buywise_muted") === "true";
+    // Check if muted in localStorage (default to true if not set)
+    const mutedStr = localStorage.getItem("buywise_muted");
+    const isMuted = mutedStr === null ? true : mutedStr === "true";
     if (isMuted) return;
 
     // Haptic feedback

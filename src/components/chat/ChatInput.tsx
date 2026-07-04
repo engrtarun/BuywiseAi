@@ -4,6 +4,7 @@ import React, { useRef, useState, useEffect } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye, Plus } from "lucide-react";
 import { QuickAccessMenu } from "./QuickAccessMenu";
+import { SoundMuteToggle } from "@/components/shared/SoundMuteToggle";
 
 const placeholders = [
   "BuyWise anything...",
@@ -204,6 +205,7 @@ export function ChatInput({
 
           <div className="flex items-end gap-2 p-1 pl-2 pr-1.5 pb-1.5">
             {/* Quick Actions + Button */}
+            <SoundMuteToggle showTooltip={true} />
             <button
               ref={plusButtonRef}
               onClick={() => {
