@@ -10,16 +10,9 @@ function createFallbackClient() {
     limit: () => emptyQuery,
     maybeSingle: async () => ({ data: null, error: null }),
     single: async () => ({ data: null, error: null }),
-    insert: () => ({
-      select: () => ({ single: async () => ({ data: null, error: null }) }),
-      single: async () => ({ data: null, error: null }),
-    }),
-    update: () => ({
-      eq: () => ({
-        select: () => ({ maybeSingle: async () => ({ data: null, error: null }) }),
-      }),
-    }),
-    delete: () => ({ eq: async () => ({ data: null, error: null }) }),
+    insert: () => emptyQuery,
+    update: () => emptyQuery,
+    delete: () => emptyQuery,
   };
 
   return {

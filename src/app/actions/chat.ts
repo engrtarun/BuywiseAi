@@ -96,8 +96,8 @@ async function incrementExistingLimitRow(
       .eq("usage_date", currentRow.usage_date)
       .single()
 
-    if (refreshError) {
-      throw new Error(`Failed to refresh daily message limit: ${refreshError.message}`)
+    if (refreshError || !refreshedRow) {
+      throw new Error(`Failed to refresh daily message limit: ${refreshError?.message ?? "No row found"}`)
     }
 
     currentRow = refreshedRow
@@ -176,8 +176,12 @@ export async function checkAndIncrementMessageLimit(): Promise<MessageLimitResul
       .select("message_count")
       .single()
 
-    if (!insertError) {
+    if (!insertError && insertedRow) {
       return formatLimitResult(insertedRow.message_count, todayIST, true)
+    }
+
+    if (!insertError) {
+      throw new Error("Failed to create daily message limit: no row returned")
     }
 
     const { data: racedRow, error: racedSelectError } = await supabase
