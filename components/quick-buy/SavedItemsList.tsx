@@ -5,6 +5,7 @@ import { QuickBuyProduct } from "@/lib/quickBuyMockData";
 import { ArrowLeft, Trash2, ShoppingBag, Zap, Plus, Minus, CheckCircle, Grid, Layers } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VirtualWardrobe } from "./VirtualWardrobe";
+import { CheckoutFlow, CheckoutItem } from "../checkout/CheckoutFlow";
 
 interface SavedItemsListProps {
   items: QuickBuyProduct[];
@@ -14,11 +15,9 @@ interface SavedItemsListProps {
   onUpdateQuantity: (id: string, quantity: number) => void;
 }
 
-type CheckoutStep = "CART" | "SUMMARY" | "SUCCESS";
-
 export function SavedItemsList({ items, itemQuantities, onBack, onRemove, onUpdateQuantity }: SavedItemsListProps) {
-  const [step, setStep] = useState<CheckoutStep>("CART");
   const [viewMode, setViewMode] = useState<"GRID" | "WARDROBE">("GRID");
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   const totalPrice = items.reduce((sum, item) => sum + item.price * (itemQuantities[item.id] || 1), 0);
   const totalItems = items.reduce((sum, item) => sum + (itemQuantities[item.id] || 1), 0);
@@ -26,107 +25,13 @@ export function SavedItemsList({ items, itemQuantities, onBack, onRemove, onUpda
   const shipping = totalPrice > 5000 ? 0 : 250;
   const finalTotal = totalPrice + tax + shipping;
 
-  const handleCheckout = () => {
-    setStep("SUMMARY");
-  };
-
-  const handleConfirm = () => {
-    setStep("SUCCESS");
-  };
-
-  // --- Success State ---
-  if (step === "SUCCESS") {
-    return (
-      <div className="flex flex-col items-center justify-center h-full w-full bg-bg-main relative z-50 p-6 animate-in fade-in duration-500">
-        <motion.div 
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", bounce: 0.5 }}
-          className="size-24 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center mb-8 shadow-[0_0_50px_rgba(34,197,94,0.3)]"
-        >
-          <CheckCircle className="size-12 text-green-500" />
-        </motion.div>
-        
-        <h2 className="text-3xl font-heading font-black text-text-primary-light mb-3 text-center">
-          Order Placed!
-        </h2>
-        <p className="text-text-secondary text-center mb-10 max-w-sm">
-          Your stylized fits are secured. We'll send you an email with tracking details shortly.
-        </p>
-
-        <button 
-          onClick={onBack}
-          className="w-full max-w-[280px] py-4 rounded-2xl bg-white/10 text-white font-bold hover:bg-white/20 active:scale-95 transition-all"
-        >
-          Back to Chat
-        </button>
-      </div>
-    );
-  }
-
-  // --- Summary State ---
-  if (step === "SUMMARY") {
-    return (
-      <div className="flex flex-col h-full w-full bg-bg-main relative z-50 animate-in slide-in-from-right-8 duration-300">
-        {/* Header */}
-        <div className="flex items-center px-4 py-4 border-b border-border-light bg-bg-main/80 backdrop-blur-md sticky top-0 z-10">
-          <button onClick={() => setStep("CART")} className="p-2 -ml-2 rounded-full hover:bg-white/5 text-text-primary-light transition-colors">
-            <ArrowLeft className="size-6" />
-          </button>
-          <h2 className="text-lg font-heading font-bold text-text-primary-light ml-2">Order Summary</h2>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 flex flex-col items-center">
-          <div className="w-full max-w-md bg-white/[0.03] border border-white/5 rounded-3xl p-6 shadow-xl">
-            <h3 className="text-xl font-black text-text-primary-light mb-6">Price Details</h3>
-            
-            <div className="space-y-4 text-[15px]">
-              <div className="flex justify-between text-text-secondary">
-                <span>Items ({totalItems})</span>
-                <span className="text-text-primary-light font-medium">₹{totalPrice.toLocaleString('en-IN')}</span>
-              </div>
-              <div className="flex justify-between text-text-secondary">
-                <span>GST (18%)</span>
-                <span className="text-text-primary-light font-medium">₹{tax.toLocaleString('en-IN')}</span>
-              </div>
-              <div className="flex justify-between text-text-secondary">
-                <span>Shipping</span>
-                <span className="text-text-primary-light font-medium">
-                  {shipping === 0 ? <span className="text-green-400">FREE</span> : `₹${shipping}`}
-                </span>
-              </div>
-              
-              <div className="h-px bg-white/10 w-full my-2" />
-              
-              <div className="flex justify-between text-lg font-black text-text-primary-light">
-                <span>Total Amount</span>
-                <span className="text-brand-accent">₹{finalTotal.toLocaleString('en-IN')}</span>
-              </div>
-            </div>
-
-            {/* Note about real payment integration */}
-            <div className="mt-8 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-              <p className="text-[13px] text-amber-500/80 leading-relaxed text-center">
-                * Note: This is a mock checkout flow. Real payment gateway integration (Stripe/Razorpay) will be implemented here.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="p-4 bg-bg-main/90 backdrop-blur-md border-t border-border-light flex justify-center">
-          <button 
-            onClick={handleConfirm}
-            className="w-full max-w-md py-4 rounded-2xl bg-brand-accent text-bg-main font-bold text-lg hover:brightness-110 active:scale-95 transition-all shadow-[0_0_30px_rgba(255,176,103,0.3)] flex items-center justify-center gap-2"
-          >
-            Confirm & Pay ₹{finalTotal.toLocaleString('en-IN')}
-            <ArrowRightIcon className="size-5" />
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const checkoutItems: CheckoutItem[] = items.map(item => ({
+    id: item.id,
+    name: item.name,
+    price: item.price,
+    image: item.image,
+    quantity: itemQuantities[item.id] || 1
+  }));
 
   // --- Cart State (Grid Layout) ---
   const containerVariants = {
@@ -265,7 +170,7 @@ export function SavedItemsList({ items, itemQuantities, onBack, onRemove, onUpda
       {items.length > 0 && viewMode === "GRID" && (
         <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-bg-main/90 backdrop-blur-md border-t border-border-light flex justify-center">
           <button 
-            onClick={handleCheckout}
+            onClick={() => setIsCheckoutOpen(true)}
             className="w-full max-w-md py-4 rounded-2xl bg-brand-accent text-bg-main font-black text-lg hover:brightness-110 active:scale-95 transition-all shadow-[0_0_30px_rgba(255,176,103,0.3)] flex items-center justify-center gap-2"
           >
             <Zap className="size-5 fill-bg-main" />
@@ -274,6 +179,14 @@ export function SavedItemsList({ items, itemQuantities, onBack, onRemove, onUpda
         </div>
       )}
 
+      <CheckoutFlow
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        items={checkoutItems}
+        onSuccess={() => {
+          // Additional success logic if needed (e.g., clear cart)
+        }}
+      />
     </div>
   );
 }

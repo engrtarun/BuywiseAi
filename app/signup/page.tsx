@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function SignupPage(props: { params: Promise<any>; searchParams: Promise<any> }) {
   const params = use(props.params);
@@ -25,6 +26,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
 
   // Multi-step flow state
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [direction, setDirection] = useState(1); // 1 for forward, -1 for backward
   const [loading, setLoading] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
 
@@ -39,6 +41,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [shake, setShake] = useState(false);
 
   // OTP input refs
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -87,18 +90,25 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
   };
 
   // Step transitions & validation
+  const triggerError = (msg: string) => {
+    setInlineError(msg);
+    setShake(true);
+    setTimeout(() => setShake(false), 500);
+  };
+
   const handleNextStep = async () => {
     setInlineError(null);
+    setDirection(1);
 
     if (step === 1) {
       if (!name.trim()) {
-        setInlineError("Please enter your name.");
+        triggerError("Please enter your name.");
         return;
       }
       setStep(2);
     } else if (step === 2) {
       if (!validateEmail(email)) {
-        setInlineError("Please enter a valid email address.");
+        triggerError("Please enter a valid email address.");
         return;
       }
 
@@ -117,7 +127,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
         }
 
         if (profile) {
-          setInlineError("Account already exists — log in instead");
+          triggerError("Account already exists — log in instead");
           setLoading(false);
           return;
         }
@@ -130,11 +140,11 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
       }
     } else if (step === 3) {
       if (!isPasswordStrong) {
-        setInlineError("Password does not meet the strength requirements.");
+        triggerError("Password does not meet the strength requirements.");
         return;
       }
       if (!passwordsMatch) {
-        setInlineError("Passwords do not match.");
+        triggerError("Passwords do not match.");
         return;
       }
 
@@ -152,14 +162,14 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
         });
 
         if (error) {
-          setInlineError(error.message);
+          triggerError(error.message);
           return;
         }
 
         setStep(4);
         setResendCooldown(30);
       } catch (err: any) {
-        setInlineError(err.message || "An unexpected error occurred. Please try again.");
+        triggerError(err.message || "An unexpected error occurred. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -168,6 +178,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
 
   const handlePrevStep = () => {
     setInlineError(null);
+    setDirection(-1);
     if (step > 1) {
       setStep((prev) => (prev - 1) as 1 | 2 | 3 | 4);
     }
@@ -211,8 +222,13 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
     setOtpCodes(newOtp);
 
     // Auto-advance focus
-    if (index < 5) {
+    if (index < 5 && singleDigit) {
       focusOtpInput(index + 1);
+    }
+    
+    // Auto-submit
+    if (newOtp.join("").length === 6) {
+      handleSubmitOtp(newOtp.join(""));
     }
   };
 
@@ -229,15 +245,16 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
       const newOtp = pastedData.slice(0, 6).split("");
       setOtpCodes(newOtp);
       focusOtpInput(5);
+      handleSubmitOtp(newOtp.join(""));
     }
   };
 
   // Submit OTP
-  const handleSubmitOtp = async () => {
+  const handleSubmitOtp = async (codeParam?: string) => {
     setInlineError(null);
-    const code = otpCodes.join("");
+    const code = codeParam || otpCodes.join("");
     if (code.length !== 6) {
-      setInlineError("Please enter all 6 digits of the verification code.");
+      triggerError("Please enter all 6 digits of the verification code.");
       return;
     }
 
@@ -257,7 +274,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
       // Successful signup, redirect
       router.push("/chat");
     } catch (err: any) {
-      setInlineError(err.message || "Verification failed. Please try again.");
+      triggerError(err.message || "Verification failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -305,6 +322,28 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
 
   const strength = getPasswordStrength();
 
+  // Animation variants
+  const variants = {
+    enter: (direction: number) => {
+      return {
+        x: direction > 0 ? 50 : -50,
+        opacity: 0
+      };
+    },
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1
+    },
+    exit: (direction: number) => {
+      return {
+        zIndex: 0,
+        x: direction < 0 ? 50 : -50,
+        opacity: 0
+      };
+    }
+  };
+
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-ink-deeper px-4 py-12 text-text-ondark">
       <div 
@@ -337,10 +376,20 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
         </div>
 
         {/* Main Content Area */}
-        <div className="flex flex-col gap-5 min-h-[220px] justify-center">
-          {/* Step 1: Name */}
-          {step === 1 && (
-            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="relative overflow-hidden min-h-[260px] flex items-center justify-center">
+          <AnimatePresence mode="wait" custom={direction}>
+            {/* Step 1: Name */}
+            {step === 1 && (
+              <motion.div 
+                key="step1"
+                custom={direction}
+                variants={variants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.3 }}
+                className={`w-full flex flex-col gap-4 absolute ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
+              >
               <div className="flex flex-col gap-2">
                 <h1 className="font-heading font-extrabold text-2xl tracking-tight">
                   What's your name?
@@ -362,12 +411,21 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
                   autoFocus
                 />
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Step 2: Email & Google */}
           {step === 2 && (
-            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <motion.div 
+              key="step2"
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.3 }}
+              className={`w-full flex flex-col gap-4 absolute ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
+            >
               <div className="flex flex-col gap-2">
                 <h1 className="font-heading font-extrabold text-2xl tracking-tight">
                   Sign up
@@ -424,12 +482,21 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
                   autoFocus
                 />
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Step 3: Password */}
           {step === 3 && (
-            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <motion.div 
+              key="step3"
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.3 }}
+              className={`w-full flex flex-col gap-4 absolute ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
+            >
               <div className="flex flex-col gap-2">
                 <h1 className="font-heading font-extrabold text-2xl tracking-tight">
                   Create password
@@ -516,12 +583,21 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
                   At least 1 uppercase letter
                 </li>
               </ul>
-            </div>
+            </motion.div>
           )}
 
           {/* Step 4: OTP Verification */}
           {step === 4 && (
-            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <motion.div 
+              key="step4"
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.3 }}
+              className={`w-full flex flex-col gap-4 absolute ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
+            >
               <div className="flex flex-col gap-2">
                 <h1 className="font-heading font-extrabold text-2xl tracking-tight">
                   Verify your email
@@ -551,7 +627,12 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
                     onChange={(e) => handleOtpChange(e.target.value, idx)}
                     onKeyDown={(e) => handleOtpKeyDown(e, idx)}
                     onPaste={idx === 0 ? handleOtpPaste : undefined}
-                    className="size-11 sm:size-12 rounded-xl border border-line-ondark bg-ink-deeper/50 text-center font-heading text-lg font-bold text-marigold focus:border-marigold focus:ring-2 focus:ring-marigold/20 outline-none transition-all disabled:opacity-50"
+                    className={`size-11 sm:size-12 rounded-xl bg-ink-deeper/50 text-center font-heading text-lg font-bold outline-none transition-all disabled:opacity-50
+                      ${shake 
+                        ? 'border-2 border-chili text-chili focus:border-chili focus:ring-2 focus:ring-chili/20' 
+                        : 'border border-line-ondark text-marigold focus:border-marigold focus:ring-2 focus:ring-marigold/20'
+                      }
+                    `}
                     disabled={loading}
                     autoFocus={idx === 0}
                   />
@@ -575,8 +656,9 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
                   </button>
                 )}
               </div>
-            </div>
+            </motion.div>
           )}
+          </AnimatePresence>
         </div>
 
         {/* Inline Error Alert */}
@@ -626,7 +708,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
           </Button>
         ) : (
           <Button
-            onClick={handleSubmitOtp}
+            onClick={() => handleSubmitOtp()}
             disabled={loading || otpCodes.join("").length !== 6}
             className="w-full h-12 bg-marigold text-ink-deeper hover:bg-marigold-dark rounded-xl font-sans font-bold text-sm tracking-wide transition-all duration-200 shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >

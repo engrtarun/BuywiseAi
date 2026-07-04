@@ -23,6 +23,27 @@ function AlertIcon({ className }: { className?: string }) {
   );
 }
 
+function HourglassIcon({ className }: { className?: string }) {
+  return (
+    <svg 
+      className={className}
+      width="18" 
+      height="18" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="1.5" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <path d="M5 22h14" />
+      <path d="M5 2h14" />
+      <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" />
+      <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
+    </svg>
+  );
+}
+
 function RetryIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -66,6 +87,10 @@ export function ErrorMessageCard({ onRetry, errorType = "generic", retryDelay }:
   const errorMessage = isRateLimit 
     ? "BuyWise AI is experiencing high demand right now. Please wait a moment and try again."
     : "Something went wrong while getting a response. Please try again.";
+
+  const subMessage = isRateLimit 
+    ? "This happens occasionally during high-traffic testing — thanks for your patience!" 
+    : "";
   return (
     <div className="w-full max-w-[85%] sm:max-w-[75%] md:max-w-[65%]">
       <div className="flex items-end gap-2 w-full">
@@ -83,12 +108,22 @@ export function ErrorMessageCard({ onRetry, errorType = "generic", retryDelay }:
           font-sans w-full min-w-0
         ">
           <div className="flex items-start gap-2.5">
-            <AlertIcon className="text-brand-accent shrink-0 mt-0.5" />
+            {isRateLimit ? (
+              <HourglassIcon className="text-brand-accent shrink-0 mt-0.5 animate-spin-slow" />
+            ) : (
+              <AlertIcon className="text-brand-accent shrink-0 mt-0.5" />
+            )}
             <div className="flex-1 min-w-0">
-              <p className="text-text-primary-light text-[14px] mb-2">
+              <p className="text-text-primary-light text-[14px] mb-1">
                 {errorMessage}
               </p>
-              <button
+              {subMessage && (
+                <p className="text-text-secondary text-[12px] italic mb-3">
+                  {subMessage}
+                </p>
+              )}
+              <div className={!subMessage ? "mt-3" : ""}>
+                <button
                 onClick={canRetry ? onRetry : undefined}
                 disabled={!canRetry}
                 className={`
@@ -103,6 +138,7 @@ export function ErrorMessageCard({ onRetry, errorType = "generic", retryDelay }:
                 <RetryIcon className={`transition-transform duration-300 ${canRetry ? "hover:rotate-[-180deg]" : ""}`} />
                 {isRateLimit && countdown && countdown > 0 ? `Retry in ${countdown}s...` : "Retry"}
               </button>
+              </div>
             </div>
           </div>
         </div>
