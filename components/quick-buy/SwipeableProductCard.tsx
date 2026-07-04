@@ -144,6 +144,7 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, isTop
         borderColor: borderColor,
         transformStyle: "preserve-3d", // Important for 3D children
         perspective: 1000,
+        touchAction: "pan-y" // Allow vertical scrolling on mobile while locking horizontal
       }}
       className={`
         absolute w-full max-w-[340px] h-[520px] 
@@ -159,10 +160,10 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, isTop
       >
         
         {/* Swipe Overlays */}
-        <motion.div style={{ opacity: likeOpacity }} className="absolute top-8 left-8 z-50 pointer-events-none border-4 border-green-500 text-green-500 font-black text-4xl px-4 py-1 rounded-xl rotate-[-15deg] shadow-[0_0_20px_rgba(34,197,94,0.3)] bg-black/20">
-          LIKE
+        <motion.div style={{ opacity: likeOpacity }} className="absolute top-8 left-8 z-50 pointer-events-none border-4 border-brand-accent text-brand-accent font-black text-4xl px-4 py-1 rounded-xl rotate-[-15deg] shadow-[0_0_20px_rgba(255,176,103,0.3)] bg-black/20 flex items-center gap-2">
+          <Heart className="size-8 fill-brand-accent text-brand-accent" /> SAVED
         </motion.div>
-        <motion.div style={{ opacity: skipOpacity }} className="absolute top-8 right-8 z-50 pointer-events-none border-4 border-red-500 text-red-500 font-black text-4xl px-4 py-1 rounded-xl rotate-[15deg] shadow-[0_0_20px_rgba(239,68,68,0.3)] bg-black/20">
+        <motion.div style={{ opacity: skipOpacity }} className="absolute top-8 right-8 z-50 pointer-events-none border-4 border-white/50 text-white/50 font-black text-4xl px-4 py-1 rounded-xl rotate-[15deg] shadow-[0_0_20px_rgba(255,255,255,0.1)] bg-black/20">
           SKIP
         </motion.div>
 
