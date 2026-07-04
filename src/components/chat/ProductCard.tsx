@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Product } from "@/types/product";
-import { Star, ExternalLink, ShoppingCart, Loader2 } from "lucide-react";
+import { Star, ExternalLink, ShoppingCart, Loader2, ChevronRight } from "lucide-react";
 import { CheckoutFlow } from "../checkout/CheckoutFlow";
 import { ProductBottomSheet } from "./ProductBottomSheet";
 
@@ -92,32 +92,14 @@ export function ProductCard({ product }: ProductCardProps) {
           </span>
         </div>
 
-        {/* Description */}
-        <p className="text-text-dim-ondark text-[12px] sm:text-[13px] line-clamp-2 leading-relaxed mb-3">
-          {product.description}
-        </p>
-
         <div className="mt-auto pt-2 flex items-end justify-between">
           <div className="flex flex-col">
-            {/* Original price & discount */}
-            {(product.originalPrice || product.discountBadge) && (
-              <div className="flex items-center gap-1.5 mb-0.5">
-                {product.originalPrice && (
-                  <span className="text-text-dim-ondark text-[11px] sm:text-[12px] line-through">
-                    {product.originalPrice}
-                  </span>
-                )}
-                {product.discountBadge && (
-                  <span className="text-chili text-[10px] sm:text-[11px] font-bold bg-chili/10 px-1 rounded">
-                    {product.discountBadge}
-                  </span>
-                )}
-              </div>
-            )}
-            {/* Final price */}
-            <span className="font-heading font-bold text-marigold text-lg sm:text-xl leading-none">
+            <span className="font-heading font-bold text-marigold text-lg sm:text-xl leading-none mb-1">
               {product.price}
             </span>
+            <div className="flex items-center text-brand-accent/80 text-[11px] font-bold tracking-wide uppercase group-hover:text-brand-accent transition-colors">
+              View Details <ChevronRight className="size-3 ml-0.5" />
+            </div>
           </div>
 
           <div className="flex items-center gap-2">

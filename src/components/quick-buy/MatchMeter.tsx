@@ -7,9 +7,11 @@ import { Flame } from "lucide-react";
 interface MatchMeterProps {
   score?: number;
   commentary?: string;
+  compact?: boolean;
+  onClick?: () => void;
 }
 
-export function MatchMeter({ score, commentary }: MatchMeterProps) {
+export function MatchMeter({ score, commentary, compact = false, onClick }: MatchMeterProps) {
   const [displayScore, setDisplayScore] = useState(0);
   const animatedScore = useMotionValue(0);
   
@@ -49,6 +51,24 @@ export function MatchMeter({ score, commentary }: MatchMeterProps) {
   const currentColor = score !== undefined ? getColor(score) : "#333333";
 
   if (score === undefined) return null;
+
+  if (compact) {
+    return (
+      <button 
+        onClick={onClick}
+        className="flex items-center gap-2 bg-bg-input/90 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all group"
+      >
+        <Flame className="size-4" style={{ color: currentColor }} />
+        <span className="font-bold text-sm text-text-primary-light tabular-nums">
+          {displayScore} <span className="text-[10px] text-text-secondary uppercase tracking-wider ml-0.5">Match</span>
+        </span>
+        <div className="w-px h-3 bg-white/20 mx-1" />
+        <span className="text-[10px] text-brand-accent uppercase font-bold tracking-wider group-hover:text-brand-accent/80">
+          Details
+        </span>
+      </button>
+    );
+  }
 
   return (
     <motion.div 

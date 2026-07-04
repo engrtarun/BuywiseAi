@@ -6,6 +6,7 @@ import { QuickBuyProduct } from "@/lib/quickBuyMockData";
 import { DraggableWardrobeItem } from "./DraggableWardrobeItem";
 import { LiveOutfitSummary } from "./LiveOutfitSummary";
 import { MatchMeter } from "./MatchMeter";
+import { MatchMeterBottomSheet } from "./MatchMeterBottomSheet";
 import { CanvasThinkingWave } from "./CanvasThinkingWave";
 import { LayoutGrid, Shuffle, Sparkles } from "lucide-react";
 import { CheckoutFlow, CheckoutItem } from "../checkout/CheckoutFlow";
@@ -23,6 +24,7 @@ export function OutfitCanvas({ wardrobeItems }: OutfitCanvasProps) {
   // Rating State
   const [isRating, setIsRating] = useState(false);
   const [matchData, setMatchData] = useState<{ score: number; commentary: string } | null>(null);
+  const [isMatchSheetOpen, setIsMatchSheetOpen] = useState(false);
 
   // Checkout State
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -168,16 +170,13 @@ export function OutfitCanvas({ wardrobeItems }: OutfitCanvasProps) {
             {/* Overlays */}
             {isRating && <CanvasThinkingWave />}
             {matchData && !isRating && (
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4">
-                <div className="relative">
-                  <button 
-                    onClick={() => setMatchData(null)}
-                    className="absolute -top-12 right-0 text-text-secondary hover:text-white font-mono text-sm"
-                  >
-                    CLOSE
-                  </button>
-                  <MatchMeter score={matchData.score} commentary={matchData.commentary} />
-                </div>
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40">
+                <MatchMeter 
+                  score={matchData.score} 
+                  commentary={matchData.commentary} 
+                  compact={true}
+                  onClick={() => setIsMatchSheetOpen(true)}
+                />
               </div>
             )}
           </div>
@@ -226,6 +225,13 @@ export function OutfitCanvas({ wardrobeItems }: OutfitCanvasProps) {
         onClose={() => setIsCheckoutOpen(false)}
         items={checkoutItems}
         onSuccess={() => setIsCheckoutOpen(false)}
+      />
+
+      <MatchMeterBottomSheet
+        isOpen={isMatchSheetOpen}
+        onClose={() => setIsMatchSheetOpen(false)}
+        score={matchData?.score}
+        commentary={matchData?.commentary}
       />
     </div>
   );
