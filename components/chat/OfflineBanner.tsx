@@ -1,32 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { OfflineIllustration } from "./OfflineIllustration";
 
-/** Animated "no wifi" SVG icon */
-function NoWifiIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <line x1="1" y1="1" x2="23" y2="23" />
-      <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55" />
-      <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39" />
-      <path d="M10.71 5.05A16 16 0 0 1 22.56 9" />
-      <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88" />
-      <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-      <line x1="12" y1="20" x2="12.01" y2="20" />
-    </svg>
-  );
-}
-
+/** Simple wifi icon for the "Back online" toast */
 function WifiIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -82,20 +59,34 @@ export function OfflineBanner() {
 
   return (
     <div className="shrink-0 z-30">
-      {/* Offline banner */}
+      {/* ── Offline banner ─────────────────────────────── */}
       {!isOnline && (
-        <div className="
-          flex items-center justify-center gap-2.5 px-4 py-2.5
-          bg-chili/15 border-b border-chili/25
-          text-chili text-[13px] font-sans
-          animate-in fade-in slide-in-from-top-2 duration-300
-        ">
-          <NoWifiIcon className="shrink-0 animate-pulse" />
-          <span>You&apos;re offline. Check your internet connection.</span>
+        <div
+          className="
+            flex items-center justify-center gap-4 px-4 py-4
+            bg-gradient-to-r from-ink-deeper/95 via-ink-deep/90 to-ink-deeper/95
+            border-b border-marigold/15 backdrop-blur-md
+            animate-in fade-in slide-in-from-top-2 duration-300
+          "
+        >
+          {/* 3D floating orb illustration */}
+          <OfflineIllustration
+            className="shrink-0 scale-90 sm:scale-100"
+          />
+
+          {/* Text content */}
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <span className="text-marigold text-[13px] sm:text-[14px] font-heading font-semibold tracking-tight">
+              You&apos;re offline
+            </span>
+            <span className="text-text-dim-ondark text-[12px] sm:text-[13px] font-sans leading-snug">
+              Check your internet connection to continue.
+            </span>
+          </div>
         </div>
       )}
 
-      {/* Back online confirmation */}
+      {/* ── Back online confirmation ───────────────────── */}
       {isOnline && showBackOnline && (
         <div className="
           flex items-center justify-center gap-2.5 px-4 py-2.5
@@ -110,3 +101,4 @@ export function OfflineBanner() {
     </div>
   );
 }
+

@@ -13,6 +13,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
  * It receives the chat history and the user's message, then uses the
  * Google Generative AI SDK to get a response from the Gemini model.
  *
+ * Gemini free tier allows only 20 requests/day for gemini-2.5-flash. For production/higher usage, 
+ * upgrade to a paid plan or implement request queuing/caching to reduce API calls. 
+ * See: https://ai.google.dev/gemini-api/docs/rate-limits
+ *
  * @param {NextRequest} req The incoming Next.js API request object.
  * @returns {Promise<NextResponse>} A Next.js API response object with the
  *   AI's text response.
@@ -76,10 +80,44 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ text });
   } catch (error: any) {
-    console.error("API route error:", error);
+    let statusCode = 500;
+    let errorMessage = error.message || "Internal Server Error";
+    let retryDelay: number | undefined;
+
+    // Check for rate-limit / quota exceeded errors
+    if (
+      error.status === 429 ||
+      errorMessage.toLowerCase().includes("429") ||
+      errorMessage.toLowerCase().includes("too many requests") ||
+      errorMessage.toLowerCase().includes("quota exceeded")
+    ) {
+      statusCode = 429;
+      errorMessage = "Rate limit exceeded";
+      
+      // Try to parse retryDelay from the error object or message string
+      if (error.retryDelay) {
+        retryDelay = parseInt(error.retryDelay, 10);
+      } else {
+        const match = error.message?.match(/(\d+)\s*s/);
+        if (match) {
+          retryDelay = parseInt(match[1], 10);
+        }
+      }
+    }
+
+    if (process.env.NODE_ENV === "development") {
+      console.error("API route error:", error);
+    } else {
+      if (statusCode === 429) {
+        console.error("Gemini API rate limit hit:", statusCode);
+      } else {
+        console.error("API route error:", error.name, error.message);
+      }
+    }
+
     return NextResponse.json(
-      { error: error.message || "Internal Server Error" },
-      { status: 500 }
+      { error: errorMessage, retryDelay },
+      { status: statusCode }
     );
   }
 }

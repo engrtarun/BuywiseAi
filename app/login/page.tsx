@@ -10,17 +10,26 @@ import {
   Mail, 
   Loader2, 
   ShieldAlert, 
-  CheckCircle2 
+  CheckCircle2,
+  X 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
+import { useGuestAccess } from "@/hooks/useGuestAccess";
 
 export default function LoginPage(props: { params: Promise<any>; searchParams: Promise<any> }) {
   const params = use(props.params);
   const searchParams = use(props.searchParams);
   const router = useRouter();
   const supabase = createClient();
+  const { enterGuestMode } = useGuestAccess();
+
+  /** Skip login → enter as guest */
+  const handleGuestSkip = () => {
+    enterGuestMode();
+    router.push("/");
+  };
 
   // Loading and Error States
   const [loading, setLoading] = useState(false);
@@ -252,8 +261,30 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
     <div className="flex min-h-dvh flex-col items-center justify-center bg-ink-deeper px-4 py-12 text-text-ondark">
       <div 
         onKeyDown={handleKeyDown}
-        className="w-full max-w-md bg-ink-deep border border-line-ondark rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col gap-6"
+        className="w-full max-w-md bg-ink-deep border border-line-ondark rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col gap-6 relative"
       >
+        {/* Close / Skip Login (X) button — top-right of card */}
+        {viewState === "login" && (
+          <button
+            type="button"
+            onClick={handleGuestSkip}
+            aria-label="Skip login and continue as guest"
+            title="Continue as guest"
+            className="
+              absolute top-4 right-4 sm:top-5 sm:right-5 z-10
+              size-8 rounded-full
+              bg-white/10 backdrop-blur-sm
+              flex items-center justify-center
+              text-text-dim-ondark
+              hover:bg-white/20 hover:text-text-ondark hover:scale-110
+              active:scale-95
+              transition-all duration-200
+              cursor-pointer
+            "
+          >
+            <X className="size-4" />
+          </button>
+        )}
         {/* Back navigation inside reset password or OTP flow */}
         {viewState !== "login" && (
           <button

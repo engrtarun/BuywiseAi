@@ -44,9 +44,27 @@ function RetryIcon({ className }: { className?: string }) {
 
 interface ErrorMessageCardProps {
   onRetry: () => void;
+  errorType?: "generic" | "rate_limit";
+  retryDelay?: number;
 }
 
-export function ErrorMessageCard({ onRetry }: ErrorMessageCardProps) {
+export function ErrorMessageCard({ onRetry, errorType = "generic", retryDelay }: ErrorMessageCardProps) {
+  const [countdown, setCountdown] = React.useState<number | null>(retryDelay || null);
+
+  React.useEffect(() => {
+    if (countdown === null || countdown <= 0) return;
+    const timer = setInterval(() => {
+      setCountdown((prev) => (prev && prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [countdown]);
+
+  const isRateLimit = errorType === "rate_limit";
+  const canRetry = !isRateLimit || countdown === null || countdown === 0;
+
+  const errorMessage = isRateLimit 
+    ? "BuyWise AI is experiencing high demand right now. Please wait a moment and try again."
+    : "Something went wrong while getting a response. Please try again.";
   return (
     <div className="w-full max-w-[85%] sm:max-w-[75%] md:max-w-[65%]">
       <div className="flex items-end gap-2 w-full">
@@ -67,19 +85,22 @@ export function ErrorMessageCard({ onRetry }: ErrorMessageCardProps) {
             <AlertIcon className="text-chili shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <p className="text-text-ondark text-[14px] mb-2">
-                Something went wrong while getting a response. Please try again.
+                {errorMessage}
               </p>
               <button
-                onClick={onRetry}
-                className="
+                onClick={canRetry ? onRetry : undefined}
+                disabled={!canRetry}
+                className={`
                   inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
                   bg-chili/10 border border-chili/20 text-chili text-[13px] font-sans font-medium
-                  hover:bg-chili/20 hover:border-chili/30 active:scale-[0.97]
                   transition-all duration-200 touch-manipulation
-                "
+                  ${canRetry 
+                    ? "hover:bg-chili/20 hover:border-chili/30 active:scale-[0.97] cursor-pointer" 
+                    : "opacity-50 cursor-not-allowed"}
+                `}
               >
-                <RetryIcon className="transition-transform duration-300 hover:rotate-[-180deg]" />
-                Retry
+                <RetryIcon className={`transition-transform duration-300 ${canRetry ? "hover:rotate-[-180deg]" : ""}`} />
+                {isRateLimit && countdown && countdown > 0 ? `Retry in ${countdown}s...` : "Retry"}
               </button>
             </div>
           </div>

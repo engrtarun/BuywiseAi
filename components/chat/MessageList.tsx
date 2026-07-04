@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "./MessageBubble";
 import { ThinkingIndicator } from "./ThinkingIndicator";
 import { ErrorMessageCard } from "./ErrorMessageCard";
+import { GuestLimitReachedCard } from "./GuestLimitReachedCard";
 import { Message, Feedback } from "./types";
 import { ArrowDown } from "lucide-react";
 
@@ -14,9 +15,11 @@ interface MessageListProps {
   onRegenerate: () => void;
   onRetry: () => void;
   onFeedback: (id: string, feedback: Feedback) => void;
+  guestLimitReached?: boolean;
+  onLoginClick?: () => void;
 }
 
-export function MessageList({ messages, isTyping, onRegenerate, onRetry, onFeedback }: MessageListProps) {
+export function MessageList({ messages, isTyping, onRegenerate, onRetry, onFeedback, guestLimitReached = false, onLoginClick }: MessageListProps) {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -65,7 +68,12 @@ export function MessageList({ messages, isTyping, onRegenerate, onRetry, onFeedb
         <div className="w-full max-w-3xl mx-auto flex flex-col gap-4 sm:gap-6 px-4 py-4">
           {messages.map((msg) =>
             msg.status === "error" ? (
-              <ErrorMessageCard key={msg.id} onRetry={onRetry} />
+              <ErrorMessageCard 
+                key={msg.id} 
+                onRetry={onRetry} 
+                errorType={msg.errorType}
+                retryDelay={msg.retryDelay}
+              />
             ) : (
               <MessageBubble
                 key={msg.id}
@@ -77,6 +85,9 @@ export function MessageList({ messages, isTyping, onRegenerate, onRetry, onFeedb
             )
           )}
           {isTyping && <ThinkingIndicator />}
+          {guestLimitReached && onLoginClick && (
+            <GuestLimitReachedCard onLoginClick={onLoginClick} />
+          )}
           <div ref={messagesEndRef} className="h-4" />
         </div>
       </ScrollArea>

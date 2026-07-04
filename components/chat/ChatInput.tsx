@@ -18,9 +18,10 @@ interface ChatInputProps {
   onStop?: () => void;
   disabled: boolean;
   isGenerating: boolean;
+  guestLimitReached?: boolean;
 }
 
-export function ChatInput({ onSend, onStop, disabled, isGenerating }: ChatInputProps) {
+export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitReached = false }: ChatInputProps) {
   const [inputText, setInputText] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -34,6 +35,7 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating }: ChatInputP
   }, []);
 
   const handleSend = () => {
+    if (guestLimitReached) return;
     const content = inputText.trim();
     if (!content || disabled) return;
 
@@ -49,7 +51,7 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating }: ChatInputP
   };
 
   return (
-    <div className="shrink-0 bg-ink-deeper border-t border-line-ondark px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-4 z-20">
+    <div className={`shrink-0 bg-ink-deeper border-t border-line-ondark px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-4 z-20 transition-opacity duration-300 ${guestLimitReached ? "opacity-60" : ""}`}>
       <div className="w-full max-w-3xl mx-auto flex flex-col gap-2">
 
         {/* Stop Generating button — shown above input while AI is responding */}
@@ -101,10 +103,11 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating }: ChatInputP
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder=""
+              placeholder={guestLimitReached ? "Log in to continue chatting..." : ""}
               minRows={1}
               maxRows={5}
-              className="w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-ondark outline-none font-sans resize-none z-10 self-center"
+              disabled={guestLimitReached}
+              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-ondark outline-none font-sans resize-none z-10 self-center ${guestLimitReached ? "cursor-not-allowed placeholder:text-text-dim-ondark/80" : ""}`}
             />
           </div>
 
@@ -119,7 +122,7 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating }: ChatInputP
               handleSend();
             }}
             aria-label="Send message"
-            className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-marigold text-ink-deeper transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || disabled ? "opacity-40" : "hover:scale-105 hover:brightness-110 active:scale-95"
+            className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-marigold text-ink-deeper transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || disabled || guestLimitReached ? "opacity-40 cursor-not-allowed" : "hover:scale-105 hover:brightness-110 active:scale-95"
               }`}
           >
             <ArrowUp className="size-5 stroke-[2.5]" />

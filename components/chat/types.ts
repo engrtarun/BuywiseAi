@@ -24,6 +24,8 @@ export interface Message {
   content: string;
   feedback?: Feedback;
   status?: MessageStatus;
+  errorType?: "generic" | "rate_limit";
+  retryDelay?: number;
   products?: Product[];
 }
 

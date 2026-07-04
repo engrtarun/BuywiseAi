@@ -2,9 +2,14 @@
 
 import React from "react";
 import { Sparkles, Search, Gift, Smartphone, Laptop, Scale } from "lucide-react";
+import { GuestLimitReachedCard } from "./GuestLimitReachedCard";
 
 interface WelcomeScreenProps {
   onSuggestionClick: (text: string) => void;
+  isGuest?: boolean;
+  guestMessagesRemaining?: number;
+  guestLimitReached?: boolean;
+  onLoginClick?: () => void;
 }
 
 const suggestions = [
@@ -34,7 +39,7 @@ const suggestions = [
   },
 ];
 
-export function WelcomeScreen({ onSuggestionClick }: WelcomeScreenProps) {
+export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessagesRemaining = 0, guestLimitReached = false, onLoginClick }: WelcomeScreenProps) {
   return (
     <div className="flex-1 min-h-0 flex items-center justify-center overflow-y-auto px-4 py-8">
       <div className="w-full max-w-2xl mx-auto flex flex-col items-center gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -57,6 +62,25 @@ export function WelcomeScreen({ onSuggestionClick }: WelcomeScreenProps) {
             Your smart shopping assistant. Ask me to find, compare, or recommend
             products across Amazon &amp; Flipkart.
           </p>
+
+          {/* Guest mode indicator badge */}
+          {isGuest && (
+            <div className="inline-flex items-center gap-2 mt-2 px-3.5 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.10] backdrop-blur-sm animate-in fade-in duration-500">
+              <span className="text-xs font-mono text-text-dim-ondark">
+                👋 Guest mode
+              </span>
+              <span className="w-px h-3 bg-line-ondark" />
+              <span className="text-xs font-mono text-marigold font-medium">
+                {guestMessagesRemaining} free message{guestMessagesRemaining !== 1 ? "s" : ""} left
+              </span>
+            </div>
+          )}
+          {/* Guest limit card */}
+          {guestLimitReached && onLoginClick && (
+            <div className="mt-6 flex justify-center w-full">
+              <GuestLimitReachedCard onLoginClick={onLoginClick} />
+            </div>
+          )}
         </div>
 
         {/* Suggestion chips */}
@@ -67,21 +91,23 @@ export function WelcomeScreen({ onSuggestionClick }: WelcomeScreenProps) {
               <button
                 key={s.text}
                 type="button"
-                onClick={() => onSuggestionClick(s.text)}
+                onClick={() => {
+                  if (!guestLimitReached) onSuggestionClick(s.text);
+                }}
                 onTouchEnd={(e) => {
                   e.preventDefault();
-                  onSuggestionClick(s.text);
+                  if (!guestLimitReached) onSuggestionClick(s.text);
                 }}
-                className="
+                disabled={guestLimitReached}
+                className={`
                   w-full h-full group flex items-center gap-3 text-left
                   px-4 py-3.5 rounded-2xl
                   bg-white/[0.03] border border-white/[0.08]
                   backdrop-blur-sm
-                  hover:bg-white/[0.07] hover:border-marigold/30 hover:-translate-y-0.5 hover:shadow-md
-                  active:scale-[0.98]
                   transition-all duration-200 ease-out
                   touch-manipulation
-                "
+                  ${guestLimitReached ? "opacity-50 cursor-not-allowed" : "hover:bg-white/[0.07] hover:border-marigold/30 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"}
+                `}
               >
                 <div className="size-9 rounded-xl bg-marigold/10 flex items-center justify-center shrink-0 group-hover:bg-marigold/20 transition-colors">
                   <Icon className="size-4.5 text-marigold" />

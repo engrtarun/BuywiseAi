@@ -38,6 +38,11 @@ interface ChatWindowProps {
   onRetry: () => void;
   onFeedback: (id: string, feedback: Feedback) => void;
   onMenuToggle: () => void;
+  /* Guest mode props */
+  isGuest?: boolean;
+  guestMessagesRemaining?: number;
+  guestLimitReached?: boolean;
+  onLoginClick?: () => void;
 }
 
 export function ChatWindow({
@@ -50,6 +55,10 @@ export function ChatWindow({
   onRetry,
   onFeedback,
   onMenuToggle,
+  isGuest = false,
+  guestMessagesRemaining = 0,
+  guestLimitReached = false,
+  onLoginClick,
 }: ChatWindowProps) {
   const showWelcome = messages.length === 0 && !isTyping;
 
@@ -58,7 +67,13 @@ export function ChatWindow({
       <ChatHeader isSidebarOpen={isSidebarOpen} onMenuToggle={onMenuToggle} />
       <OfflineBanner />
       {showWelcome ? (
-        <WelcomeScreen onSuggestionClick={onSend} />
+        <WelcomeScreen
+          onSuggestionClick={onSend}
+          isGuest={isGuest}
+          guestMessagesRemaining={guestMessagesRemaining}
+          guestLimitReached={guestLimitReached}
+          onLoginClick={onLoginClick}
+        />
       ) : (
         <MessageList
           messages={messages}
@@ -66,9 +81,17 @@ export function ChatWindow({
           onRegenerate={onRegenerate}
           onRetry={onRetry}
           onFeedback={onFeedback}
+          guestLimitReached={guestLimitReached}
+          onLoginClick={onLoginClick}
         />
       )}
-      <ChatInput onSend={onSend} onStop={onStop} disabled={isTyping} isGenerating={isTyping} />
+      <ChatInput
+        onSend={onSend}
+        onStop={onStop}
+        disabled={isTyping}
+        isGenerating={isTyping}
+        guestLimitReached={guestLimitReached}
+      />
     </div>
   );
 }
