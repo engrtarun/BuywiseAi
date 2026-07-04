@@ -37,6 +37,34 @@ export default function QuickBuyPage() {
     return () => window.clearTimeout(timer);
   }, [toastMessage]);
 
+  const saveProductAction = async (isCart: boolean) => {
+    const product = products[currentIndex];
+    if (!product) return;
+
+    try {
+      const res = await fetch('/api/quick-buy/actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_id: String(product.id),
+          product_name: product.name,
+          price: product.price,
+          image_url: product.image_url,
+          is_cart: isCart,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.error || 'Failed to save product action');
+      }
+    } catch (err) {
+      console.error('Failed to save quick-buy action', err);
+      const message = err instanceof Error ? err.message : 'Failed to save product action';
+      setToastMessage(`⚠️ ${message}`);
+    }
+  };
+
   const handleNextCard = () => {
     setAddToCartChecked(false);
     setCurrentIndex((prev) => prev + 1);
@@ -45,6 +73,7 @@ export default function QuickBuyPage() {
 
   const handleOneClickBuy = (productName: string) => {
     setAddToCartChecked(true);
+    void saveProductAction(true);
     setToastMessage(`✅ ${productName} added to your cart`);
     handleNextCard();
   };
@@ -100,7 +129,13 @@ export default function QuickBuyPage() {
           <input
             type="checkbox"
             checked={addToCartChecked}
-            onChange={(e) => setAddToCartChecked(e.target.checked)}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              setAddToCartChecked(checked);
+              if (checked) {
+                void saveProductAction(true);
+              }
+            }}
             className="h-4 w-4 accent-amber-400"
           />
           <span className="select-none text-xs font-medium text-white">Add to Cart</span>
@@ -146,7 +181,10 @@ export default function QuickBuyPage() {
           🚀 Buy (One Click)
         </Button>
         <Button
-          onClick={handleNextCard}
+          onClick={() => {
+            void saveProductAction(false);
+            handleNextCard();
+          }}
           variant="outline"
           className="flex-1 rounded-xl border-slate-600 bg-slate-800 py-6 text-md text-white hover:bg-slate-700 hover:text-white"
         >
