@@ -374,7 +374,6 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
         chatHistory={chatSessions.filter((s) => !s.isTemporary)}
         activeChatId={activeChatId}
         onNewChat={handleNewChat}
-        onNewTemporaryChat={handleNewTemporaryChat}
         onSelectChat={handleSelectChat}
         onDeleteChat={handleDeleteChat}
         isOpen={sidebarOpen}
@@ -401,6 +400,7 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
           cooldownUntil={cooldownUntil}
           isTemporaryChat={isTemporaryChat}
           onNewChat={handleNewChat}
+          onNewTemporaryChat={handleNewTemporaryChat}
         />
       </div>
     </div>
