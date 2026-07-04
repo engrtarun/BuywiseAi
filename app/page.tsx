@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, use } from "react";
 import { Message, ChatSession, Feedback } from "@/components/chat/types";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { Sidebar } from "@/components/chat/Sidebar";
@@ -67,7 +67,9 @@ function extractAiText(raw: any): string {
 
 /* ── Page (top-level orchestrator) ────────────────────── */
 
-export default function Page() {
+export default function Page(props: { params: Promise<any>; searchParams: Promise<any> }) {
+  const params = use(props.params);
+  const searchParams = use(props.searchParams);
   // Chat sessions state
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);

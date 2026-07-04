@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Eye, 
@@ -16,7 +16,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 
-export default function LoginPage() {
+export default function LoginPage(props: { params: Promise<any>; searchParams: Promise<any> }) {
+  const params = use(props.params);
+  const searchParams = use(props.searchParams);
   const router = useRouter();
   const supabase = createClient();
 

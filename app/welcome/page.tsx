@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { User, Loader2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 
-export default function WelcomePage() {
+export default function WelcomePage(props: { params: Promise<any>; searchParams: Promise<any> }) {
+  const params = use(props.params);
+  const searchParams = use(props.searchParams);
   const router = useRouter();
   const supabase = createClient();
 
