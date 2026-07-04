@@ -126,7 +126,7 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, isTop
 
   return (
     <motion.div
-      drag={isTop ? "x" : false}
+      drag="x"
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.7}
       onDragEnd={handleDragEnd}
@@ -145,11 +145,12 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, isTop
         transformStyle: "preserve-3d", // Important for 3D children
         perspective: 1000,
       }}
-      className="
+      className={`
         absolute w-full max-w-[340px] h-[520px] 
         rounded-[32px] border border-white/[0.08] backdrop-blur-md shadow-2xl
         flex flex-col overflow-hidden will-change-transform
-      "
+        ${!isTop ? "pointer-events-none" : "pointer-events-auto"}
+      `}
     >
       {/* 3D Inner Content Container */}
       <div 

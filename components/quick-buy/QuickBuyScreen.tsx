@@ -14,12 +14,15 @@ interface QuickBuyScreenProps {
 export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
   const { 
     isInitializing, 
+    isLoadingProducts,
     preferences, 
     savePreferences, 
     savedItemIds, 
     savedProducts, 
+    itemQuantities,
     saveItem, 
     removeSavedItem, 
+    updateQuantity,
     getFilteredProducts 
   } = useQuickBuy();
 
@@ -71,8 +74,10 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
       <div className="absolute inset-0 z-[100] bg-bg-main">
         <SavedItemsList 
           items={savedProducts} 
+          itemQuantities={itemQuantities}
           onBack={() => setShowSaved(false)} 
           onRemove={removeSavedItem} 
+          onUpdateQuantity={updateQuantity}
         />
       </div>
     );
@@ -93,13 +98,18 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
           <span className="hidden sm:inline">Back to Chat</span>
         </button>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Quick Budget Display/Edit */}
           <button
             onClick={() => setShowSettings(true)}
-            className="p-2 rounded-full hover:bg-white/5 text-text-secondary transition-colors"
-            title="Filters"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 transition-colors group"
+            title="Change Budget & Sizes"
           >
-            <Settings2 className="size-5" />
+            <span className="text-xs font-medium text-text-secondary hidden sm:inline">Budget:</span>
+            <span className="text-sm font-bold text-brand-accent">
+              {preferences?.maxBudget ? `₹${preferences.maxBudget}` : "Any"}
+            </span>
+            <Settings2 className="size-3.5 text-text-secondary group-hover:text-text-primary-light" />
           </button>
           <button
             onClick={() => setShowSaved(true)}
@@ -112,11 +122,18 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
       </div>
 
       {/* Swipe Deck */}
-      <SwipeCardDeck 
-        products={filteredProducts} 
-        onSave={saveItem} 
-        onOpenSettings={() => setShowSettings(true)}
-      />
+      {isLoadingProducts ? (
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <div className="size-8 rounded-full border-4 border-brand-accent/20 border-t-brand-accent animate-spin mb-4" />
+          <p className="text-text-secondary font-medium animate-pulse">Loading live collection...</p>
+        </div>
+      ) : (
+        <SwipeCardDeck 
+          products={filteredProducts} 
+          onSave={saveItem} 
+          onOpenSettings={() => setShowSettings(true)}
+        />
+      )}
 
     </div>
   );
