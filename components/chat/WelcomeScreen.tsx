@@ -55,10 +55,10 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
 
         {/* Welcome text */}
         <div className="text-center space-y-3">
-          <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-text-ondark tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-text-primary-light tracking-tight">
             Hi, I&apos;m <span className="text-marigold">BuyWise AI</span>
           </h1>
-          <p className="text-sm sm:text-base text-text-dim-ondark font-sans max-w-md mx-auto leading-relaxed">
+          <p className="text-sm sm:text-base text-text-secondary font-sans max-w-md mx-auto leading-relaxed">
             Your smart shopping assistant. Ask me to find, compare, or recommend
             products across Amazon &amp; Flipkart.
           </p>
@@ -112,7 +112,7 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
                 <div className="size-9 rounded-xl bg-marigold/10 flex items-center justify-center shrink-0 group-hover:bg-marigold/20 transition-colors">
                   <Icon className="size-4.5 text-marigold" />
                 </div>
-                <span className="text-[13px] sm:text-[14px] text-text-ondark font-sans leading-snug">
+                <span className="text-[13px] sm:text-[14px] text-text-primary-light font-sans leading-snug">
                   {s.text}
                 </span>
               </button>

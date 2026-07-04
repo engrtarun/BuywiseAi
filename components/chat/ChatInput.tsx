@@ -51,7 +51,7 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitRe
   };
 
   return (
-    <div className={`shrink-0 bg-ink-deeper border-t border-line-ondark px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-4 z-20 transition-opacity duration-300 ${guestLimitReached ? "opacity-60" : ""}`}>
+    <div className={`shrink-0 bg-bg-main border-t border-border-light px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-4 z-20 transition-opacity duration-300 ${guestLimitReached ? "opacity-60" : ""}`}>
       <div className="w-full max-w-3xl mx-auto flex flex-col gap-2">
 
         {/* Stop Generating button — shown above input while AI is responding */}
@@ -60,8 +60,8 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitRe
             onClick={onStop}
             className="
               self-center flex items-center gap-2 px-4 py-2 rounded-full
-              bg-ink-deep border border-line-ondark text-text-ondark text-[13px] font-sans
-              hover:border-chili/50 hover:text-chili active:scale-[0.97]
+              bg-bg-input border border-border-light text-text-primary-light text-[13px] font-sans
+              hover:border-brand-accent/50 hover:text-brand-accent active:scale-[0.97]
               transition-all duration-200 touch-manipulation shadow-sm
               animate-in fade-in slide-in-from-bottom-1 duration-200
             "
@@ -71,7 +71,7 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitRe
           </button>
         )}
 
-        <div className="flex items-end gap-2 bg-ink-deep rounded-3xl border border-line-ondark p-1 pr-1.5 focus-within:border-marigold/50 transition-colors shadow-sm">
+        <div className="flex items-end gap-2 bg-bg-input rounded-3xl border border-border-light p-1 pr-1.5 focus-within:border-brand-accent/50 transition-colors shadow-sm">
 
           <div className="relative flex-1 flex min-h-[44px] sm:min-h-[48px]">
             {/* Custom Animated Placeholder */}
@@ -81,7 +81,7 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitRe
                   <span
                     key={i}
                     className={`
-                      absolute left-4 right-4 text-[15px] text-text-dim-ondark font-sans truncate
+                      absolute left-4 right-4 text-[15px] text-text-secondary font-sans truncate
                       transition-all duration-500 ease-in-out
                       ${i === placeholderIndex
                         ? "opacity-100 translate-y-0"
@@ -107,7 +107,7 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitRe
               minRows={1}
               maxRows={5}
               disabled={guestLimitReached}
-              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-ondark outline-none font-sans resize-none z-10 self-center ${guestLimitReached ? "cursor-not-allowed placeholder:text-text-dim-ondark/80" : ""}`}
+              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center ${guestLimitReached ? "cursor-not-allowed placeholder:text-text-dim-ondark/80" : ""}`}
             />
           </div>
 
@@ -122,7 +122,7 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitRe
               handleSend();
             }}
             aria-label="Send message"
-            className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-marigold text-ink-deeper transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || disabled || guestLimitReached ? "opacity-40 cursor-not-allowed" : "hover:scale-105 hover:brightness-110 active:scale-95"
+            className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-brand-accent text-white transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || disabled || guestLimitReached ? "opacity-40 cursor-not-allowed" : "hover:scale-105 hover:brightness-110 active:scale-95"
               }`}
           >
             <ArrowUp className="size-5 stroke-[2.5]" />

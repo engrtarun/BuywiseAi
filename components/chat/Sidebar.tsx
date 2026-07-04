@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Menu, Camera, Palette, Check } from "lucide-react";
+import { Search, Menu, Camera, Palette, Check, MoreVertical, Pencil } from "lucide-react";
 import { ChatSession } from "./types";
 import { useSidebarResize } from "./useSidebarResize";
 import { useTheme } from "@/hooks/useTheme";
@@ -358,7 +358,7 @@ function NewChatButton({ onClick, isCollapsed }: NewChatButtonProps) {
         className={`
           group flex items-center justify-center gap-2.5
           rounded-xl bg-marigold/10 border border-marigold/20
-          text-marigold font-heading font-bold text-sm
+          text-text-primary-dark font-heading font-bold text-sm
           hover:bg-marigold/20 hover:border-marigold/40
           active:scale-[0.98] transition-all duration-200 touch-manipulation
           ${isCollapsed ? "size-10 shrink-0" : "w-full px-4 py-3"}
@@ -387,12 +387,12 @@ function SearchField({ isCollapsed, onExpand, value, onChange }: SearchFieldProp
           onClick={onExpand}
           className="
             group flex items-center justify-center size-10 shrink-0 rounded-xl
-            bg-white/[0.04] border border-white/[0.08] text-text-ondark
+            bg-white/[0.04] border border-border-dark text-text-primary-dark
             hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-200
           "
           aria-label="Search chats"
         >
-          <Search className="size-5 text-text-dim-ondark group-hover:text-text-ondark transition-colors" />
+          <Search className="size-5 text-text-secondary group-hover:text-text-primary-dark transition-colors" />
         </button>
       </Tooltip>
     );
@@ -400,16 +400,16 @@ function SearchField({ isCollapsed, onExpand, value, onChange }: SearchFieldProp
 
   return (
     <div className="relative w-full">
-      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4.5 text-text-dim-ondark" />
+      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4.5 text-text-secondary" />
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search chats..."
         className="
-          w-full bg-white/[0.04] border border-white/[0.08] rounded-xl
-          py-2.5 pl-10 pr-4 text-[13px] font-sans text-text-ondark
-          placeholder:text-text-dim-ondark outline-none
+          w-full bg-white/[0.04] border border-border-dark rounded-xl
+          py-2.5 pl-10 pr-4 text-[13px] font-sans text-text-primary-dark
+          placeholder:text-text-secondary outline-none
           focus:border-marigold/40 focus:bg-white/[0.06] transition-all
         "
       />
@@ -422,47 +422,174 @@ interface ChatHistoryItemProps {
   isActive: boolean;
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
+  onRename?: (id: string, title: string) => void;
 }
 
-function ChatHistoryItem({ session, isActive, onSelect, onDelete }: ChatHistoryItemProps) {
+function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: ChatHistoryItemProps) {
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editTitle, setEditTitle] = React.useState(session.title);
+
+  React.useEffect(() => {
+    setEditTitle(session.title);
+  }, [session.title]);
+
+  const handleSave = async () => {
+    const trimmed = editTitle.trim();
+    if (!trimmed) {
+      handleCancel();
+      return;
+    }
+
+    setIsEditing(false);
+
+    if (trimmed === session.title) return;
+
+    if (onRename) {
+      onRename(session.id, trimmed);
+    }
+
+    // Call Supabase update
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("chat_sessions")
+        .update({ title: trimmed })
+        .eq("id", session.id);
+
+      if (error) {
+        console.error("Failed to rename chat in Supabase:", error.message);
+      }
+    } catch (err) {
+      console.error("Failed to rename chat:", err);
+    }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditTitle(session.title);
+  };
+
   return (
-    <button
-      onClick={() => onSelect(session.id)}
+    <div
+      onClick={() => {
+        if (!isEditing) {
+          onSelect(session.id);
+        }
+      }}
       className={`
-        group w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left
-        transition-all duration-200 relative
+        group w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left
+        transition-all duration-200 relative cursor-pointer select-none
         ${isActive
-          ? "bg-white/[0.08] border-l-2 border-l-marigold text-text-ondark"
-          : "bg-transparent border-l-2 border-l-transparent text-text-dim-ondark hover:bg-white/[0.04] hover:text-text-ondark"
+          ? "bg-[#2a2a2a] text-text-primary-dark"
+          : "bg-transparent text-text-secondary hover:bg-[#232323] hover:text-text-primary-dark"
         }
       `}
     >
       <ChatBubbleIcon
-        className={`shrink-0 transition-all duration-300 ${
-          isActive ? "text-marigold scale-110" : "text-text-dim-ondark group-hover:text-marigold/70"
+        className={`shrink-0 size-3.5 transition-all duration-300 ${
+          isActive ? "text-text-primary-dark opacity-60" : "text-text-secondary opacity-40 group-hover:opacity-75"
         }`}
       />
-      <span className="flex-1 text-[13px] truncate font-sans leading-tight">
-        {session.title}
-      </span>
-      <span
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(session.id);
-        }}
-        className="
-          opacity-0 group-hover:opacity-100
-          pointer-events-none group-hover:pointer-events-auto
-          shrink-0 p-1 rounded-md
-          text-text-dim-ondark hover:text-chili hover:bg-white/[0.06]
-          transition-all duration-200
-          cursor-pointer
-        "
-        aria-label="Delete chat"
-      >
-        <TrashIcon className="transition-transform duration-200 hover:scale-110" />
-      </span>
-    </button>
+      
+      {isEditing ? (
+        <input
+          type="text"
+          value={editTitle}
+          onChange={(e) => setEditTitle(e.target.value)}
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSave();
+            } else if (e.key === "Escape") {
+              handleCancel();
+            }
+          }}
+          onBlur={handleSave}
+          autoFocus
+          className="flex-1 bg-[#1A1A18] text-text-primary-dark text-[13px] font-sans px-1.5 py-0.5 rounded outline-none border border-brand-accent/50 min-w-0"
+        />
+      ) : (
+        <span className="flex-1 min-w-0 text-[13px] truncate font-sans leading-tight pr-14">
+          {session.title}
+        </span>
+      )}
+      
+      {!isEditing && (
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+          {isActive && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(true);
+                setEditTitle(session.title);
+              }}
+              className="p-1 rounded-md text-text-secondary hover:text-text-primary-dark transition-colors"
+              aria-label="Rename chat"
+            >
+              <Pencil className="size-3.5" />
+            </button>
+          )}
+
+          <div className="relative">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMenuOpen(!isMenuOpen);
+              }}
+              className={`
+                p-1 rounded-md text-text-secondary hover:text-text-primary-dark hover:bg-white/[0.06]
+                transition-all duration-200 cursor-pointer
+                ${isMenuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}
+              `}
+              aria-label="Chat actions"
+            >
+              <MoreVertical className="size-4" />
+            </button>
+
+            {isMenuOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-[60]" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMenuOpen(false);
+                  }}
+                />
+                
+                <div className="absolute right-0 mt-1.5 z-[70] bg-[#1A1A18] border border-border-dark rounded-xl p-1 shadow-xl flex flex-col gap-0.5 min-w-[120px] animate-in fade-in zoom-in-95 duration-100">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMenuOpen(false);
+                      setIsEditing(true);
+                      setEditTitle(session.title);
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none"
+                  >
+                    Rename
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMenuOpen(false);
+                      onDelete(session.id);
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-sans text-chili hover:bg-chili/10 transition-all font-semibold select-none"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -474,6 +601,7 @@ function SidebarContent({
   onNewChat,
   onSelectChat,
   onDeleteChat,
+  onRenameChat,
   onClose,
   isCollapsed,
   onToggleCollapse,
@@ -483,6 +611,7 @@ function SidebarContent({
   onNewChat: () => void;
   onSelectChat: (id: string) => void;
   onDeleteChat: (id: string) => void;
+  onRenameChat?: (id: string, title: string) => void;
   onClose: () => void;
   isCollapsed: boolean;
   onToggleCollapse?: () => void;
@@ -558,16 +687,7 @@ function SidebarContent({
       const clickedOutsideMenu = menuRef.current && !menuRef.current.contains(target);
       const clickedOutsideDropdown = !dropdownRef.current || !dropdownRef.current.contains(target);
       
-      console.log('Outside click handler fired!', {
-        target,
-        clickedOutsideMenu,
-        clickedOutsideDropdown,
-        menuRef: menuRef.current,
-        dropdownRef: dropdownRef.current
-      });
-      
       if (clickedOutsideMenu && clickedOutsideDropdown) {
-        console.log('Closing dropdown from outside click');
         setMenuOpen(false);
       }
     }
@@ -602,7 +722,7 @@ function SidebarContent({
               `}
               aria-label="Toggle Sidebar"
             >
-              <Menu className={`text-text-ondark ${isCollapsed ? "size-5" : "size-4.5"}`} />
+              <Menu className={`text-text-primary-dark ${isCollapsed ? "size-5" : "size-4.5"}`} />
             </button>
           </Tooltip>
 
@@ -611,7 +731,7 @@ function SidebarContent({
               <div className="size-8 shrink-0 rounded-lg bg-marigold flex items-center justify-center shadow-sm">
                 <span className="text-ink-deeper font-heading font-extrabold text-sm">B</span>
               </div>
-              <span className="font-heading font-bold text-[15px] text-text-ondark tracking-tight truncate">
+              <span className="font-heading font-bold text-[15px] text-text-primary-dark tracking-tight truncate">
                 BuyWise AI
               </span>
             </div>
@@ -637,13 +757,13 @@ function SidebarContent({
           ${isCollapsed ? "opacity-0 hidden" : "opacity-100"}
         `}
       >
-        <p className="px-4 mb-2 text-[11px] font-mono text-text-dim-ondark uppercase tracking-wider">
+        <p className="px-4 mb-2 text-[11px] font-mono text-text-secondary uppercase tracking-wider">
           Recent chats
         </p>
         <ScrollArea className="h-full px-2">
           <div className="flex flex-col gap-0.5">
             {filteredHistory.length === 0 ? (
-              <p className="px-3 py-4 text-[12px] text-text-dim-ondark/60 text-center font-sans italic">
+              <p className="px-3 py-4 text-[12px] text-text-secondary/60 text-center font-sans italic">
                 {searchQuery ? "No matching chats." : "No chats yet. Start one!"}
               </p>
             ) : (
@@ -654,6 +774,7 @@ function SidebarContent({
                   isActive={session.id === activeChatId}
                   onSelect={(id) => { onSelectChat(id); onClose(); }}
                   onDelete={onDeleteChat}
+                  onRename={onRenameChat}
                 />
               ))
             )}
@@ -693,16 +814,16 @@ function SidebarContent({
                 )}
               </div>
               <div className="flex flex-col min-w-0 flex-1">
-                <span className="font-sans text-[13px] font-bold text-text-ondark truncate">
+                <span className="font-sans text-[13px] font-bold text-text-primary-dark truncate">
                   {profile?.full_name || "User"}
                 </span>
-                <span className="font-mono text-[10px] text-text-dim-ondark truncate">
+                <span className="font-mono text-[10px] text-text-secondary truncate">
                   {profile?.email || ""}
                 </span>
               </div>
             </div>
             
-            <div className="h-px bg-white/[0.06] my-1 mx-2" />
+            <div className="h-px bg-border-dark my-1 mx-2" />
 
             {/* Menu Items */}
             <button 
@@ -711,9 +832,9 @@ function SidebarContent({
                 setMenuOpen(false);
                 setShowProfileModal(true);
               }}
-              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none"
+              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none"
             >
-              <UserIcon className="text-text-dim-ondark group-hover:text-marigold group-hover:scale-110 transition-all duration-300" />
+              <UserIcon className="text-text-secondary group-hover:text-marigold group-hover:scale-110 transition-all duration-300" />
               <span>Profile</span>
             </button>
             
@@ -723,25 +844,25 @@ function SidebarContent({
                 setMenuOpen(false);
                 alert("Settings page placeholder");
               }}
-              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none"
+              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none"
             >
-              <SettingsIcon className="text-text-dim-ondark group-hover:text-marigold group-hover:rotate-45 transition-all duration-300" />
+              <SettingsIcon className="text-text-secondary group-hover:text-marigold group-hover:rotate-45 transition-all duration-300" />
               <span>Settings</span>
             </button>
             
-            <div className="h-px bg-white/[0.06] my-1 mx-2" />
+            <div className="h-px bg-border-dark my-1 mx-2" />
 
             {/* Help with flyout */}
             <div className="group/help relative">
               <button 
                 type="button"
-                className="group flex items-center justify-between w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none"
+                className="group flex items-center justify-between w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none"
               >
                 <div className="flex items-center gap-3">
-                  <HelpIcon className="text-text-dim-ondark group-hover:text-marigold group-hover:scale-110 transition-all duration-300" />
+                  <HelpIcon className="text-text-secondary group-hover:text-marigold group-hover:scale-110 transition-all duration-300" />
                   <span>Help</span>
                 </div>
-                <ChevronRightIcon className="text-text-dim-ondark group-hover:text-marigold group-hover:translate-x-0.5 transition-all duration-300" />
+                <ChevronRightIcon className="text-text-secondary group-hover:text-marigold group-hover:translate-x-0.5 transition-all duration-300" />
               </button>
               
               {/* Flyout submenu */}
@@ -763,9 +884,9 @@ function SidebarContent({
                     // TODO: Replace # with actual help documentation URL
                     setMenuOpen(false);
                   }}
-                  className="group/item flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-[12px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
+                  className="group/item flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-[12px] font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
                 >
-                  <HelpIcon className="size-3.5 text-text-dim-ondark group-hover/item:text-marigold transition-colors" />
+                  <HelpIcon className="size-3.5 text-text-secondary group-hover/item:text-marigold transition-colors" />
                   <span className="select-none">Help center</span>
                 </a>
                 <a 
@@ -775,15 +896,15 @@ function SidebarContent({
                     // TODO: Update email address or replace with actual bug report form URL
                     setMenuOpen(false);
                   }}
-                  className="group/item flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-[12px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
+                  className="group/item flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-[12px] font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
                 >
-                  <BugIcon className="size-3.5 text-text-dim-ondark group-hover/item:text-marigold transition-colors" />
+                  <BugIcon className="size-3.5 text-text-secondary group-hover/item:text-marigold transition-colors" />
                   <span className="select-none">Report a bug</span>
                 </a>
               </div>
             </div>
             
-            <div className="h-px bg-white/[0.06] my-1 mx-2" />
+            <div className="h-px bg-border-dark my-1 mx-2" />
 
             <button
               type="button"
@@ -895,7 +1016,7 @@ function SidebarContent({
                 {loadingProfile ? (
                   <div className="h-4 w-24 bg-white/[0.08] animate-pulse rounded" />
                 ) : (
-                  <span className="font-sans text-[13px] text-text-ondark truncate block">
+                  <span className="font-sans text-[13px] text-text-primary-dark truncate block">
                     {profile?.full_name || "Guest User"}
                   </span>
                 )}
@@ -916,6 +1037,7 @@ interface SidebarProps {
   onNewChat: () => void;
   onSelectChat: (id: string) => void;
   onDeleteChat: (id: string) => void;
+  onRenameChat?: (id: string, title: string) => void;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -926,6 +1048,7 @@ export function Sidebar({
   onNewChat,
   onSelectChat,
   onDeleteChat,
+  onRenameChat,
   isOpen,
   onClose,
 }: SidebarProps) {
@@ -943,7 +1066,7 @@ export function Sidebar({
     };
   }, [isOpen]);
 
-  const contentProps = { chatHistory, activeChatId, onNewChat, onSelectChat, onDeleteChat, onClose };
+  const contentProps = { chatHistory, activeChatId, onNewChat, onSelectChat, onDeleteChat, onRenameChat, onClose };
 
   return (
     <>

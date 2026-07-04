@@ -18,7 +18,7 @@ interface ChatHeaderProps {
 
 function ChatHeader({ isSidebarOpen, onMenuToggle }: ChatHeaderProps) {
   return (
-    <header className="shrink-0 z-20 flex items-center gap-3 bg-ink-deeper px-4 py-3 border-b border-line-ondark md:hidden">
+    <header className="shrink-0 z-20 flex items-center gap-3 bg-bg-main px-4 py-3 border-b border-border-light md:hidden">
       <div className="w-full max-w-3xl mx-auto flex items-center gap-3">
         <HamburgerButton isOpen={isSidebarOpen} onClick={onMenuToggle} />
       </div>
@@ -63,7 +63,7 @@ export function ChatWindow({
   const showWelcome = messages.length === 0 && !isTyping;
 
   return (
-    <div className="flex flex-col h-dvh w-full bg-ink-deeper overflow-hidden relative">
+    <div className="flex flex-col h-dvh w-full bg-bg-main text-text-primary-light overflow-hidden relative">
       <ChatHeader isSidebarOpen={isSidebarOpen} onMenuToggle={onMenuToggle} />
       <OfflineBanner />
       {showWelcome ? (

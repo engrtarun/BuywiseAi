@@ -1,17 +1,26 @@
 "use client";
 
-import React, { useState, useCallback, useRef, use } from "react";
+import React, { useState, useCallback, useRef, use, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Message, ChatSession, Feedback } from "@/components/chat/types";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { Sidebar } from "@/components/chat/Sidebar";
 import { useGuestAccess } from "@/hooks/useGuestAccess";
+import { createClient } from "@/lib/supabase/client";
+
+import {
+  getOrCreateActiveSession,
+  getChatHistory,
+  sendMessage as apiSendMessage,
+  listChatSessions,
+  deleteChatSession,
+  createChatSession,
+  generateChatTitle,
+} from "@/app/actions/chat";
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // IMPORTANT: Set up your Gemini API key as an environment variable
-// Create a .env.local file in the project root and add the following line:
-// GEMINI_API_KEY=your_gemini_api_key
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
 
 /* ── Helpers ──────────────────────────────────────────── */
@@ -26,59 +35,18 @@ function generateTitle(firstMessage: string): string {
   return trimmed.length > max ? trimmed.slice(0, max) + "…" : trimmed;
 }
 
-/**
- * Safely extracts text from various AI API response shapes (Gemini, Claude, OpenAI).
- */
-function extractAiText(raw: any): string {
-  if (typeof raw === "string") return raw;
-  if (!raw) return "";
-
-  // Gemini style: { candidates: [{ content: { parts: [{ text: "..." }] } }] }
-  if (raw.candidates && Array.isArray(raw.candidates) && raw.candidates.length > 0) {
-    const candidate = raw.candidates[0];
-    if (candidate.content && Array.isArray(candidate.content.parts)) {
-      return candidate.content.parts
-        .map((p: any) => p.text || "")
-        .join("");
-    }
-  }
-
-  // Anthropic style: { content: [{ type: "text", text: "..." }] }
-  if (raw.content && Array.isArray(raw.content)) {
-    return raw.content
-      .filter((block: any) => block.type === "text")
-      .map((block: any) => block.text || "")
-      .join("");
-  }
-
-  // OpenAi style: { choices: [{ message: { content: "..." } }] }
-  if (raw.choices && Array.isArray(raw.choices) && raw.choices.length > 0) {
-    const choice = raw.choices[0];
-    if (choice.message && typeof choice.message.content === "string") {
-      return choice.message.content;
-    }
-  }
-
-  // Generic fallback if it's an object with a content string
-  if (typeof raw.content === "string") {
-    return raw.content;
-  }
-
-  return "Unable to parse AI response. Please check API response format.";
-}
-
 /* ── Page (top-level orchestrator) ────────────────────── */
 
 export default function Page(props: { params: Promise<any>; searchParams: Promise<any> }) {
   const params = use(props.params);
   const searchParams = use(props.searchParams);
   const router = useRouter();
-
   // Chat sessions state
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Guest access hook
   const {
@@ -97,6 +65,68 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
   // Derive the active session's messages
   const activeSession = chatSessions.find((s) => s.id === activeChatId);
   const activeMessages = activeSession?.messages ?? [];
+
+  // Load chat sessions and initial active history on mount
+  useEffect(() => {
+    async function initChat() {
+      try {
+        setIsLoading(true);
+        // 1. Fetch all chat sessions for the logged-in user
+        const sessions = await listChatSessions();
+        
+        // 2. Format database sessions to frontend ChatSession state shape
+        const formattedSessions: ChatSession[] = await Promise.all(
+          sessions.map(async (s) => {
+            const history = await getChatHistory(s.id);
+            const messages: Message[] = history.map((m) => ({
+              id: m.id,
+              role: m.sender === "ai" ? "assistant" : "user",
+              content: m.message,
+            }));
+
+            return {
+              id: s.id,
+              title: s.title || (messages[0]?.content ? generateTitle(messages[0].content) : "New Chat"),
+              messages,
+              createdAt: new Date(s.created_at).getTime(),
+            };
+          })
+        );
+
+        setChatSessions(formattedSessions);
+
+        // 3. Find or create the active session
+        const activeSid = await getOrCreateActiveSession();
+        setActiveChatId(activeSid);
+
+        // If the active session is not in our list (e.g. freshly created), fetch it
+        if (!formattedSessions.some((s) => s.id === activeSid)) {
+          const freshHistory = await getChatHistory(activeSid);
+          const freshMessages: Message[] = freshHistory.map((m) => ({
+            id: m.id,
+            role: m.sender === "ai" ? "assistant" : "user",
+            content: m.message,
+          }));
+
+          const freshSession: ChatSession = {
+            id: activeSid,
+            title: freshMessages[0]?.content ? generateTitle(freshMessages[0].content) : "New Chat",
+            messages: freshMessages,
+            createdAt: Date.now(),
+          };
+
+          setChatSessions((prev) => [freshSession, ...prev]);
+        }
+
+      } catch (err: any) {
+        console.error("Failed to initialize chat from Supabase:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    initChat();
+  }, []);
 
   /* ── Helpers ──────────────────────────────────────── */
 
@@ -118,7 +148,6 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
 
         if (!response.ok) {
           const errorData = await response.json();
-          
           if (response.status === 429) {
             console.warn('[Handled] Gemini rate limit hit, showing user-facing retry UI');
             appendErrorMessage(chatId, "rate_limit", errorData.retryDelay);
@@ -134,10 +163,15 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
         }
 
         const data = await response.json();
+        const aiMsgContent = data.text;
+
+        // Persist AI message to Supabase
+        const dbAiMsg = await apiSendMessage(chatId, "ai", aiMsgContent);
+
         const aiMsg: Message = {
-          id: generateId(),
+          id: dbAiMsg.id,
           role: "assistant",
-          content: data.text,
+          content: dbAiMsg.message,
         };
 
         setChatSessions((prev) =>
@@ -184,9 +218,27 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
 
   /* ── Handlers ─────────────────────────────────────── */
 
-  const handleNewChat = useCallback(() => {
-    setActiveChatId(null);
+  const handleNewChat = useCallback(async () => {
     setIsTyping(false);
+    setIsLoading(true);
+    try {
+      // Create new session in Supabase
+      const newSid = await createChatSession();
+      
+      const newSession: ChatSession = {
+        id: newSid,
+        title: "New Chat",
+        messages: [],
+        createdAt: Date.now(),
+      };
+      
+      setChatSessions((prev) => [newSession, ...prev]);
+      setActiveChatId(newSid);
+    } catch (err) {
+      console.error("Failed to create new chat session:", err);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const handleSelectChat = useCallback((id: string) => {
@@ -194,73 +246,127 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
     setIsTyping(false);
   }, []);
 
-  const handleDeleteChat = useCallback((id: string) => {
-    setChatSessions((prev) => prev.filter((s) => s.id !== id));
-    if (activeChatId === id) {
-      setActiveChatId(null);
+  const handleDeleteChat = useCallback(async (id: string) => {
+    try {
+      // Persist delete in database
+      await deleteChatSession(id);
+      
+      setChatSessions((prev) => prev.filter((s) => s.id !== id));
+      if (activeChatId === id) {
+        setActiveChatId(null);
+      }
+    } catch (err) {
+      console.error("Failed to delete chat session:", err);
     }
   }, [activeChatId]);
 
-  /**
-   * handleSend — FIXED DUPLICATE BUG:
-   *
-   * Previous code called setChatSessions INSIDE a setActiveChatId functional
-   * updater. React 18 StrictMode double-invokes functional updaters in dev,
-   * causing the session to be created twice.
-   *
-   * Fix: Generate the new ID in a ref BEFORE calling any state setters,
-   * then use separate setState calls (not nested functional updaters).
-   */
   /** Navigate to login (used by guest limit prompt) */
   const handleLoginClick = useCallback(() => {
     router.push("/login");
   }, [router]);
 
+  const handleRenameChat = useCallback((id: string, title: string) => {
+    setChatSessions((prev) => prev.map((s) => (s.id === id ? { ...s, title } : s)));
+  }, []);
+
   const handleSend = useCallback(
-    (content: string) => {
+    async (content: string) => {
       /* ── Guest limit gate ────────────────────── */
       if (isGuest && !canSendMessage) {
         return; // Block the message
       }
-
       const userMsg: Message = { id: generateId(), role: "user", content };
 
       let chatIdToUpdate: string;
       let history: Message[] = [];
+      let isFirstMessage = false;
 
-      if (activeChatId === null) {
-        // Starting a brand new chat session
-        const newId = generateId();
-        chatIdToUpdate = newId;
-        const newSession: ChatSession = {
-          id: newId,
-          title: generateTitle(content),
-          messages: [userMsg],
-          createdAt: Date.now(),
-        };
-        setChatSessions((prev) => [newSession, ...prev]);
-        setActiveChatId(newId);
-        history = [];
-      } else {
-        // Appending to the active session
-        chatIdToUpdate = activeChatId;
-        const session = chatSessions.find((s) => s.id === activeChatId);
-        history = session?.messages ?? [];
-        setChatSessions((prev) =>
-          prev.map((s) =>
-            s.id === activeChatId
-              ? { ...s, messages: [...s.messages, userMsg] }
-              : s
-          )
-        );
+      try {
+        if (activeChatId === null) {
+          isFirstMessage = true;
+          // Starting a brand new chat session
+          const newId = await createChatSession();
+          chatIdToUpdate = newId;
+          const newSession: ChatSession = {
+            id: newId,
+            title: generateTitle(content),
+            messages: [userMsg],
+            createdAt: Date.now(),
+          };
+          setChatSessions((prev) => [newSession, ...prev]);
+          setActiveChatId(newId);
+          history = [];
+
+          // Persist user message to Supabase
+          await apiSendMessage(newId, "user", content);
+          
+          // Also set title of the chat in Supabase
+          const supabase = createClient();
+          const { error } = await supabase
+            .from("chat_sessions")
+            .update({ title: generateTitle(content) })
+            .eq("id", newId);
+          if (error) console.error("Failed to update session title in Supabase:", error.message);
+
+        } else {
+          // Appending to the active session
+          chatIdToUpdate = activeChatId;
+          const session = chatSessions.find((s) => s.id === activeChatId);
+          history = session?.messages ?? [];
+          setChatSessions((prev) =>
+            prev.map((s) =>
+              s.id === activeChatId
+                ? { ...s, messages: [...s.messages, userMsg] }
+                : s
+            )
+          );
+
+          // Persist user message to Supabase
+          await apiSendMessage(activeChatId, "user", content);
+
+          // If the session title was default "New Chat", rename it with the first message title
+          if (session && (session.title === "New Chat" || !session.title || session.messages.length === 0)) {
+            isFirstMessage = true;
+            const newTitle = generateTitle(content);
+            setChatSessions((prev) =>
+              prev.map((s) => (s.id === activeChatId ? { ...s, title: newTitle } : s))
+            );
+            const supabase = createClient();
+            await supabase
+              .from("chat_sessions")
+              .update({ title: newTitle })
+              .eq("id", activeChatId);
+          }
+        }
+
+        // Trigger AI reply first (so it generates immediately and doesn't wait for titling)
+        getAiReply(chatIdToUpdate, history, content);
+
+        // Asynchronously generate chat title in the background if it's the first message
+        if (isFirstMessage) {
+          generateChatTitle(content).then(async (generatedTitle) => {
+            // Update local state immediately so sidebar title refreshes dynamically
+            setChatSessions((prev) =>
+              prev.map((s) => (s.id === chatIdToUpdate ? { ...s, title: generatedTitle } : s))
+            );
+            
+            // Persist the generated title to Supabase
+            const supabase = createClient();
+            await supabase
+              .from("chat_sessions")
+              .update({ title: generatedTitle })
+              .eq("id", chatIdToUpdate);
+          }).catch((err) => {
+            console.error("Background title generation failed:", err);
+          });
+        }
+      } catch (err) {
+        console.error("Failed to send message and save to Supabase:", err);
       }
-
       /* Increment guest message counter (no-op for non-guests) */
       if (isGuest) {
         incrementGuestMessageCount();
       }
-
-      getAiReply(chatIdToUpdate, history, content);
     },
     [activeChatId, chatSessions, getAiReply, isGuest, canSendMessage, incrementGuestMessageCount]
   );
@@ -279,7 +385,7 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
    * Regenerate Response:
    * Removes the last AI message and re-triggers the AI reply.
    */
-  const handleRegenerate = useCallback(() => {
+  const handleRegenerate = useCallback(async () => {
     if (!activeChatId) return;
 
     let lastUserMessage: Message | undefined;
@@ -296,11 +402,11 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
           }
         }
         history = msgs;
-        lastUserMessage = msgs[msgs.length -1];
+        lastUserMessage = msgs[msgs.length - 1];
         return { ...s, messages: msgs };
       })
     );
-    if(lastUserMessage){
+    if (lastUserMessage) {
       getAiReply(activeChatId, history, lastUserMessage.content);
     }
 
@@ -321,19 +427,19 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
         if (s.id !== activeChatId) return s;
         const messages = s.messages.filter((m) => m.status !== "error")
         history = messages;
-        lastUserMessage = messages[messages.length -1];
+        lastUserMessage = messages[messages.length - 1];
         return { ...s, messages };
       })
     );
 
-    if(lastUserMessage){
+    if (lastUserMessage) {
       getAiReply(activeChatId, history, lastUserMessage.content);
     }
   }, [activeChatId, getAiReply]);
+
   /**
    * Feedback:
    * Updates the feedback field on a specific message.
-   * In production, you'd POST this to an analytics endpoint.
    */
   const handleFeedback = useCallback((messageId: string, feedback: Feedback) => {
     setChatSessions((prev) =>
@@ -347,6 +453,17 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
     console.log(`[Feedback] Message ${messageId}: ${feedback ?? "cleared"}`);
   }, []);
 
+  if (isLoading) {
+    return (
+      <div className="flex h-dvh w-full items-center justify-center bg-bg-main text-text-primary-light">
+        <div className="flex flex-col items-center gap-3">
+          <div className="size-8 rounded-full border-4 border-brand-accent/20 border-t-brand-accent animate-spin" />
+          <p className="text-[13px] font-sans text-text-secondary animate-pulse">Loading BuyWise AI...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-dvh w-full bg-ink-deeper overflow-hidden">
       {/* Sidebar — always visible on desktop, overlay on mobile */}
@@ -356,6 +473,7 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
         onNewChat={handleNewChat}
         onSelectChat={handleSelectChat}
         onDeleteChat={handleDeleteChat}
+        onRenameChat={handleRenameChat}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
