@@ -6,6 +6,12 @@ import { Volume2, VolumeX } from "lucide-react";
 export function SoundMuteToggle({ showTooltip = false }: { showTooltip?: boolean }) {
   const [isMuted, setIsMuted] = useState(true);
   const [tooltipVisible, setTooltipVisible] = useState(false);
+  const dismissTooltip = () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("buywise_sound_tooltip_shown", "true");
+    }
+    setTooltipVisible(false);
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -34,12 +40,6 @@ export function SoundMuteToggle({ showTooltip = false }: { showTooltip?: boolean
     }
   }, [showTooltip]);
 
-  const dismissTooltip = () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("buywise_sound_tooltip_shown", "true");
-    }
-    setTooltipVisible(false);
-  };
 
   const toggleMute = () => {
     if (tooltipVisible) {

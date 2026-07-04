@@ -140,6 +140,23 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
   }, []);
 
   /* ── Helpers ──────────────────────────────────────── */
+  /** Append an error placeholder message to a chat session */
+  const appendErrorMessage = useCallback((chatId: string, errorType: "generic" | "rate_limit" = "generic", retryDelay?: number) => {
+    const errMsg: Message = {
+      id: generateId(),
+      role: "assistant",
+      content: "",
+      status: "error",
+      errorType,
+      retryDelay,
+    };
+    setChatSessions((prev) =>
+      prev.map((s) =>
+        s.id === chatId ? { ...s, messages: [...s.messages, errMsg] } : s
+      )
+    );
+    setIsTyping(false);
+  }, []);
 
   /**
    * Get an AI response by calling the API route.
@@ -212,26 +229,8 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
         abortControllerRef.current = null;
       }
     },
-    []
+    [appendErrorMessage]
   );
-
-  /** Append an error placeholder message to a chat session */
-  const appendErrorMessage = useCallback((chatId: string, errorType: "generic" | "rate_limit" = "generic", retryDelay?: number) => {
-    const errMsg: Message = {
-      id: generateId(),
-      role: "assistant",
-      content: "",
-      status: "error",
-      errorType,
-      retryDelay,
-    };
-    setChatSessions((prev) =>
-      prev.map((s) =>
-        s.id === chatId ? { ...s, messages: [...s.messages, errMsg] } : s
-      )
-    );
-    setIsTyping(false);
-  }, []);
 
   /* ── Handlers ─────────────────────────────────────── */
 
