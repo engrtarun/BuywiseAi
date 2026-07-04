@@ -119,12 +119,12 @@
   --border-dark: #2A4A44;
 
   /* User Bubble Colors */
-  --user-bubble-bg: #E8A33D;
-  --user-bubble-text: #0C2823;
+  --user-bubble-bg: #1b5c4f;
+  --user-bubble-text: #F6EFDD;
 
   /* AI Bubble Colors */
-  --ai-bubble-bg: #F6EFDD;
-  --ai-text: #1B2B27;
+  --ai-bubble-bg: #D9E6E1;
+  --ai-text: #123832;
   --ai-bubble-padding: 0.75rem 1rem;
   --ai-bubble-radius: 1rem;
   --ai-bubble-radius-bl: 0.125rem;
@@ -193,11 +193,11 @@
   --border-light: #2A4A44;
   --border-dark: #2A4A44;
 
-  --user-bubble-bg: #E8A33D;
-  --user-bubble-text: #0C2823;
+  --user-bubble-bg: #1b5c4f;
+  --user-bubble-text: #F6EFDD;
 
-  --ai-bubble-bg: #F6EFDD;
-  --ai-text: #1B2B27;
+  --ai-bubble-bg: #D9E6E1;
+  --ai-text: #123832;
   --ai-bubble-padding: 0.75rem 1rem;
   --ai-bubble-radius: 1rem;
   --ai-bubble-radius-bl: 0.125rem;
