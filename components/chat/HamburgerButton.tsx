@@ -19,7 +19,7 @@ interface HamburgerButtonProps {
  */
 export function HamburgerButton({ isOpen, onClick }: HamburgerButtonProps) {
   const barBase =
-    "block absolute left-1/2 h-[2px] w-5 -translate-x-1/2 rounded-full bg-text-ondark transition-all duration-250 ease-in-out";
+    "block absolute left-1/2 h-[2px] w-5 -translate-x-1/2 rounded-full bg-text-primary-light transition-all duration-250 ease-in-out";
 
   return (
     <button
