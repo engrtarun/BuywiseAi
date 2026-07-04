@@ -1,5 +1,6 @@
 "use server"
 
+import { env } from "@/lib/env"
 import { createClient } from "@/lib/supabase/server"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
@@ -183,11 +184,7 @@ export async function deleteChatSession(sessionId: string): Promise<void> {
  * Falls back to truncating the first message if the call fails or times out.
  */
 export async function generateChatTitle(message: string): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    console.warn("generateChatTitle: GEMINI_API_KEY is not defined, using fallback truncation.");
-    return fallbackTitle(message);
-  }
+  const apiKey = env.GEMINI_API_KEY;
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
