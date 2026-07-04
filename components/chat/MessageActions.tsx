@@ -147,7 +147,7 @@ export function MessageActions({ message, isLastAiMessage, onRegenerate, onFeedb
   };
 
   const btnBase =
-    "flex items-center justify-center size-8 sm:size-7 rounded-lg transition-all duration-200 touch-manipulation";
+    "flex items-center justify-center size-8 sm:size-7 rounded-lg transition-all duration-200 touch-manipulation cursor-pointer";
 
   return (
     <div className="flex items-center gap-0.5 mt-1.5 ml-9 sm:ml-10">

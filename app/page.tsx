@@ -47,6 +47,8 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
   const [isTyping, setIsTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  const [isTemporaryChat, setIsTemporaryChat] = useState(false);
 
   // Guest access hook
   const {
@@ -136,6 +138,7 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
   const getAiReply = useCallback(
     async (chatId: string, history: Message[], message: string) => {
       setIsTyping(true);
+      const startTime = Date.now();
       abortControllerRef.current = new AbortController();
 
       try {
@@ -191,6 +194,11 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
           appendErrorMessage(chatId, "generic");
         }
       } finally {
+        const endTime = Date.now();
+        const responseTimeSeconds = (endTime - startTime) / 1000;
+        const cooldownSeconds = Math.max(2, Math.min(15, responseTimeSeconds * 0.5));
+        setCooldownUntil(Date.now() + cooldownSeconds * 1000);
+
         setIsTyping(false);
         abortControllerRef.current = null;
       }
@@ -220,6 +228,7 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
 
   const handleNewChat = useCallback(async () => {
     setIsTyping(false);
+    setIsTemporaryChat(false);
     setIsLoading(true);
     try {
       // Create new session in Supabase
@@ -232,7 +241,7 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
         createdAt: Date.now(),
       };
       
-      setChatSessions((prev) => [newSession, ...prev]);
+      setChatSessions((prev) => [newSession, ...prev].filter((s) => !s.isTemporary));
       setActiveChatId(newSid);
     } catch (err) {
       console.error("Failed to create new chat session:", err);
@@ -241,9 +250,18 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
     }
   }, []);
 
+  const handleNewTemporaryChat = useCallback(() => {
+    setActiveChatId(null);
+    setIsTyping(false);
+    setIsTemporaryChat(true);
+    setChatSessions((prev) => prev.filter((s) => !s.isTemporary));
+  }, []);
+
   const handleSelectChat = useCallback((id: string) => {
     setActiveChatId(id);
     setIsTyping(false);
+    setIsTemporaryChat(false);
+    setChatSessions((prev) => prev.filter((s) => !s.isTemporary));
   }, []);
 
   const handleDeleteChat = useCallback(async (id: string) => {
@@ -285,28 +303,42 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
         if (activeChatId === null) {
           isFirstMessage = true;
           // Starting a brand new chat session
-          const newId = await createChatSession();
+          let newId: string;
+          let newSession: ChatSession;
+
+          if (isTemporaryChat) {
+            // Guest / temporary chat — no Supabase persistence
+            newId = generateId();
+            newSession = {
+              id: newId,
+              title: "Temporary Chat",
+              messages: [userMsg],
+              createdAt: Date.now(),
+              isTemporary: true,
+            };
+          } else {
+            newId = await createChatSession();
+            newSession = {
+              id: newId,
+              title: generateTitle(content),
+              messages: [userMsg],
+              createdAt: Date.now(),
+            };
+            // Persist user message to Supabase
+            await apiSendMessage(newId, "user", content);
+            // Also set title of the chat in Supabase
+            const supabase = createClient();
+            const { error } = await supabase
+              .from("chat_sessions")
+              .update({ title: generateTitle(content) })
+              .eq("id", newId);
+            if (error) console.error("Failed to update session title in Supabase:", error.message);
+          }
+
           chatIdToUpdate = newId;
-          const newSession: ChatSession = {
-            id: newId,
-            title: generateTitle(content),
-            messages: [userMsg],
-            createdAt: Date.now(),
-          };
           setChatSessions((prev) => [newSession, ...prev]);
           setActiveChatId(newId);
           history = [];
-
-          // Persist user message to Supabase
-          await apiSendMessage(newId, "user", content);
-          
-          // Also set title of the chat in Supabase
-          const supabase = createClient();
-          const { error } = await supabase
-            .from("chat_sessions")
-            .update({ title: generateTitle(content) })
-            .eq("id", newId);
-          if (error) console.error("Failed to update session title in Supabase:", error.message);
 
         } else {
           // Appending to the active session
@@ -321,21 +353,23 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
             )
           );
 
-          // Persist user message to Supabase
-          await apiSendMessage(activeChatId, "user", content);
+          if (!session?.isTemporary) {
+            // Persist user message to Supabase
+            await apiSendMessage(activeChatId, "user", content);
 
-          // If the session title was default "New Chat", rename it with the first message title
-          if (session && (session.title === "New Chat" || !session.title || session.messages.length === 0)) {
-            isFirstMessage = true;
-            const newTitle = generateTitle(content);
-            setChatSessions((prev) =>
-              prev.map((s) => (s.id === activeChatId ? { ...s, title: newTitle } : s))
-            );
-            const supabase = createClient();
-            await supabase
-              .from("chat_sessions")
-              .update({ title: newTitle })
-              .eq("id", activeChatId);
+            // If the session title was default "New Chat", rename it with the first message title
+            if (session && (session.title === "New Chat" || !session.title || session.messages.length === 0)) {
+              isFirstMessage = true;
+              const newTitle = generateTitle(content);
+              setChatSessions((prev) =>
+                prev.map((s) => (s.id === activeChatId ? { ...s, title: newTitle } : s))
+              );
+              const supabase = createClient();
+              await supabase
+                .from("chat_sessions")
+                .update({ title: newTitle })
+                .eq("id", activeChatId);
+            }
           }
         }
 
@@ -343,7 +377,7 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
         getAiReply(chatIdToUpdate, history, content);
 
         // Asynchronously generate chat title in the background if it's the first message
-        if (isFirstMessage) {
+        if (isFirstMessage && !isTemporaryChat) {
           generateChatTitle(content).then(async (generatedTitle) => {
             // Update local state immediately so sidebar title refreshes dynamically
             setChatSessions((prev) =>
@@ -368,7 +402,7 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
         incrementGuestMessageCount();
       }
     },
-    [activeChatId, chatSessions, getAiReply, isGuest, canSendMessage, incrementGuestMessageCount]
+    [activeChatId, chatSessions, getAiReply, isGuest, canSendMessage, incrementGuestMessageCount, isTemporaryChat]
   );
 
   /**
@@ -468,14 +502,16 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
     <div className="flex h-dvh w-full bg-ink-deeper overflow-hidden">
       {/* Sidebar — always visible on desktop, overlay on mobile */}
       <Sidebar
-        chatHistory={chatSessions}
+        chatHistory={chatSessions.filter((s) => !s.isTemporary)}
         activeChatId={activeChatId}
         onNewChat={handleNewChat}
+        onNewTemporaryChat={handleNewTemporaryChat}
         onSelectChat={handleSelectChat}
         onDeleteChat={handleDeleteChat}
         onRenameChat={handleRenameChat}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        isGuest={isGuest}
       />
 
       {/* Main chat area */}
@@ -494,6 +530,9 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
           guestMessagesRemaining={messagesRemaining}
           guestLimitReached={guestLimitReached}
           onLoginClick={handleLoginClick}
+          cooldownUntil={cooldownUntil}
+          isTemporaryChat={isTemporaryChat}
+          onNewChat={handleNewChat}
         />
       </div>
     </div>

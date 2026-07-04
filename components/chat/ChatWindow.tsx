@@ -8,6 +8,7 @@ import { WelcomeScreen } from "./WelcomeScreen";
 import { OfflineBanner } from "./OfflineBanner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { HamburgerButton } from "./HamburgerButton";
+import { TemporaryChatBadge } from "./TemporaryChatBadge";
 
 /* ── Header ──────────────────────────────────────────── */
 
@@ -43,6 +44,9 @@ interface ChatWindowProps {
   guestMessagesRemaining?: number;
   guestLimitReached?: boolean;
   onLoginClick?: () => void;
+  cooldownUntil?: number | null;
+  isTemporaryChat?: boolean;
+  onNewChat: () => void;
 }
 
 export function ChatWindow({
@@ -59,6 +63,9 @@ export function ChatWindow({
   guestMessagesRemaining = 0,
   guestLimitReached = false,
   onLoginClick,
+  cooldownUntil = null,
+  isTemporaryChat = false,
+  onNewChat,
 }: ChatWindowProps) {
   const showWelcome = messages.length === 0 && !isTyping;
 
@@ -66,6 +73,7 @@ export function ChatWindow({
     <div className="flex flex-col h-dvh w-full bg-bg-main text-text-primary-light overflow-hidden relative">
       <ChatHeader isSidebarOpen={isSidebarOpen} onMenuToggle={onMenuToggle} />
       <OfflineBanner />
+      {isTemporaryChat && <TemporaryChatBadge onExit={onNewChat} />}
       {showWelcome ? (
         <WelcomeScreen
           onSuggestionClick={onSend}
@@ -91,6 +99,8 @@ export function ChatWindow({
         disabled={isTyping}
         isGenerating={isTyping}
         guestLimitReached={guestLimitReached}
+        cooldownUntil={cooldownUntil}
+        onLoginClick={onLoginClick}
       />
     </div>
   );

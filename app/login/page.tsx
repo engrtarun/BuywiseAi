@@ -23,7 +23,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
   const searchParams = use(props.searchParams);
   const router = useRouter();
   const supabase = createClient();
-  const { enterGuestMode } = useGuestAccess();
+  const { enterGuestMode, resetGuestAccess } = useGuestAccess();
 
   /** Skip login → enter as guest */
   const handleGuestSkip = () => {
@@ -111,6 +111,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
       }
 
       // Successful login
+      resetGuestAccess();
       router.push("/chat");
     } catch (err: any) {
       setInlineError(err.message || "An unexpected error occurred. Please try again.");
@@ -130,6 +131,9 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
+      if (!error) {
+        resetGuestAccess();
+      }
       if (error) {
         setInlineError(error.message);
       }
@@ -223,6 +227,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
         return;
       }
 
+      resetGuestAccess();
       router.push("/chat");
     } catch (err: any) {
       setInlineError(err.message || "Verification failed. Please try again.");

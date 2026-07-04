@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Hourglass } from "lucide-react";
 
 /**
  * ThinkingIndicator — Pulsing Wave Animation (Option A)
@@ -38,8 +39,19 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
  * ────────────────────────────────────────────────────────────
  */
 export function ThinkingIndicator() {
+  const [isTakingLong, setIsTakingLong] = useState(false);
+
+  useEffect(() => {
+    // 15 seconds timer
+    const timer = setTimeout(() => {
+      setIsTakingLong(true);
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="flex items-end gap-2 w-full max-w-[85%] sm:max-w-[75%] md:max-w-[65%] animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="flex flex-col gap-2 w-full max-w-[85%] sm:max-w-[75%] md:max-w-[65%] animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="flex items-end gap-2 w-full">
       <Avatar className="size-7 sm:size-8 shrink-0">
         <AvatarFallback className="bg-marigold text-ink-deeper font-heading font-bold text-[10px] sm:text-xs">
           B
@@ -63,6 +75,16 @@ export function ThinkingIndicator() {
           Thinking
         </span>
       </div>
+      </div>
+
+      {isTakingLong && (
+        <div className="ml-10 flex items-center gap-2 animate-in fade-in duration-700">
+          <Hourglass className="size-3.5 text-marigold/70 animate-[spin_4s_linear_infinite]" />
+          <span className="text-[13px] font-sans text-text-dim-ondark">
+            This is taking a little longer than usual — hang tight, we&apos;re still working on it!
+          </span>
+        </div>
+      )}
 
       {/* Scoped styles — CSS keyframes for the wave animation */}
       <style jsx>{`
