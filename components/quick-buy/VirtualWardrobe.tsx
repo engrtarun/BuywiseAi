@@ -3,13 +3,16 @@
 import React, { useState } from "react";
 import { QuickBuyProduct } from "@/lib/quickBuyMockData";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Shuffle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Shuffle, LayoutDashboard } from "lucide-react";
+import { OutfitCanvas } from "./OutfitCanvas";
 
 interface VirtualWardrobeProps {
   items: QuickBuyProduct[];
 }
 
 export function VirtualWardrobe({ items }: VirtualWardrobeProps) {
+  const [mode, setMode] = useState<"mix" | "canvas">("mix");
+
   // Helper to categorize
   const { tops, bottoms } = React.useMemo(() => {
     const t: QuickBuyProduct[] = [];
@@ -166,25 +169,67 @@ export function VirtualWardrobe({ items }: VirtualWardrobeProps) {
   };
 
   return (
-    <div className="flex flex-col h-full w-full animate-in fade-in zoom-in-95 duration-500 bg-bg-main relative">
-      <div className="flex-1 flex flex-col p-2 pb-24 overflow-hidden">
-        
-        {/* Top Half */}
-        {renderHalf("Top", tops, topIndex, topDir, paginateTop)}
-
-        {/* Divider / Action */}
-        <div className="relative z-30 h-0 flex items-center justify-center">
+    <div className="flex flex-col h-full w-full bg-bg-main relative pt-2">
+      <div className="flex justify-center mb-2 px-4 z-10">
+        <div className="bg-bg-input rounded-xl border border-white/10 p-1 flex shadow-lg">
           <button 
-            onClick={handleRandomize}
-            className="px-4 py-2 bg-brand-accent text-bg-main font-bold rounded-full text-sm shadow-[0_0_20px_rgba(255,176,103,0.4)] flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
+            onClick={() => setMode("mix")}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${mode === "mix" ? 'bg-white/10 text-brand-accent' : 'text-text-secondary hover:text-white'}`}
           >
-            <Shuffle className="size-4" />
-            Mix
+            Mix & Match
+          </button>
+          <button 
+            onClick={() => setMode("canvas")}
+            className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${mode === "canvas" ? 'bg-brand-accent text-bg-main shadow-[0_0_15px_rgba(255,176,103,0.4)]' : 'text-text-secondary hover:text-white'}`}
+          >
+            <LayoutDashboard className="size-4" />
+            Canvas Mode
           </button>
         </div>
+      </div>
 
-        {/* Bottom Half */}
-        {renderHalf("Bottom", bottoms, bottomIndex, bottomDir, paginateBottom)}
+      <div className="flex-1 overflow-hidden relative">
+        <AnimatePresence mode="wait">
+          {mode === "mix" ? (
+            <motion.div 
+              key="mix"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="flex-1 flex flex-col p-2 pb-24 overflow-hidden h-full"
+            >
+              
+              {/* Top Half */}
+              {renderHalf("Top", tops, topIndex, topDir, paginateTop)}
+
+              {/* Divider / Action */}
+              <div className="relative z-30 h-0 flex items-center justify-center">
+                <button 
+                  onClick={handleRandomize}
+                  className="px-4 py-2 bg-brand-accent text-bg-main font-bold rounded-full text-sm shadow-[0_0_20px_rgba(255,176,103,0.4)] flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
+                >
+                  <Shuffle className="size-4" />
+                  Mix
+                </button>
+              </div>
+
+              {/* Bottom Half */}
+              {renderHalf("Bottom", bottoms, bottomIndex, bottomDir, paginateBottom)}
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="canvas"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="w-full h-full absolute inset-0"
+            >
+              <OutfitCanvas wardrobeItems={items} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
