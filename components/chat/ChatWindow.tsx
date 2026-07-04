@@ -9,6 +9,8 @@ import { OfflineBanner } from "./OfflineBanner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { HamburgerButton } from "./HamburgerButton";
 import { TemporaryChatButton } from "./TemporaryChatButton";
+import { QuickBuyButton } from "@/components/quick-buy/QuickBuyButton";
+import { QuickBuyScreen } from "@/components/quick-buy/QuickBuyScreen";
 
 /* ── Header ──────────────────────────────────────────── */
 
@@ -18,11 +20,12 @@ interface ChatHeaderProps {
   isGuest: boolean;
   isTemporaryChat: boolean;
   onNewTemporaryChat?: () => void;
+  onQuickBuyClick: () => void;
 }
 
-function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onNewTemporaryChat }: ChatHeaderProps) {
+function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onNewTemporaryChat, onQuickBuyClick }: ChatHeaderProps) {
   return (
-    <header className="shrink-0 z-20 flex items-center bg-bg-main px-4 py-3 border-b border-border-light h-14 md:hidden">
+    <header className="shrink-0 z-20 flex items-center bg-bg-main px-4 py-3 border-b border-border-light h-14">
       <div className="w-full flex items-center justify-between">
         <div className="flex items-center gap-3">
           <HamburgerButton isOpen={isSidebarOpen} onClick={onMenuToggle} />
@@ -39,6 +42,7 @@ function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onN
           {!isGuest && onNewTemporaryChat && (
             <TemporaryChatButton onClick={onNewTemporaryChat} isTemporaryChat={isTemporaryChat} />
           )}
+          <QuickBuyButton onClick={onQuickBuyClick} />
         </div>
       </div>
     </header>
@@ -92,6 +96,8 @@ export function ChatWindow({
   onNewChat,
   onNewTemporaryChat,
 }: ChatWindowProps) {
+  const [showQuickBuy, setShowQuickBuy] = React.useState(false);
+  
   const showWelcome = messages.length === 0 && !isTyping;
 
   return (
@@ -102,6 +108,7 @@ export function ChatWindow({
         isGuest={isGuest} 
         isTemporaryChat={isTemporaryChat} 
         onNewTemporaryChat={onNewTemporaryChat} 
+        onQuickBuyClick={() => setShowQuickBuy(true)}
       />
       <OfflineBanner />
       {showWelcome ? (
@@ -137,6 +144,9 @@ export function ChatWindow({
         cooldownUntil={cooldownUntil}
         onLoginClick={onLoginClick}
       />
+
+      {/* Quick Buy Overlay */}
+      {showQuickBuy && <QuickBuyScreen onClose={() => setShowQuickBuy(false)} />}
     </div>
   );
 }
