@@ -6,7 +6,11 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+<<<<<<< HEAD:components/chat/Sidebar.tsx
 import { Search, Menu, Camera, Palette, Check, MoreVertical, Pencil, Ghost, LogOut, Shirt, Sparkles } from "lucide-react";
+=======
+import { Search, Menu, Camera, Palette, Check, MoreVertical, Pencil, Ghost, UserCog } from "lucide-react";
+>>>>>>> ce36872 (add /profile page, avatar upload bucket integration, and user profile completion progress ring):src/components/chat/Sidebar.tsx
 import { ChatSession } from "@/types/chat";
 import { useSidebarResize } from "./useSidebarResize";
 import { useTheme } from "@/hooks/useTheme";
@@ -627,6 +631,8 @@ function SidebarContent({
     full_name: string | null;
     avatar_url: string | null;
     email: string | null;
+    size: string | null;
+    budget: number | null;
   } | null>(null);
   const [loadingProfile, setLoadingProfile] = React.useState(true);
   const [menuOpen, setMenuOpen] = React.useState(false);
@@ -648,7 +654,7 @@ function SidebarContent({
 
         const { data, error } = await supabase
           .from("profiles")
-          .select("full_name, avatar_url, email")
+          .select("full_name, avatar_url, email, size, budget")
           .eq("id", user.id)
           .maybeSingle();
 
@@ -657,9 +663,11 @@ function SidebarContent({
         }
 
         setProfile({
-          full_name: data?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || "User",
+          full_name: data?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || null,
           avatar_url: data?.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
           email: data?.email || user.email || null,
+          size: data?.size || null,
+          budget: typeof data?.budget === "number" ? data.budget : null,
         });
       } catch (err) {
         console.error("Failed to load user profile:", err);
@@ -670,6 +678,21 @@ function SidebarContent({
 
     loadUserProfile();
   }, [supabase]);
+
+  const calculateCompletion = () => {
+    if (!profile) return 0;
+    let filled = 0;
+    const totalFields = 4;
+    
+    if (profile.full_name && profile.full_name.trim()) filled++;
+    if (profile.avatar_url && profile.avatar_url.trim()) filled++;
+    if (profile.size && profile.size.trim()) filled++;
+    if (profile.budget !== null && profile.budget !== undefined) filled++;
+    
+    return Math.round((filled / totalFields) * 100);
+  };
+  
+  const completionPercentage = calculateCompletion();
 
   const updateMenuRect = React.useCallback(() => {
     if (menuRef.current) {
@@ -870,7 +893,7 @@ function SidebarContent({
               type="button"
               onClick={() => {
                 setMenuOpen(false);
-                setShowProfileModal(true);
+                router.push("/profile");
               }}
               className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
             >
@@ -962,7 +985,7 @@ function SidebarContent({
           isOpen={showProfileModal} 
           onClose={() => setShowProfileModal(false)} 
           profile={profile} 
-          onSave={(updates) => setProfile(prev => prev ? { ...prev, ...updates } : { full_name: null, avatar_url: null, email: null, ...updates })}
+          onSave={(updates) => setProfile(prev => prev ? { ...prev, ...updates } : { full_name: null, avatar_url: null, email: null, size: null, budget: null, ...updates })}
         />
 
         <SettingsModal
@@ -1037,7 +1060,7 @@ function SidebarContent({
         </Popover>
 
         <Tooltip text="User Profile" isCollapsed={isCollapsed}>
-          <button 
+          <div
             onClick={() => setMenuOpen(!menuOpen)}
             className={`
               flex items-center gap-3 rounded-xl hover:bg-white/[0.08] transition-all duration-200 p-2 hover:scale-[1.02] active:scale-[0.98] cursor-pointer
@@ -1047,32 +1070,76 @@ function SidebarContent({
           >
             {loadingProfile ? (
               <div className="size-8 rounded-full bg-white/[0.08] animate-pulse shrink-0" />
-            ) : profile?.avatar_url ? (
-              <img 
-                src={profile.avatar_url} 
-                alt={profile.full_name || "Avatar"} 
-                className="size-8 rounded-full object-cover shrink-0 border border-white/[0.1]"
-              />
             ) : (
-              <Avatar className="size-8 shrink-0">
-                <AvatarFallback className="bg-marigold/20 text-marigold text-xs font-bold">
-                  {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : "U"}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative size-10 flex items-center justify-center shrink-0">
+                {/* SVG circular progress ring */}
+                <svg className="absolute inset-0 size-full -rotate-90">
+                  <circle
+                    cx="20"
+                    cy="20"
+                    r="17"
+                    className="stroke-white/[0.08] fill-transparent"
+                    strokeWidth="2"
+                  />
+                  <circle
+                    cx="20"
+                    cy="20"
+                    r="17"
+                    className="stroke-marigold fill-transparent transition-all duration-500 ease-out"
+                    strokeWidth="2"
+                    strokeDasharray="106.8"
+                    strokeDashoffset={106.8 - (completionPercentage / 100) * 106.8}
+                    strokeLinecap="round"
+                  />
+                </svg>
+
+                {/* Avatar inside ring */}
+                <div className="size-7 rounded-full overflow-hidden flex items-center justify-center bg-white/[0.05]">
+                  {profile?.avatar_url ? (
+                    <img 
+                      src={profile.avatar_url} 
+                      alt={profile.full_name || "Avatar"} 
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <div className="size-full bg-marigold/20 text-marigold text-[10px] font-bold flex items-center justify-center font-sans">
+                      {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : "U"}
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
             
             {!isCollapsed && (
-              <div className="flex-1 min-w-0 text-left">
+              <div className="flex-1 min-w-0 text-left flex items-center justify-between gap-2">
                 {loadingProfile ? (
                   <div className="h-4 w-24 bg-white/[0.08] animate-pulse rounded" />
                 ) : (
-                  <span className="font-sans text-[13px] text-text-primary-dark truncate block">
-                    {profile?.full_name || "Guest User"}
-                  </span>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-sans text-[13px] text-text-primary-dark truncate block font-medium">
+                      {profile?.full_name || "Guest User"}
+                    </span>
+                    <span className="font-sans text-[10px] text-text-secondary block">
+                      {completionPercentage}% complete
+                    </span>
+                  </div>
+                )}
+
+                {!loadingProfile && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // prevent opening dropdown menu
+                      router.push("/profile");
+                    }}
+                    className="p-1.5 rounded-lg hover:bg-white/10 text-text-secondary hover:text-marigold transition-colors shrink-0"
+                    title="Edit Profile"
+                  >
+                    <UserCog className="size-4" />
+                  </button>
                 )}
               </div>
             )}
-          </button>
+          </div>
         </Tooltip>
       </div>
     </div>
