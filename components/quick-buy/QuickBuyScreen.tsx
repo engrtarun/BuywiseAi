@@ -23,9 +23,7 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
     saveItem, 
     removeSavedItem, 
     updateQuantity,
-    getFilteredProducts,
-    hasMore,
-    fetchNextPage
+    getFilteredProducts 
   } = useQuickBuy();
 
   const [showSettings, setShowSettings] = useState(false);
@@ -134,8 +132,6 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
           products={filteredProducts} 
           onSave={saveItem} 
           onOpenSettings={() => setShowSettings(true)}
-          hasMore={hasMore}
-          onPrefetch={fetchNextPage}
         />
       )}
 

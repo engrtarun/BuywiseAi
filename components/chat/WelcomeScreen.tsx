@@ -11,6 +11,7 @@ interface WelcomeScreenProps {
   guestMessagesRemaining?: number;
   guestLimitReached?: boolean;
   dailyLimitReached?: boolean;
+  dailyLimitMessage?: string;
   onLoginClick?: () => void;
 }
 
@@ -41,13 +42,13 @@ const suggestions = [
   },
 ];
 
-export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessagesRemaining = 0, guestLimitReached = false, dailyLimitReached = false, onLoginClick }: WelcomeScreenProps) {
+export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessagesRemaining = 0, guestLimitReached = false, dailyLimitReached = false, dailyLimitMessage, onLoginClick }: WelcomeScreenProps) {
   if (guestLimitReached) {
     return <LoginRequiredScreen onLoginClick={onLoginClick} />;
   }
   
   if (dailyLimitReached) {
-    return <DailyLimitReachedCard />;
+    return <DailyLimitReachedCard message={dailyLimitMessage} />;
   }
 
   return (

@@ -4,61 +4,36 @@ import React, { useState, useEffect } from "react";
 import { QuickBuyProduct } from "@/lib/quickBuyMockData";
 import { SwipeableProductCard } from "./SwipeableProductCard";
 import { AnimatePresence } from "framer-motion";
-import { RefreshCcw, SlidersHorizontal, Loader2 } from "lucide-react";
+import { RefreshCcw, SlidersHorizontal } from "lucide-react";
 
 interface SwipeCardDeckProps {
   products: QuickBuyProduct[];
   onSave: (id: string) => void;
   onOpenSettings: () => void;
-  hasMore: boolean;
-  onPrefetch: () => void;
 }
 
-export function SwipeCardDeck({ products, onSave, onOpenSettings, hasMore, onPrefetch }: SwipeCardDeckProps) {
-  const [swipedIds, setSwipedIds] = useState<Set<string>>(new Set());
+export function SwipeCardDeck({ products, onSave, onOpenSettings }: SwipeCardDeckProps) {
+  const [deck, setDeck] = useState<QuickBuyProduct[]>(products);
 
-  // Reset swiped cards when the products completely change (e.g. filter change)
+  // Sync if products prop changes (e.g., settings updated)
   useEffect(() => {
-    // If products array shrinks (meaning a complete reset happened), clear swiped set
-    if (products.length === 0) {
-      setSwipedIds(new Set());
-    }
+    setDeck(products);
   }, [products]);
 
   const handleSwipeLeft = (id: string) => {
-    setSwipedIds((prev) => new Set(prev).add(id));
+    setDeck((prev) => prev.filter((p) => p.id !== id));
   };
 
   const handleSwipeRight = (id: string) => {
     onSave(id);
-    setSwipedIds((prev) => new Set(prev).add(id));
+    setDeck((prev) => prev.filter((p) => p.id !== id));
   };
 
   const handleReset = () => {
-    setSwipedIds(new Set());
+    setDeck(products);
   };
 
-  const visibleCards = products.filter((p) => !swipedIds.has(p.id));
-
-  // Prefetch trigger
-  useEffect(() => {
-    if (visibleCards.length <= 3 && hasMore) {
-      onPrefetch();
-    }
-  }, [visibleCards.length, hasMore, onPrefetch]);
-
-  if (visibleCards.length === 0) {
-    if (hasMore) {
-      // Loading next page (user swiped faster than fetch)
-      return (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-300">
-           <Loader2 className="size-10 text-brand-accent animate-spin mb-4" />
-           <p className="text-text-secondary font-medium">Fetching more items...</p>
-        </div>
-      );
-    }
-
-    // Truly empty
+  if (deck.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-300">
         <div className="size-20 rounded-full bg-white/5 flex items-center justify-center mb-6 shadow-inner">
@@ -90,15 +65,15 @@ export function SwipeCardDeck({ products, onSave, onOpenSettings, hasMore, onPre
   }
 
   // To create the stacked effect, we render the first few cards (reversed so first is on top)
-  const renderedCards = visibleCards.slice(0, 3).reverse();
+  const visibleCards = deck.slice(0, 3).reverse();
 
   return (
     <div className="flex-1 flex items-center justify-center relative w-full overflow-hidden perspective-[1000px]">
       <AnimatePresence>
-        {renderedCards.map((product, i) => {
+        {visibleCards.map((product, i) => {
           // Because we reversed, the original index 0 is at the END of this array.
-          const isTop = i === renderedCards.length - 1;
-          const index = renderedCards.length - 1 - i; // 0 for top, 1 for second, etc.
+          const isTop = i === visibleCards.length - 1;
+          const index = visibleCards.length - 1 - i; // 0 for top, 1 for second, etc.
           
           return (
             <SwipeableProductCard

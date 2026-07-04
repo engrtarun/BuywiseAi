@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { QuickBuyProduct } from "@/lib/quickBuyMockData";
 
 export interface QuickBuyPreferences {
@@ -13,121 +14,156 @@ const PREFS_KEY = "buywise_quickbuy_prefs";
 const SAVED_ITEMS_KEY = "buywise_quickbuy_saved";
 const QUANTITIES_KEY = "buywise_quickbuy_quantities";
 
+function normalizeProfilePreferences(raw: Record<string, any> | null | undefined): QuickBuyPreferences | null {
+  if (!raw) return null;
+
+  const sizes = Array.isArray(raw.sizes)
+    ? raw.sizes
+    : typeof raw.size === "string"
+      ? raw.size.split(",").map((value: string) => value.trim()).filter(Boolean)
+      : [];
+
+  const preferredCategories = Array.isArray(raw.preferred_categories)
+    ? raw.preferred_categories
+    : Array.isArray(raw.preferredCategories)
+      ? raw.preferredCategories
+      : [];
+
+  const maxBudget = typeof raw.max_budget === "number"
+    ? raw.max_budget
+    : typeof raw.budget === "number"
+      ? raw.budget
+      : typeof raw.maxBudget === "number"
+        ? raw.maxBudget
+        : null;
+
+  if (sizes.length === 0 && preferredCategories.length === 0 && maxBudget === null) {
+    return null;
+  }
+
+  return {
+    sizes,
+    preferredCategories,
+    maxBudget,
+  };
+}
+
 export function useQuickBuy() {
   const [preferences, setPreferences] = useState<QuickBuyPreferences | null>(null);
   const [savedItemIds, setSavedItemIds] = useState<string[]>([]);
   const [itemQuantities, setItemQuantities] = useState<Record<string, number>>({});
   const [isInitializing, setIsInitializing] = useState(true);
-  
+
   const [allProducts, setAllProducts] = useState<QuickBuyProduct[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
-  
-  // Pagination State
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
 
-  // Load from localStorage on mount
   useEffect(() => {
-    try {
-      const storedPrefs = localStorage.getItem(PREFS_KEY);
-      if (storedPrefs) {
-        setPreferences(JSON.parse(storedPrefs));
-      }
+    let isMounted = true;
 
-      const storedSaved = localStorage.getItem(SAVED_ITEMS_KEY);
-      if (storedSaved) {
-        setSavedItemIds(JSON.parse(storedSaved));
-      }
+    async function initialize() {
+      try {
+        const storedPrefs = localStorage.getItem(PREFS_KEY);
+        if (storedPrefs) {
+          const parsedPrefs = JSON.parse(storedPrefs) as QuickBuyPreferences;
+          if (isMounted) {
+            setPreferences(parsedPrefs);
+          }
+        }
 
-      const storedQuantities = localStorage.getItem(QUANTITIES_KEY);
-      if (storedQuantities) {
-        setItemQuantities(JSON.parse(storedQuantities));
+        const storedSaved = localStorage.getItem(SAVED_ITEMS_KEY);
+        if (storedSaved) {
+          if (isMounted) {
+            setSavedItemIds(JSON.parse(storedSaved));
+          }
+        }
+
+        const storedQuantities = localStorage.getItem(QUANTITIES_KEY);
+        if (storedQuantities) {
+          if (isMounted) {
+            setItemQuantities(JSON.parse(storedQuantities));
+          }
+        }
+
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user || !isMounted) {
+          return;
+        }
+
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("size, budget, sizes, max_budget, preferred_sizes, preferred_categories, preferences")
+          .maybeSingle();
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (error) {
+          console.warn("Quick Buy profile preferences are unavailable:", error.message);
+          return;
+        }
+
+        const profilePreferences = normalizeProfilePreferences(profile as Record<string, any> | null);
+        if (profilePreferences && !storedPrefs && isMounted) {
+          setPreferences(profilePreferences);
+        }
+      } catch (err) {
+        console.error("Failed to load QuickBuy state from localStorage or Supabase", err);
+      } finally {
+        if (isMounted) {
+          setIsInitializing(false);
+        }
       }
-    } catch (err) {
-      console.error("Failed to load QuickBuy state from localStorage", err);
-    } finally {
-      setIsInitializing(false);
     }
+
+    initialize();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Fetch products from API
-  const fetchProducts = useCallback(async (currentPage: number, prefs: QuickBuyPreferences | null, isNextPage: boolean = false) => {
-    if (isNextPage) setIsFetchingNextPage(true);
-    else setIsLoadingProducts(true);
+  useEffect(() => {
+    async function fetchProducts() {
+      setIsLoadingProducts(true);
+      try {
+        const params = new URLSearchParams();
+        if (preferences?.sizes?.length) {
+          params.set("size", preferences.sizes.join(","));
+        }
+        if (preferences?.maxBudget !== null && preferences?.maxBudget !== undefined) {
+          params.set("budget", String(preferences.maxBudget));
+        }
 
-    try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: "12",
-      });
-
-      if (prefs) {
-        if (prefs.sizes?.length > 0) params.append("sizes", prefs.sizes.join(","));
-        if (prefs.preferredCategories?.length > 0) params.append("categories", prefs.preferredCategories.join(","));
-        if (prefs.maxBudget !== null) params.append("budget", prefs.maxBudget.toString());
-      }
-
-      const res = await fetch(`/api/quick-buy?${params.toString()}`);
-      const json = await res.json();
-      
-      if (json.success && json.data) {
-        if (isNextPage) {
-          setAllProducts(prev => {
-            // Avoid duplicates
-            const newIds = new Set(json.data.map((p: any) => p.id));
-            const filteredPrev = prev.filter(p => !newIds.has(p.id));
-            return [...filteredPrev, ...json.data];
-          });
-        } else {
+        const url = `/api/quick-buy${params.toString() ? `?${params.toString()}` : ""}`;
+        const res = await fetch(url);
+        const json = await res.json();
+        if (json.success && json.data) {
           setAllProducts(json.data);
         }
-        setHasMore(json.pagination.hasMore);
-      } else {
-        // Fallback to empty if error
-        if (!isNextPage) setAllProducts([]);
-        setHasMore(false);
+      } catch (err) {
+        console.error("Failed to fetch products", err);
+      } finally {
+        setIsLoadingProducts(false);
       }
-    } catch (err) {
-      console.error("Failed to fetch products", err);
-      if (!isNextPage) setAllProducts([]);
-      setHasMore(false);
-    } finally {
-      setIsLoadingProducts(false);
-      setIsFetchingNextPage(false);
     }
-  }, []);
 
-  // Trigger initial fetch or fetch when preferences change
-  useEffect(() => {
-    // Only fetch if we're not initializing localStorage anymore
     if (!isInitializing) {
-      // If preferences exist, it will use them for filtering. 
-      // If null, it will fetch without filters.
-      fetchProducts(1, preferences, false);
+      void fetchProducts();
     }
-  }, [preferences, isInitializing, fetchProducts]);
-
-  const fetchNextPage = useCallback(() => {
-    if (!hasMore || isFetchingNextPage || isLoadingProducts) return;
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchProducts(nextPage, preferences, true);
-  }, [hasMore, isFetchingNextPage, isLoadingProducts, page, preferences, fetchProducts]);
+  }, [preferences, isInitializing]);
 
   const savePreferences = useCallback((newPrefs: QuickBuyPreferences) => {
     setPreferences(newPrefs);
-    setPage(1);
-    setHasMore(true);
-    setAllProducts([]); // Clear UI immediately while new ones load
     localStorage.setItem(PREFS_KEY, JSON.stringify(newPrefs));
   }, []);
 
   const clearPreferences = useCallback(() => {
     setPreferences(null);
-    setPage(1);
-    setHasMore(true);
-    setAllProducts([]);
     localStorage.removeItem(PREFS_KEY);
   }, []);
 
@@ -138,7 +174,27 @@ export function useQuickBuy() {
       localStorage.setItem(SAVED_ITEMS_KEY, JSON.stringify(next));
       return next;
     });
-  }, []);
+
+    const product = allProducts.find((item) => item.id === productId);
+    if (!product) {
+      console.warn("Quick Buy save skipped because product data was not available in the current catalog.");
+      return;
+    }
+
+    void fetch("/api/quick-buy/actions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        product_id: product.id,
+        product_name: product.name,
+        price: product.price,
+        image_url: (product as QuickBuyProduct & { image_url?: string }).image_url || product.image,
+        is_cart: false,
+      }),
+    }).catch((err) => {
+      console.error("Failed to persist Quick Buy save action", err);
+    });
+  }, [allProducts]);
 
   const removeSavedItem = useCallback((productId: string) => {
     setSavedItemIds((prev) => {
@@ -152,6 +208,9 @@ export function useQuickBuy() {
       localStorage.setItem(QUANTITIES_KEY, JSON.stringify(next));
       return next;
     });
+
+    // No DELETE endpoint exists yet, so removal is only local until the backend is added.
+    console.info("Quick Buy remove action is local-only for now.", productId);
   }, []);
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {
@@ -162,12 +221,27 @@ export function useQuickBuy() {
     });
   }, []);
 
-  // Since filtering is now server-side, this just returns allProducts
   const getFilteredProducts = useCallback((): QuickBuyProduct[] => {
-    return allProducts;
-  }, [allProducts]);
+    if (!preferences) return [];
 
-  // Derived saved items list
+    return allProducts.filter((product) => {
+      if (preferences.maxBudget !== null && product.price > preferences.maxBudget) {
+        return false;
+      }
+
+      if (preferences.sizes?.length > 0) {
+        const hasMatchingSize = product.sizes.some((size) => preferences.sizes.includes(size));
+        if (!hasMatchingSize) return false;
+      }
+
+      if (preferences.preferredCategories?.length > 0) {
+        if (!preferences.preferredCategories.includes(product.category)) return false;
+      }
+
+      return true;
+    });
+  }, [preferences, allProducts]);
+
   const savedProducts = savedItemIds
     .map((id) => allProducts.find((p) => p.id === id))
     .filter((p): p is QuickBuyProduct => p !== undefined);
@@ -175,8 +249,6 @@ export function useQuickBuy() {
   return {
     isInitializing,
     isLoadingProducts,
-    isFetchingNextPage,
-    hasMore,
     preferences,
     savePreferences,
     clearPreferences,
@@ -187,6 +259,5 @@ export function useQuickBuy() {
     removeSavedItem,
     updateQuantity,
     getFilteredProducts,
-    fetchNextPage
   };
 }
