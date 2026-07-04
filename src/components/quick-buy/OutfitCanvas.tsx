@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { DragDropContext, Droppable, DropResult } from "@hello-pangea/dnd";
 import { QuickBuyProduct } from "@/lib/quickBuyMockData";
 import { DraggableWardrobeItem } from "./DraggableWardrobeItem";
