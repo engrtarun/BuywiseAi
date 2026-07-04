@@ -35,7 +35,7 @@ export async function createClient() {
   const cookieStore = await cookies();
 
   if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return createFallbackClient();
+    return createFallbackClient() as ReturnType<typeof createServerClient>;
   }
 
   return createServerClient(

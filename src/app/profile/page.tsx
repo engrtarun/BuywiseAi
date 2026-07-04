@@ -99,7 +99,7 @@ export default function ProfilePage() {
     try {
       // 1. Ensure avatars bucket exists
       const { data: buckets } = await supabase.storage.listBuckets();
-      const hasAvatars = buckets?.some((b) => b.name === "avatars");
+      const hasAvatars = buckets?.some((b: { name: string }) => b.name === "avatars");
 
       if (!hasAvatars) {
         // Attempt to create bucket
