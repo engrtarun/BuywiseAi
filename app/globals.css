@@ -15,19 +15,21 @@
   --font-heading: var(--font-sora), "Sora", ui-sans-serif, system-ui, sans-serif;
 
   /* ── BuyWise brand colors ─────────────────── */
-  --color-ink-deep: #123832;
-  --color-ink-deeper: #0C2823;
-  --color-paper: #F6EFDD;
-  --color-paper-dim: #EDE3C9;
-  --color-marigold: #E8A33D;
-  --color-marigold-dark: #C17F22;
-  --color-chili: #C1502E;
-  --color-text-onlight: #1B2B27;
-  --color-text-dim-onlight: #5C6E68;
-  --color-text-ondark: #F6EFDD;
-  --color-text-dim-ondark: #9DB3AC;
-  --color-line-ondark: #2A4A44;
-  --color-line-onlight: #DDD2B4;
+  --color-ink-deep: var(--ink-deep);
+  --color-ink-deeper: var(--ink-deeper);
+  --color-paper: var(--paper);
+  --color-paper-dim: var(--paper-dim);
+  --color-marigold: var(--marigold);
+  --color-marigold-dark: var(--marigold-dark);
+  --color-chili: var(--chili);
+  --color-text-onlight: var(--text-onlight);
+  --color-text-dim-onlight: var(--text-dim-onlight);
+  --color-text-ondark: var(--text-ondark);
+  --color-text-dim-ondark: var(--text-dim-ondark);
+  --color-line-ondark: var(--line-ondark);
+  --color-line-onlight: var(--line-onlight);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-dropdown-bg: var(--dropdown-bg);
 
   /* ── shadcn semantic aliases ──────────────── */
   --color-background: var(--background);
@@ -78,6 +80,8 @@
   /* ── BuyWise brand palette ────────────────── */
   --ink-deep: #123832;
   --ink-deeper: #0C2823;
+  --sidebar-bg: #091e1a;
+  --dropdown-bg: #0d2a24;
   --paper: #F6EFDD;
   --paper-dim: #EDE3C9;
   --marigold: #E8A33D;
@@ -90,40 +94,79 @@
   --line-ondark: #2A4A44;
   --line-onlight: #DDD2B4;
 
-  /* ── shadcn light theme ───────────────────── */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  /* ── Default shadcn variables aligned to BuyWise Dark ── */
+  --background: var(--ink-deeper);
+  --foreground: var(--text-ondark);
+  --card: var(--ink-deep);
+  --card-foreground: var(--text-ondark);
+  --popover: var(--dropdown-bg);
+  --popover-foreground: var(--text-ondark);
+  --primary: var(--marigold);
+  --primary-foreground: var(--ink-deeper);
+  --secondary: var(--line-ondark);
+  --secondary-foreground: var(--text-ondark);
+  --muted: var(--line-ondark);
+  --muted-foreground: var(--text-dim-ondark);
+  --accent: var(--line-ondark);
+  --accent-foreground: var(--text-ondark);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: var(--line-ondark);
+  --input: var(--line-ondark);
+  --ring: var(--marigold);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: var(--sidebar-bg);
+  --sidebar-foreground: var(--text-ondark);
+  --sidebar-primary: var(--marigold);
+  --sidebar-primary-foreground: var(--ink-deeper);
+  --sidebar-accent: var(--line-ondark);
+  --sidebar-accent-foreground: var(--text-ondark);
+  --sidebar-border: var(--line-ondark);
+  --sidebar-ring: var(--marigold);
 }
+
+/* BuyWise Dark Theme Preset */
+[data-theme="buywise-dark"] {
+  --ink-deep: #123832;
+  --ink-deeper: #0C2823;
+  --sidebar-bg: #091e1a;
+  --dropdown-bg: #0d2a24;
+  --paper: #F6EFDD;
+  --paper-dim: #EDE3C9;
+  --marigold: #E8A33D;
+  --marigold-dark: #C17F22;
+  --chili: #C1502E;
+  --text-onlight: #1B2B27;
+  --text-dim-onlight: #5C6E68;
+  --text-ondark: #F6EFDD;
+  --text-dim-ondark: #9DB3AC;
+  --line-ondark: #2A4A44;
+  --line-onlight: #DDD2B4;
+
+  /* Overrides for shadcn ui popover & components */
+  --background: var(--ink-deeper);
+  --foreground: var(--text-ondark);
+  --card: var(--ink-deep);
+  --card-foreground: var(--text-ondark);
+  --popover: var(--dropdown-bg);
+  --popover-foreground: var(--text-ondark);
+  --primary: var(--marigold);
+  --primary-foreground: var(--ink-deeper);
+  --secondary: var(--line-ondark);
+  --secondary-foreground: var(--text-ondark);
+  --muted: var(--line-ondark);
+  --muted-foreground: var(--text-dim-ondark);
+  --accent: var(--line-ondark);
+  --accent-foreground: var(--text-ondark);
+  --border: var(--line-ondark);
+  --input: var(--line-ondark);
+  --ring: var(--marigold);
+}
+
 
 .dark {
   --background: oklch(0.145 0 0);
