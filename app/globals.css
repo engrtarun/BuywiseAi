@@ -35,15 +35,15 @@
   --color-ai-text: var(--ai-text);
 
   /* ── Claude-style theme palette ───────────── */
-  --color-bg-main: #212121;
-  --color-bg-sidebar: #1A1A18;
-  --color-bg-input: #2F2F2F;
-  --color-text-primary-light: #F5F4EE;
-  --color-text-primary-dark: #F5F4EE;
-  --color-text-secondary: #8A8A85;
-  --color-brand-accent: #C96442;
-  --color-border-light: #333333;
-  --color-border-dark: #2E2E2B;
+  --color-bg-main: var(--bg-main);
+  --color-bg-sidebar: var(--bg-sidebar);
+  --color-bg-input: var(--bg-input);
+  --color-text-primary-light: var(--text-primary-light);
+  --color-text-primary-dark: var(--text-primary-dark);
+  --color-text-secondary: var(--text-secondary);
+  --color-brand-accent: var(--brand-accent);
+  --color-border-light: var(--border-light);
+  --color-border-dark: var(--border-dark);
 
   /* ── shadcn semantic aliases ──────────────── */
   --color-background: var(--background);
