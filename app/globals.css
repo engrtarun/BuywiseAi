@@ -30,6 +30,9 @@
   --color-line-onlight: var(--line-onlight);
   --color-sidebar-bg: var(--sidebar-bg);
   --color-dropdown-bg: var(--dropdown-bg);
+  --color-user-bubble-bg: var(--user-bubble-bg);
+  --color-user-bubble-text: var(--user-bubble-text);
+  --color-ai-text: var(--ai-text);
 
   /* ── Claude-style theme palette ───────────── */
   --color-bg-main: #212121;
@@ -88,11 +91,11 @@
    ───────────────────────────────────────────── */
 
 :root {
-  /* ── BuyWise brand palette ────────────────── */
+  /* ── BuyWise Green defaults ──────────────── */
   --ink-deep: #123832;
   --ink-deeper: #0C2823;
-  --sidebar-bg: #091e1a;
-  --dropdown-bg: #0d2a24;
+  --sidebar-bg: #0C2823;
+  --dropdown-bg: #091e1a;
   --paper: #F6EFDD;
   --paper-dim: #EDE3C9;
   --marigold: #E8A33D;
@@ -105,36 +108,47 @@
   --line-ondark: #2A4A44;
   --line-onlight: #DDD2B4;
 
-  /* ── Claude-style theme palette ───────────── */
-  --bg-main: #212121;
-  --bg-sidebar: #1A1A18;
-  --bg-input: #2F2F2F;
-  --text-primary-light: #F5F4EE;
-  --text-primary-dark: #F5F4EE;
-  --text-secondary: #8A8A85;
-  --brand-accent: #C96442;
-  --border-light: #333333;
-  --border-dark: #2E2E2B;
+  --bg-main: #123832;
+  --bg-sidebar: #0C2823;
+  --bg-input: #091e1a;
+  --text-primary-light: #F6EFDD;
+  --text-primary-dark: #F6EFDD;
+  --text-secondary: #9DB3AC;
+  --brand-accent: #E8A33D;
+  --border-light: #2A4A44;
+  --border-dark: #2A4A44;
 
-  /* ── Default shadcn variables aligned to BuyWise Dark ── */
-  --background: var(--ink-deeper);
-  --foreground: var(--text-ondark);
-  --card: var(--ink-deep);
-  --card-foreground: var(--text-ondark);
+  /* User Bubble Colors */
+  --user-bubble-bg: #E8A33D;
+  --user-bubble-text: #0C2823;
+
+  /* AI Bubble Colors */
+  --ai-bubble-bg: #F6EFDD;
+  --ai-text: #1B2B27;
+  --ai-bubble-padding: 0.75rem 1rem;
+  --ai-bubble-radius: 1rem;
+  --ai-bubble-radius-bl: 0.125rem;
+  --ai-bubble-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+  /* ── Default shadcn variables aligned to BuyWise Green ── */
+  --background: var(--bg-main);
+  --foreground: var(--text-primary-light);
+  --card: var(--bg-input);
+  --card-foreground: var(--text-primary-light);
   --popover: var(--dropdown-bg);
-  --popover-foreground: var(--text-ondark);
-  --primary: var(--marigold);
+  --popover-foreground: var(--text-primary-light);
+  --primary: var(--brand-accent);
   --primary-foreground: var(--ink-deeper);
-  --secondary: var(--line-ondark);
-  --secondary-foreground: var(--text-ondark);
-  --muted: var(--line-ondark);
-  --muted-foreground: var(--text-dim-ondark);
-  --accent: var(--line-ondark);
-  --accent-foreground: var(--text-ondark);
+  --secondary: var(--border-light);
+  --secondary-foreground: var(--text-primary-light);
+  --muted: var(--border-light);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--border-light);
+  --accent-foreground: var(--text-primary-light);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: var(--line-ondark);
-  --input: var(--line-ondark);
-  --ring: var(--marigold);
+  --border: var(--border-light);
+  --input: var(--border-light);
+  --ring: var(--brand-accent);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -151,12 +165,12 @@
   --sidebar-ring: var(--marigold);
 }
 
-/* BuyWise Dark Theme Preset */
-[data-theme="buywise-dark"] {
+/* BuyWise Green Theme Preset (Default) */
+[data-theme="buywise-green"] {
   --ink-deep: #123832;
   --ink-deeper: #0C2823;
-  --sidebar-bg: #091e1a;
-  --dropdown-bg: #0d2a24;
+  --sidebar-bg: #0C2823;
+  --dropdown-bg: #091e1a;
   --paper: #F6EFDD;
   --paper-dim: #EDE3C9;
   --marigold: #E8A33D;
@@ -169,24 +183,64 @@
   --line-ondark: #2A4A44;
   --line-onlight: #DDD2B4;
 
-  /* Overrides for shadcn ui popover & components */
-  --background: var(--ink-deeper);
-  --foreground: var(--text-ondark);
-  --card: var(--ink-deep);
-  --card-foreground: var(--text-ondark);
-  --popover: var(--dropdown-bg);
-  --popover-foreground: var(--text-ondark);
-  --primary: var(--marigold);
-  --primary-foreground: var(--ink-deeper);
-  --secondary: var(--line-ondark);
-  --secondary-foreground: var(--text-ondark);
-  --muted: var(--line-ondark);
-  --muted-foreground: var(--text-dim-ondark);
-  --accent: var(--line-ondark);
-  --accent-foreground: var(--text-ondark);
-  --border: var(--line-ondark);
-  --input: var(--line-ondark);
-  --ring: var(--marigold);
+  --bg-main: #123832;
+  --bg-sidebar: #0C2823;
+  --bg-input: #091e1a;
+  --text-primary-light: #F6EFDD;
+  --text-primary-dark: #F6EFDD;
+  --text-secondary: #9DB3AC;
+  --brand-accent: #E8A33D;
+  --border-light: #2A4A44;
+  --border-dark: #2A4A44;
+
+  --user-bubble-bg: #E8A33D;
+  --user-bubble-text: #0C2823;
+
+  --ai-bubble-bg: #F6EFDD;
+  --ai-text: #1B2B27;
+  --ai-bubble-padding: 0.75rem 1rem;
+  --ai-bubble-radius: 1rem;
+  --ai-bubble-radius-bl: 0.125rem;
+  --ai-bubble-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* BuyWise Dark Theme Preset */
+[data-theme="buywise-dark"] {
+  --ink-deep: #2F2F2F;
+  --ink-deeper: #171717;
+  --sidebar-bg: #171717;
+  --dropdown-bg: #2F2F2F;
+  --paper: #F5F4EE;
+  --paper-dim: #8A8A85;
+  --marigold: #C96442;
+  --marigold-dark: #9E4A2E;
+  --chili: #C1502E;
+  --text-onlight: #F5F4EE;
+  --text-dim-onlight: #8A8A85;
+  --text-ondark: #F5F4EE;
+  --text-dim-ondark: #8A8A85;
+  --line-ondark: #333333;
+  --line-onlight: #333333;
+
+  --bg-main: #212121;
+  --bg-sidebar: #171717;
+  --bg-input: #2F2F2F;
+  --text-primary-light: #F5F4EE;
+  --text-primary-dark: #F5F4EE;
+  --text-secondary: #8A8A85;
+  --brand-accent: #C96442;
+  --border-light: #333333;
+  --border-dark: #333333;
+
+  --user-bubble-bg: #2F2F2F;
+  --user-bubble-text: #F5F4EE;
+
+  --ai-bubble-bg: transparent;
+  --ai-text: #F5F4EE;
+  --ai-bubble-padding: 0;
+  --ai-bubble-radius: 0;
+  --ai-bubble-radius-bl: 0;
+  --ai-bubble-shadow: none;
 }
 
 

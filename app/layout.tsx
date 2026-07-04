@@ -48,7 +48,7 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('buywise-theme') || 'buywise-dark';
+                  var theme = localStorage.getItem('buywise-theme') || 'buywise-green';
                   document.documentElement.setAttribute('data-theme', theme);
                 } catch (e) {}
               })();

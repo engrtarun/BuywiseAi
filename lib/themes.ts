@@ -11,13 +11,23 @@ export interface ThemePreset {
 
 export const THEME_PRESETS: ThemePreset[] = [
   {
+    id: "buywise-green",
+    name: "BuyWise Green",
+    colors: {
+      primary: "#E8A33D",
+      background: "#123832",
+      sidebar: "#0C2823",
+      text: "#F6EFDD",
+    },
+  },
+  {
     id: "buywise-dark",
     name: "BuyWise Dark",
     colors: {
-      primary: "#E8A33D",
-      background: "#0C2823",
-      sidebar: "#091e1a",
-      text: "#F6EFDD",
+      primary: "#C96442",
+      background: "#212121",
+      sidebar: "#171717",
+      text: "#F5F4EE",
     },
   },
 ];

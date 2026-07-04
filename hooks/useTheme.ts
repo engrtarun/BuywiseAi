@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 
 export function useTheme() {
-  const [theme, setThemeState] = useState<string>("buywise-dark");
+  const [theme, setThemeState] = useState<string>("buywise-green");
 
   useEffect(() => {
     // Read from localStorage or HTML attribute on mount
     const savedTheme = localStorage.getItem("buywise-theme");
-    const currentTheme = savedTheme || document.documentElement.getAttribute("data-theme") || "buywise-dark";
+    const currentTheme = savedTheme || document.documentElement.getAttribute("data-theme") || "buywise-green";
     setThemeState(currentTheme);
     
     // Sync the attribute just in case

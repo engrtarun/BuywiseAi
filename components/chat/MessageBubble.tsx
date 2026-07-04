@@ -116,7 +116,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
       <div className="flex justify-end w-full">
         <div
           dir="auto"
-          className="bg-[#2f2f2f] text-text-primary-light rounded-2xl rounded-br-sm px-4 py-3 text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap break-words shadow-sm max-w-[85%] sm:max-w-[75%] md:max-w-[65%] font-sans font-medium"
+          className="bg-user-bubble-bg text-user-bubble-text rounded-2xl rounded-br-sm px-4 py-3 text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap break-words shadow-sm max-w-[85%] sm:max-w-[75%] md:max-w-[65%] font-sans font-medium"
         >
           {message.content}
         </div>
@@ -149,7 +149,15 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
           {message.content && (
             <div
               dir="auto"
-              className="text-text-primary-light text-[14px] sm:text-[15px] leading-relaxed break-words font-sans w-full min-w-0 inline-block"
+              style={{
+                backgroundColor: "var(--ai-bubble-bg)",
+                color: "var(--ai-text)",
+                padding: "var(--ai-bubble-padding)",
+                borderRadius: "var(--ai-bubble-radius)",
+                borderBottomLeftRadius: "var(--ai-bubble-radius-bl, var(--ai-bubble-radius))",
+                boxShadow: "var(--ai-bubble-shadow)",
+              }}
+              className="text-[14px] sm:text-[15px] leading-relaxed break-words font-sans w-full min-w-0 inline-block"
             >
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
