@@ -26,6 +26,7 @@ export function DraggableWardrobeItem({ item, index, onRemove, isCanvasItem = fa
           <VelocityTracker isDragging={snapshot.isDragging} velocityX={velocityX}>
             <div
               ref={provided.innerRef}
+              id={isCanvasItem ? undefined : `onboarding-source-item-${index}`}
               {...provided.draggableProps}
               {...provided.dragHandleProps}
               style={{

@@ -8,7 +8,8 @@ import { LiveOutfitSummary } from "./LiveOutfitSummary";
 import { MatchMeter } from "./MatchMeter";
 import { MatchMeterBottomSheet } from "./MatchMeterBottomSheet";
 import { CanvasThinkingWave } from "./CanvasThinkingWave";
-import { LayoutGrid, Shuffle, Sparkles } from "lucide-react";
+import { LayoutGrid, Shuffle, Sparkles, HelpCircle } from "lucide-react";
+import { CanvasOnboardingTour } from "@/components/shared/CanvasOnboardingTour";
 import { CheckoutFlow, CheckoutItem } from "../checkout/CheckoutFlow";
 import axios from "axios";
 
@@ -28,6 +29,29 @@ export function OutfitCanvas({ wardrobeItems }: OutfitCanvasProps) {
 
   // Checkout State
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+  // Onboarding State
+  const [isOnboardingActive, setIsOnboardingActive] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const seen = localStorage.getItem("buywise_canvas_onboarding_seen");
+      if (!seen) {
+        setIsOnboardingActive(true);
+      }
+    }
+  }, []);
+
+  const handleOnboardingComplete = () => {
+    setIsOnboardingActive(false);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("buywise_canvas_onboarding_seen", "true");
+    }
+  };
+
+  const handleReplayOnboarding = () => {
+    setIsOnboardingActive(true);
+  };
 
   const handleDragEnd = useCallback((result: DropResult) => {
     const { source, destination } = result;
@@ -108,7 +132,16 @@ export function OutfitCanvas({ wardrobeItems }: OutfitCanvasProps) {
       
       {/* Top Header / Mode Toggle */}
       <div className="flex items-center justify-between p-4 border-b border-white/5 bg-bg-main z-20">
-        <h2 className="font-heading font-bold text-lg text-text-primary-light">Outfit Canvas</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="font-heading font-bold text-lg text-text-primary-light">Outfit Canvas</h2>
+          <button 
+            onClick={handleReplayOnboarding}
+            className="p-1 rounded-full text-text-secondary hover:text-white bg-white/5 hover:bg-white/10 transition-colors"
+            title="Replay Tutorial"
+          >
+            <HelpCircle className="size-4" />
+          </button>
+        </div>
         <div className="flex bg-white/5 rounded-lg p-1 border border-white/10">
           <button
             onClick={() => setLayoutMode("free")}
@@ -138,6 +171,7 @@ export function OutfitCanvas({ wardrobeItems }: OutfitCanvasProps) {
               {(provided, snapshot) => (
                 <div
                   ref={provided.innerRef}
+                  id="onboarding-canvas-zone"
                   {...provided.droppableProps}
                   className={`
                     min-h-full w-full p-8 pb-32 transition-colors duration-300 relative
@@ -170,7 +204,7 @@ export function OutfitCanvas({ wardrobeItems }: OutfitCanvasProps) {
             {/* Overlays */}
             {isRating && <CanvasThinkingWave />}
             {matchData && !isRating && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40">
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40" id="onboarding-match-meter">
                 <MatchMeter 
                   score={matchData.score} 
                   commentary={matchData.commentary} 
@@ -185,6 +219,7 @@ export function OutfitCanvas({ wardrobeItems }: OutfitCanvasProps) {
           {canvasItems.length >= 2 && !isRating && !matchData && (
              <div className="absolute bottom-[100px] left-1/2 -translate-x-1/2 z-30">
                <button 
+                 id="onboarding-rate-button"
                  onClick={handleRateFit}
                  className="bg-brand-accent text-bg-main font-black uppercase tracking-widest px-6 py-3 rounded-full shadow-[0_0_30px_rgba(255,176,103,0.5)] flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
                >
@@ -199,6 +234,7 @@ export function OutfitCanvas({ wardrobeItems }: OutfitCanvasProps) {
             {(provided, snapshot) => (
               <div
                 ref={provided.innerRef}
+                id="onboarding-source-panel"
                 {...provided.droppableProps}
                 className={`
                   h-32 shrink-0 bg-bg-input/80 backdrop-blur-xl border-t border-white/10 
@@ -232,6 +268,14 @@ export function OutfitCanvas({ wardrobeItems }: OutfitCanvasProps) {
         onClose={() => setIsMatchSheetOpen(false)}
         score={matchData?.score}
         commentary={matchData?.commentary}
+      />
+
+      <CanvasOnboardingTour 
+        isActive={isOnboardingActive}
+        canvasItemsCount={canvasItems.length}
+        isRating={isRating}
+        matchData={matchData}
+        onComplete={handleOnboardingComplete}
       />
     </div>
   );
