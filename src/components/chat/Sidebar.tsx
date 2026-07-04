@@ -6,11 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-<<<<<<< HEAD:components/chat/Sidebar.tsx
-import { Search, Menu, Camera, Palette, Check, MoreVertical, Pencil, Ghost, LogOut, Shirt, Sparkles } from "lucide-react";
-=======
-import { Search, Menu, Camera, Palette, Check, MoreVertical, Pencil, Ghost, UserCog } from "lucide-react";
->>>>>>> ce36872 (add /profile page, avatar upload bucket integration, and user profile completion progress ring):src/components/chat/Sidebar.tsx
+import { Search, Menu, Camera, Palette, Check, MoreVertical, Pencil, Ghost, LogOut, Shirt, Sparkles, UserCog } from "lucide-react";
 import { ChatSession } from "@/types/chat";
 import { useSidebarResize } from "./useSidebarResize";
 import { useTheme } from "@/hooks/useTheme";
