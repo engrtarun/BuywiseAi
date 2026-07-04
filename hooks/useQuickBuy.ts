@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { QuickBuyProduct } from "@/lib/quickBuyMockData";
 
 export interface QuickBuyPreferences {
@@ -21,6 +21,11 @@ export function useQuickBuy() {
   
   const [allProducts, setAllProducts] = useState<QuickBuyProduct[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -47,31 +52,82 @@ export function useQuickBuy() {
   }, []);
 
   // Fetch products from API
-  useEffect(() => {
-    async function fetchProducts() {
-      setIsLoadingProducts(true);
-      try {
-        const res = await fetch("/api/quick-buy");
-        const json = await res.json();
-        if (json.success && json.data) {
+  const fetchProducts = useCallback(async (currentPage: number, prefs: QuickBuyPreferences | null, isNextPage: boolean = false) => {
+    if (isNextPage) setIsFetchingNextPage(true);
+    else setIsLoadingProducts(true);
+
+    try {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: "12",
+      });
+
+      if (prefs) {
+        if (prefs.sizes?.length > 0) params.append("sizes", prefs.sizes.join(","));
+        if (prefs.preferredCategories?.length > 0) params.append("categories", prefs.preferredCategories.join(","));
+        if (prefs.maxBudget !== null) params.append("budget", prefs.maxBudget.toString());
+      }
+
+      const res = await fetch(`/api/quick-buy?${params.toString()}`);
+      const json = await res.json();
+      
+      if (json.success && json.data) {
+        if (isNextPage) {
+          setAllProducts(prev => {
+            // Avoid duplicates
+            const newIds = new Set(json.data.map((p: any) => p.id));
+            const filteredPrev = prev.filter(p => !newIds.has(p.id));
+            return [...filteredPrev, ...json.data];
+          });
+        } else {
           setAllProducts(json.data);
         }
-      } catch (err) {
-        console.error("Failed to fetch products", err);
-      } finally {
-        setIsLoadingProducts(false);
+        setHasMore(json.pagination.hasMore);
+      } else {
+        // Fallback to empty if error
+        if (!isNextPage) setAllProducts([]);
+        setHasMore(false);
       }
+    } catch (err) {
+      console.error("Failed to fetch products", err);
+      if (!isNextPage) setAllProducts([]);
+      setHasMore(false);
+    } finally {
+      setIsLoadingProducts(false);
+      setIsFetchingNextPage(false);
     }
-    fetchProducts();
   }, []);
+
+  // Trigger initial fetch or fetch when preferences change
+  useEffect(() => {
+    // Only fetch if we're not initializing localStorage anymore
+    if (!isInitializing) {
+      // If preferences exist, it will use them for filtering. 
+      // If null, it will fetch without filters.
+      fetchProducts(1, preferences, false);
+    }
+  }, [preferences, isInitializing, fetchProducts]);
+
+  const fetchNextPage = useCallback(() => {
+    if (!hasMore || isFetchingNextPage || isLoadingProducts) return;
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchProducts(nextPage, preferences, true);
+  }, [hasMore, isFetchingNextPage, isLoadingProducts, page, preferences, fetchProducts]);
 
   const savePreferences = useCallback((newPrefs: QuickBuyPreferences) => {
     setPreferences(newPrefs);
+    setPage(1);
+    setHasMore(true);
+    setAllProducts([]); // Clear UI immediately while new ones load
     localStorage.setItem(PREFS_KEY, JSON.stringify(newPrefs));
   }, []);
 
   const clearPreferences = useCallback(() => {
     setPreferences(null);
+    setPage(1);
+    setHasMore(true);
+    setAllProducts([]);
     localStorage.removeItem(PREFS_KEY);
   }, []);
 
@@ -106,36 +162,10 @@ export function useQuickBuy() {
     });
   }, []);
 
-  // Filter the fetched data based on preferences
+  // Since filtering is now server-side, this just returns allProducts
   const getFilteredProducts = useCallback((): QuickBuyProduct[] => {
-    if (!preferences) return [];
-    
-    console.log('All mock products:', allProducts);
-    console.log('User prefs:', preferences);
-
-    const filtered = allProducts.filter((product) => {
-      // Check budget
-      if (preferences.maxBudget !== null && product.price > preferences.maxBudget) {
-        return false;
-      }
-      
-      // Check sizes (product must have at least one of the selected sizes)
-      if (preferences.sizes?.length > 0) {
-        const hasMatchingSize = product.sizes.some((size) => preferences.sizes.includes(size));
-        if (!hasMatchingSize) return false;
-      }
-
-      // Check categories (if any selected, product must match one)
-      if (preferences.preferredCategories?.length > 0) {
-        if (!preferences.preferredCategories.includes(product.category)) return false;
-      }
-      
-      return true;
-    });
-
-    console.log('Filtered products:', filtered);
-    return filtered;
-  }, [preferences, allProducts]);
+    return allProducts;
+  }, [allProducts]);
 
   // Derived saved items list
   const savedProducts = savedItemIds
@@ -145,6 +175,8 @@ export function useQuickBuy() {
   return {
     isInitializing,
     isLoadingProducts,
+    isFetchingNextPage,
+    hasMore,
     preferences,
     savePreferences,
     clearPreferences,
@@ -155,5 +187,6 @@ export function useQuickBuy() {
     removeSavedItem,
     updateQuantity,
     getFilteredProducts,
+    fetchNextPage
   };
 }

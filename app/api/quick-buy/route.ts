@@ -2,26 +2,28 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   try {
-    // 1. URL se search params (size aur budget) nikalna
+    // 1. URL se search params nikalna
     const { searchParams } = new URL(request.url);
-    const userSize = searchParams.get('size') || 'M';
-    const maxBudget = Number(searchParams.get('budget')) || 5000;
+    const page = Number(searchParams.get('page')) || 1;
+    const limit = Number(searchParams.get('limit')) || 12;
+    
+    const sizesParam = searchParams.get('sizes');
+    const categoriesParam = searchParams.get('categories');
+    const budgetParam = searchParams.get('budget');
+    
+    const userSizes = sizesParam ? sizesParam.split(',') : [];
+    const preferredCategories = categoriesParam ? categoriesParam.split(',') : [];
+    const maxBudget = budgetParam ? Number(budgetParam) : null;
 
-    // 2. FakeStoreAPI se Men's aur Women's clothing parallelly fetch karna
-    const [mensRes, womensRes] = await Promise.all([
-      fetch("https://fakestoreapi.com/products/category/men's clothing"),
-      fetch("https://fakestoreapi.com/products/category/women's clothing")
-    ]);
-
-    const mensClothes = await mensRes.json();
-    const womensClothes = await womensRes.json();
-    const allClothes = [...mensClothes, ...womensClothes];
+    // 2. Fetch entire FakeStoreAPI catalog for pagination testing
+    // Pagination limits initial load to ~12 items and fetches incrementally as the user swipes, 
+    // reducing initial load time and API calls compared to fetching the full catalog upfront on the client.
+    const res = await fetch("https://fakestoreapi.com/products");
+    const allClothes = await res.json();
 
     // 3. Data Formatting (USD to INR aur Mock Sizes inject karna)
     const formattedProducts = allClothes.map((product: any) => {
-      // Demo ke liye har product ko random sizes assign karna
       const availableSizes = ['S', 'M', 'L', 'XL'];
-      // Har product ko 2-3 random sizes de dete hain
       const mockSizes = availableSizes.filter(() => Math.random() > 0.4); 
       if (mockSizes.length === 0) mockSizes.push('M'); // Safe fallback
 
@@ -37,27 +39,47 @@ export async function GET(request: Request) {
       };
     });
 
-    // 4. Smart Filtering Logic (User ke size aur budget ke mutabiq)
-    // Actually, because we have client-side filtering in useQuickBuy, 
-    // we can return all products and let the client handle it, OR we can pre-filter here.
-    // The text file shows pre-filtering. Let's pre-filter based on query params if they exist,
-    // otherwise return all.
-    const filteredProducts = formattedProducts.filter((product) => {
+    // 4. Server-side Filtering Logic
+    const filteredProducts = formattedProducts.filter((product: any) => {
       let matchesSize = true;
       let matchesBudget = true;
+      let matchesCategory = true;
       
-      if (searchParams.has('size')) {
-        matchesSize = product.sizes.includes(userSize);
+      if (userSizes.length > 0) {
+        matchesSize = product.sizes.some((s: string) => userSizes.includes(s));
       }
-      if (searchParams.has('budget')) {
+      
+      if (maxBudget !== null) {
         matchesBudget = product.price <= maxBudget;
       }
-      return matchesSize && matchesBudget;
+
+      if (preferredCategories.length > 0) {
+        matchesCategory = preferredCategories.includes(product.category);
+      }
+      
+      return matchesSize && matchesBudget && matchesCategory;
     });
 
-    return NextResponse.json({ success: true, data: filteredProducts });
+    // 5. Pagination
+    const totalFiltered = filteredProducts.length;
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+    
+    const hasMore = endIndex < totalFiltered;
+
+    return NextResponse.json({ 
+      success: true, 
+      data: paginatedProducts,
+      pagination: {
+        page,
+        limit,
+        totalFiltered,
+        hasMore
+      }
+    });
   } catch (error) {
     console.error("API Error:", error);
-    return NextResponse.json({ success: false, error: 'Failed to fetch clothes' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Failed to fetch products' }, { status: 500 });
   }
 }
