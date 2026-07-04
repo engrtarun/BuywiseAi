@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Sparkles, Search, Gift, Smartphone, Laptop, Scale } from "lucide-react";
+import { LoginRequiredScreen } from "./LoginRequiredScreen";
 
 interface WelcomeScreenProps {
   onSuggestionClick: (text: string) => void;
@@ -39,6 +40,10 @@ const suggestions = [
 ];
 
 export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessagesRemaining = 0, guestLimitReached = false, onLoginClick }: WelcomeScreenProps) {
+  if (guestLimitReached) {
+    return <LoginRequiredScreen onLoginClick={onLoginClick} />;
+  }
+
   return (
     <div className="flex-1 min-h-0 flex items-center justify-center overflow-y-auto px-4 py-8">
       <div className="w-full max-w-2xl mx-auto flex flex-col items-center gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

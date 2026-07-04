@@ -2,8 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import TextareaAutosize from "react-textarea-autosize";
-import { ArrowUp, Square } from "lucide-react";
-import { GuestLimitReachedCard } from "./GuestLimitReachedCard";
+import { ArrowUp, Square, LogIn } from "lucide-react";
 
 const placeholders = [
   "BuyWise anything...",
@@ -79,9 +78,22 @@ export function ChatInput({ onSend, onStop, disabled, isGenerating, guestLimitRe
 
   if (guestLimitReached) {
     return (
-      <div className="shrink-0 bg-bg-main border-t border-border-light px-3 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)] sm:px-4 sm:py-6 z-20 flex justify-center w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
-        <div className="w-full max-w-3xl flex justify-center">
-          {onLoginClick && <GuestLimitReachedCard onLoginClick={onLoginClick} />}
+      <div className="shrink-0 bg-bg-main border-t border-border-light px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-4 z-20 transition-opacity duration-300">
+        <div className="w-full max-w-3xl mx-auto">
+          <button
+            onClick={onLoginClick}
+            className="
+              w-full flex items-center justify-between gap-3 px-4 py-3.5 
+              rounded-2xl bg-white/[0.03] border border-marigold/30 
+              text-text-secondary text-[15px] cursor-pointer hover:bg-white/[0.05] 
+              transition-colors group
+            "
+          >
+            <span className="font-sans">Log in to continue chatting...</span>
+            <div className="size-8 rounded-full bg-brand-accent flex items-center justify-center shrink-0 text-ink-deeper shadow-md shadow-marigold/20 group-hover:scale-105 transition-transform">
+              <LogIn className="size-4" />
+            </div>
+          </button>
         </div>
       </div>
     );
