@@ -1,11 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { QuickBuyScreen } from '@/components/quick-buy/QuickBuyScreen';
+import { VirtualWardrobe } from '@/components/quick-buy/VirtualWardrobe';
 import { FloatingChatBubble } from '@/components/shared/FloatingChatBubble';
 import { ChevronLeft } from 'lucide-react';
+import { mockQuickBuyProducts } from '@/lib/quickBuyMockData';
 
-export default function QuickBuyPage() {
+export default function VirtualWardrobePage() {
   const router = useRouter();
 
   return (
@@ -22,7 +23,7 @@ export default function QuickBuyPage() {
       </div>
 
       <div className="pt-14 h-screen">
-        <QuickBuyScreen onClose={() => router.push('/chat')} />
+        <VirtualWardrobe items={mockQuickBuyProducts} />
       </div>
 
       <FloatingChatBubble />

@@ -2,7 +2,8 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import TextareaAutosize from "react-textarea-autosize";
-import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye } from "lucide-react";
+import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye, Plus } from "lucide-react";
+import { QuickAccessMenu } from "./QuickAccessMenu";
 
 const placeholders = [
   "BuyWise anything...",
@@ -45,6 +46,9 @@ export function ChatInput({
   const [inputText, setInputText] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [isQuickMenuOpen, setIsQuickMenuOpen] = useState(false);
+  const plusButtonRef = useRef<HTMLButtonElement>(null);
+  const [plusButtonRect, setPlusButtonRect] = useState<DOMRect | null>(null);
 
   // Rotate placeholder every 5 seconds
   useEffect(() => {
@@ -198,7 +202,27 @@ export function ChatInput({
             </button>
           </div>
 
-          <div className="flex items-end gap-2 p-1 pr-1.5">
+          <div className="flex items-end gap-2 p-1 pl-2 pr-1.5 pb-1.5">
+            {/* Quick Actions + Button */}
+            <button
+              ref={plusButtonRef}
+              onClick={() => {
+                if (plusButtonRef.current) {
+                  setPlusButtonRect(plusButtonRef.current.getBoundingClientRect());
+                }
+                setIsQuickMenuOpen(!isQuickMenuOpen);
+              }}
+              className="flex items-center justify-center size-10 shrink-0 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-text-secondary hover:text-text-primary-light self-end mb-[2px]"
+              aria-label="Quick Actions"
+            >
+              <Plus className={`size-5 transition-transform duration-200 ${isQuickMenuOpen ? 'rotate-45' : 'rotate-0'}`} />
+            </button>
+            <QuickAccessMenu 
+              isOpen={isQuickMenuOpen} 
+              onClose={() => setIsQuickMenuOpen(false)} 
+              anchorRect={plusButtonRect} 
+            />
+
             <div className="relative flex-1 flex min-h-[44px] sm:min-h-[48px]">
             {/* Custom Animated Placeholder */}
             {!inputText && (

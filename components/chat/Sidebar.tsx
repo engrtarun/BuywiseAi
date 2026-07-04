@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Menu, Camera, Palette, Check, MoreVertical, Pencil, Ghost } from "lucide-react";
+import { Search, Menu, Camera, Palette, Check, MoreVertical, Pencil, Ghost, LogOut, Shirt, Sparkles } from "lucide-react";
 import { ChatSession } from "@/types/chat";
 import { useSidebarResize } from "./useSidebarResize";
 import { useTheme } from "@/hooks/useTheme";
@@ -745,6 +745,42 @@ function SidebarContent({
         {/* Actions */}
         <div className={`flex flex-col gap-2 w-full ${isCollapsed ? "items-center" : ""}`}>
           <NewChatButton onClick={() => { onNewChat(); onClose(); }} isCollapsed={isCollapsed} />
+          
+          {/* Shopping Tools */}
+          <div className="flex flex-col gap-1 w-full mt-2 mb-1">
+            {!isCollapsed && (
+              <p className="px-2 mb-1 text-[10px] font-mono text-text-secondary uppercase tracking-wider">
+                Shopping Tools
+              </p>
+            )}
+            
+            <Tooltip text="Quick Buy" isCollapsed={isCollapsed}>
+              <button 
+                onClick={() => { router.push('/quick-buy'); onClose(); }}
+                className={`
+                  flex items-center gap-2.5 rounded-xl font-sans text-[13px] text-text-primary-dark hover:bg-white/[0.06] transition-all cursor-pointer group select-none
+                  ${isCollapsed ? "size-10 justify-center" : "w-full px-3 py-2.5"}
+                `}
+              >
+                <Sparkles className="size-4 shrink-0 text-brand-accent group-hover:scale-110 transition-transform" />
+                {!isCollapsed && <span className="truncate flex-1 text-left">Quick Buy</span>}
+              </button>
+            </Tooltip>
+
+            <Tooltip text="Virtual Wardrobe" isCollapsed={isCollapsed}>
+              <button 
+                onClick={() => { router.push('/virtual-wardrobe'); onClose(); }}
+                className={`
+                  flex items-center gap-2.5 rounded-xl font-sans text-[13px] text-text-primary-dark hover:bg-white/[0.06] transition-all cursor-pointer group select-none
+                  ${isCollapsed ? "size-10 justify-center" : "w-full px-3 py-2.5"}
+                `}
+              >
+                <Shirt className="size-4 shrink-0 text-text-secondary group-hover:text-brand-accent group-hover:scale-110 transition-transform" />
+                {!isCollapsed && <span className="truncate flex-1 text-left">Virtual Wardrobe</span>}
+              </button>
+            </Tooltip>
+          </div>
+
           <SearchField 
             isCollapsed={isCollapsed} 
             onExpand={onToggleCollapse}

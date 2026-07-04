@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useAnimation, PanInfo } from "framer-motion";
-import { X, Star, ShoppingBag, ShieldCheck, ChevronRight } from "lucide-react";
+import { X, Star, ShoppingBag, ShieldCheck, Layers, ChevronRight } from "lucide-react";
 import { Product } from "@/types/product";
+import { useRouter } from "next/navigation";
 
 interface ProductBottomSheetProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface ProductBottomSheetProps {
 export function ProductBottomSheet({ isOpen, onClose, product, onBuy }: ProductBottomSheetProps) {
   const [mounted, setMounted] = useState(false);
   const controls = useAnimation();
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -172,21 +174,34 @@ export function ProductBottomSheet({ isOpen, onClose, product, onBuy }: ProductB
             </div>
 
             {/* Bottom Action Bar */}
-            <div className="p-4 md:px-8 border-t border-line-ondark bg-bg-main backdrop-blur-xl flex gap-3 pb-8 md:pb-6">
-              <button
-                onClick={handleBackdropClick}
-                className="w-1/3 py-4 rounded-xl border border-white/10 font-bold text-text-ondark hover:bg-white/5 transition-colors flex items-center justify-center gap-2"
-              >
-                Cancel
-              </button>
+            <div className="p-4 md:px-8 border-t border-line-ondark bg-bg-main backdrop-blur-xl flex flex-col gap-3 pb-8 md:pb-6">
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={handleBackdropClick}
+                  className="w-1/3 py-4 rounded-xl border border-white/10 font-bold text-text-ondark hover:bg-white/5 transition-colors flex items-center justify-center gap-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    onBuy(product);
+                  }}
+                  className="w-2/3 py-4 rounded-xl bg-brand-accent text-bg-main font-bold hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,176,103,0.3)]"
+                >
+                  <ShoppingBag className="size-5" />
+                  Buy Now
+                </button>
+              </div>
               <button
                 onClick={() => {
-                  onBuy(product);
+                  // Pass a query param to pre-filter the deck if desired
+                  router.push(`/quick-buy?category=${encodeURIComponent(product.name)}`);
+                  onClose();
                 }}
-                className="w-2/3 py-4 rounded-xl bg-brand-accent text-bg-main font-bold hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,176,103,0.3)]"
+                className="w-full py-3.5 rounded-xl border border-brand-accent/30 bg-brand-accent/5 text-brand-accent font-bold hover:bg-brand-accent/10 active:scale-95 transition-all flex items-center justify-center gap-2"
               >
-                <ShoppingBag className="size-5" />
-                Buy Now
+                <Layers className="size-4" />
+                See More Like This
               </button>
             </div>
           </motion.div>

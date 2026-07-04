@@ -20,25 +20,52 @@ export function SwipeCardDeck({ products, onSave, onOpenSettings, hasMore, onPre
   const [swipedIds, setSwipedIds] = useState<Set<string>>(new Set());
   const router = useRouter();
 
-  // Reset swiped cards when the products completely change (e.g. filter change)
+  // Initialize from sessionStorage on mount
   useEffect(() => {
-    // If products array shrinks (meaning a complete reset happened), clear swiped set
-    if (products.length === 0) {
-      setSwipedIds(new Set());
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem("buywise_quickbuy_swiped_ids");
+      if (stored) {
+        try {
+          setSwipedIds(new Set(JSON.parse(stored)));
+        } catch (e) {
+          console.error("Failed to parse swiped IDs", e);
+        }
+      }
     }
-  }, [products]);
+  }, []);
+
+  // Reset swiped cards when the products completely change (e.g. filter change), or just rely on the IDs.
+  // Actually, keeping the swiped IDs is better even if products change, so they don't see them again if they switch back.
+  // We will let the Set grow.
+
+  const saveToSession = (newSet: Set<string>) => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("buywise_quickbuy_swiped_ids", JSON.stringify(Array.from(newSet)));
+    }
+  };
 
   const handleSwipeLeft = (id: string) => {
-    setSwipedIds((prev) => new Set(prev).add(id));
+    setSwipedIds((prev) => {
+      const next = new Set(prev).add(id);
+      saveToSession(next);
+      return next;
+    });
   };
 
   const handleSwipeRight = (id: string) => {
     onSave(id);
-    setSwipedIds((prev) => new Set(prev).add(id));
+    setSwipedIds((prev) => {
+      const next = new Set(prev).add(id);
+      saveToSession(next);
+      return next;
+    });
   };
 
   const handleReset = () => {
     setSwipedIds(new Set());
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("buywise_quickbuy_swiped_ids");
+    }
   };
 
   const visibleCards = products.filter((p) => !swipedIds.has(p.id));
