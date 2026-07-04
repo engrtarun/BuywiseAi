@@ -1,19 +1,21 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, useMotionValue, useTransform, useAnimation, PanInfo } from "framer-motion";
+import { motion, useMotionValue, useTransform, useAnimation, PanInfo, AnimatePresence } from "framer-motion";
 import { QuickBuyProduct } from "@/lib/quickBuyMockData";
-import { Star, Check, ShoppingCart, Zap, Heart, ArrowRight } from "lucide-react";
+import { Star, Check, ShoppingCart, Zap, Heart, ArrowRight, Package } from "lucide-react";
+import confetti from "canvas-confetti";
 
 interface SwipeableProductCardProps {
   product: QuickBuyProduct;
   onSwipeLeft: (id: string) => void;
   onSwipeRight: (id: string) => void;
+  onBuy?: (price: number) => void;
   isTop: boolean;
   index: number;
 }
 
-export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, isTop, index }: SwipeableProductCardProps) {
+export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy, isTop, index }: SwipeableProductCardProps) {
   const x = useMotionValue(0);
   const controls = useAnimation();
   
@@ -102,10 +104,36 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, isTop
     }
   };
 
-  const handleBuy = (e: React.MouseEvent) => {
+  const [showFlyingBox, setShowFlyingBox] = useState(false);
+
+  const handleBuy = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    setShowToast("Order placed!");
-    setTimeout(() => setShowToast(null), 2000);
+    
+    // Confetti
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (rect.left + rect.width / 2) / window.innerWidth;
+    const y = (rect.top + rect.height / 2) / window.innerHeight;
+    
+    confetti({
+      particleCount: 80,
+      spread: 70,
+      origin: { x, y },
+      colors: ["#ffb067", "#f97316", "#2dd4bf"] // Amber, Orange, Mint
+    });
+
+    // Notify parent to add to budget
+    if (onBuy) onBuy(product.price);
+
+    // Show animations
+    setShowToast(`🎉 Order Placed! ₹${product.price}`);
+    setShowFlyingBox(true);
+    
+    setTimeout(() => {
+      setShowToast(null);
+      setShowFlyingBox(false);
+      // Auto-swipe after buy animation
+      manualSwipe("right");
+    }, 1200);
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -193,11 +221,38 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, isTop
           </div>
           
           {/* Toast */}
-          {showToast && (
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-4 py-2 rounded-lg font-bold text-sm backdrop-blur-md border border-white/10 z-50 animate-in zoom-in duration-200">
-              {showToast}
-            </div>
-          )}
+          <AnimatePresence>
+            {showToast && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-5 py-3 rounded-2xl font-black text-base backdrop-blur-md border border-white/20 z-50 shadow-2xl flex items-center justify-center whitespace-nowrap"
+              >
+                {showToast}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Flying Box Micro-animation */}
+          <AnimatePresence>
+            {showFlyingBox && (
+              <motion.div
+                initial={{ opacity: 1, x: "-50%", y: "-50%", scale: 1 }}
+                animate={{ 
+                  opacity: 0, 
+                  x: "150%", 
+                  y: "-250%", 
+                  scale: 0.5,
+                  rotate: 45
+                }}
+                transition={{ duration: 0.8, ease: "anticipate" }}
+                className="absolute top-1/2 left-1/2 z-40 bg-brand-accent p-3 rounded-xl shadow-lg"
+              >
+                <Package className="size-6 text-bg-main" />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Product Details Area */}

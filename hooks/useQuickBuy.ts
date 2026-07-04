@@ -12,11 +12,13 @@ export interface QuickBuyPreferences {
 const PREFS_KEY = "buywise_quickbuy_prefs";
 const SAVED_ITEMS_KEY = "buywise_quickbuy_saved";
 const QUANTITIES_KEY = "buywise_quickbuy_quantities";
+const TOTAL_SPENT_KEY = "buywise_quickbuy_spent";
 
 export function useQuickBuy() {
   const [preferences, setPreferences] = useState<QuickBuyPreferences | null>(null);
   const [savedItemIds, setSavedItemIds] = useState<string[]>([]);
   const [itemQuantities, setItemQuantities] = useState<Record<string, number>>({});
+  const [totalSpent, setTotalSpent] = useState<number>(0);
   const [isInitializing, setIsInitializing] = useState(true);
   
   const [allProducts, setAllProducts] = useState<QuickBuyProduct[]>([]);
@@ -43,6 +45,11 @@ export function useQuickBuy() {
       const storedQuantities = localStorage.getItem(QUANTITIES_KEY);
       if (storedQuantities) {
         setItemQuantities(JSON.parse(storedQuantities));
+      }
+
+      const storedSpent = sessionStorage.getItem(TOTAL_SPENT_KEY);
+      if (storedSpent) {
+        setTotalSpent(JSON.parse(storedSpent));
       }
     } catch (err) {
       console.error("Failed to load QuickBuy state from localStorage", err);
@@ -120,7 +127,9 @@ export function useQuickBuy() {
     setPage(1);
     setHasMore(true);
     setAllProducts([]); // Clear UI immediately while new ones load
+    setTotalSpent(0);
     localStorage.setItem(PREFS_KEY, JSON.stringify(newPrefs));
+    sessionStorage.removeItem(TOTAL_SPENT_KEY);
   }, []);
 
   const clearPreferences = useCallback(() => {
@@ -128,7 +137,9 @@ export function useQuickBuy() {
     setPage(1);
     setHasMore(true);
     setAllProducts([]);
+    setTotalSpent(0);
     localStorage.removeItem(PREFS_KEY);
+    sessionStorage.removeItem(TOTAL_SPENT_KEY);
   }, []);
 
   const saveItem = useCallback((productId: string) => {
@@ -162,6 +173,14 @@ export function useQuickBuy() {
     });
   }, []);
 
+  const addExpense = useCallback((amount: number) => {
+    setTotalSpent((prev) => {
+      const next = prev + amount;
+      sessionStorage.setItem(TOTAL_SPENT_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   // Since filtering is now server-side, this just returns allProducts
   const getFilteredProducts = useCallback((): QuickBuyProduct[] => {
     return allProducts;
@@ -187,6 +206,8 @@ export function useQuickBuy() {
     removeSavedItem,
     updateQuantity,
     getFilteredProducts,
-    fetchNextPage
+    fetchNextPage,
+    totalSpent,
+    addExpense
   };
 }

@@ -12,9 +12,10 @@ interface SwipeCardDeckProps {
   onOpenSettings: () => void;
   hasMore: boolean;
   onPrefetch: () => void;
+  onBuy?: (price: number) => void;
 }
 
-export function SwipeCardDeck({ products, onSave, onOpenSettings, hasMore, onPrefetch }: SwipeCardDeckProps) {
+export function SwipeCardDeck({ products, onSave, onOpenSettings, hasMore, onPrefetch, onBuy }: SwipeCardDeckProps) {
   const [swipedIds, setSwipedIds] = useState<Set<string>>(new Set());
 
   // Reset swiped cards when the products completely change (e.g. filter change)
@@ -104,10 +105,11 @@ export function SwipeCardDeck({ products, onSave, onOpenSettings, hasMore, onPre
             <SwipeableProductCard
               key={product.id}
               product={product}
-              isTop={isTop}
               index={index}
+              isTop={isTop}
               onSwipeLeft={handleSwipeLeft}
               onSwipeRight={handleSwipeRight}
+              onBuy={onBuy}
             />
           );
         })}

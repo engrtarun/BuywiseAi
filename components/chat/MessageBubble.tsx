@@ -3,12 +3,14 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Message, Feedback } from "@/types/chat";
 import { Product } from "@/types/product";
 import { MessageActions } from "./MessageActions";
 import { ProductCard } from "./ProductCard";
 import { ProductCarousel } from "./ProductCarousel";
+import { SpoilerText } from "./SpoilerText";
 
 /** Detect if raw markdown contains a GFM table */
 function hasTable(content: string): boolean {
@@ -17,7 +19,15 @@ function hasTable(content: string): boolean {
 
 /* ── Styled Markdown component overrides ──────────────── */
 
+/* ── Styled Markdown component overrides ──────────────── */
+
 const markdownComponents = {
+  span: ({ node, 'data-spoiler': isSpoiler, children, ...props }: any) => {
+    if (isSpoiler === "true") {
+      return <SpoilerText>{children}</SpoilerText>;
+    }
+    return <span {...props}>{children}</span>;
+  },
   p: ({ node, ...props }: any) => <p className="mb-3 last:mb-0" {...props} />,
   a: ({ node, ...props }: any) => (
     <a
@@ -128,6 +138,9 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   const containsTable = hasTable(message.content);
   const hasProducts = message.products && message.products.length > 0;
   const isSingleProduct = hasProducts && message.products?.length === 1;
+  
+  // Pre-process for spoiler syntax ||text||
+  const processedContent = message.content.replace(/\|\|(.*?)\|\|/g, '<span data-spoiler="true">$1</span>');
 
   // AI Bubble
   return (
@@ -162,9 +175,10 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
             >
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
                 components={markdownComponents}
               >
-                {message.content}
+                {processedContent}
               </ReactMarkdown>
             </div>
           )}

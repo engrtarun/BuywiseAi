@@ -2,8 +2,9 @@
 
 import React, { useState } from "react";
 import { QuickBuyProduct } from "@/lib/quickBuyMockData";
-import { ArrowLeft, Trash2, ShoppingBag, Zap, Plus, Minus, CheckCircle } from "lucide-react";
+import { ArrowLeft, Trash2, ShoppingBag, Zap, Plus, Minus, CheckCircle, Grid, Layers } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { VirtualWardrobe } from "./VirtualWardrobe";
 
 interface SavedItemsListProps {
   items: QuickBuyProduct[];
@@ -17,6 +18,7 @@ type CheckoutStep = "CART" | "SUMMARY" | "SUCCESS";
 
 export function SavedItemsList({ items, itemQuantities, onBack, onRemove, onUpdateQuantity }: SavedItemsListProps) {
   const [step, setStep] = useState<CheckoutStep>("CART");
+  const [viewMode, setViewMode] = useState<"GRID" | "WARDROBE">("GRID");
 
   const totalPrice = items.reduce((sum, item) => sum + item.price * (itemQuantities[item.id] || 1), 0);
   const totalItems = items.reduce((sum, item) => sum + (itemQuantities[item.id] || 1), 0);
@@ -145,20 +147,44 @@ export function SavedItemsList({ items, itemQuantities, onBack, onRemove, onUpda
       
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4 border-b border-border-light bg-bg-main/80 backdrop-blur-md sticky top-0 z-10">
-        <button
-          onClick={onBack}
-          className="p-2 -ml-2 rounded-full hover:bg-white/5 text-text-primary-light transition-colors"
-        >
-          <ArrowLeft className="size-6" />
-        </button>
-        <h2 className="text-lg font-heading font-bold text-text-primary-light">
-          My Deck Cart
-        </h2>
-        <div className="text-sm font-bold text-brand-accent pr-2">{totalItems} items</div>
+        <div className="flex items-center">
+          <button
+            onClick={onBack}
+            className="p-2 -ml-2 rounded-full hover:bg-white/5 text-text-primary-light transition-colors"
+          >
+            <ArrowLeft className="size-6" />
+          </button>
+          <h2 className="text-lg font-heading font-bold text-text-primary-light ml-1">
+            My Deck Cart
+          </h2>
+        </div>
+        
+        {/* View Toggle */}
+        {items.length > 0 && (
+          <div className="flex items-center bg-black/40 border border-white/10 rounded-lg p-0.5">
+            <button
+              onClick={() => setViewMode("GRID")}
+              className={`p-1.5 rounded-md transition-all ${viewMode === "GRID" ? "bg-white/10 text-white" : "text-text-secondary hover:text-white"}`}
+              title="Grid View"
+            >
+              <Grid className="size-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("WARDROBE")}
+              className={`p-1.5 rounded-md transition-all ${viewMode === "WARDROBE" ? "bg-brand-accent text-bg-main" : "text-text-secondary hover:text-white"}`}
+              title="Mix & Match"
+            >
+              <Layers className="size-4" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-28">
+      {viewMode === "WARDROBE" ? (
+        <VirtualWardrobe items={items} />
+      ) : (
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-28">
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-text-secondary animate-in fade-in zoom-in duration-500">
             <div className="size-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
@@ -233,9 +259,10 @@ export function SavedItemsList({ items, itemQuantities, onBack, onRemove, onUpda
           </motion.div>
         )}
       </div>
+      )}
 
       {/* Footer / Buy All */}
-      {items.length > 0 && (
+      {items.length > 0 && viewMode === "GRID" && (
         <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-bg-main/90 backdrop-blur-md border-t border-border-light flex justify-center">
           <button 
             onClick={handleCheckout}

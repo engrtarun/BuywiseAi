@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import TextareaAutosize from "react-textarea-autosize";
-import { ArrowUp, Square, LogIn, Clock } from "lucide-react";
+import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye } from "lucide-react";
 
 const placeholders = [
   "BuyWise anything...",
@@ -92,6 +92,31 @@ export function ChatInput({
     }
   };
 
+  const applyFormatting = (prefix: string, suffix: string = prefix) => {
+    if (!inputRef.current) return;
+    const el = inputRef.current;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const text = el.value;
+
+    const before = text.substring(0, start);
+    const selected = text.substring(start, end);
+    const after = text.substring(end);
+
+    const newText = before + prefix + selected + suffix + after;
+    setInputText(newText);
+
+    // Set cursor position after React re-renders
+    setTimeout(() => {
+      el.focus();
+      if (selected.length > 0) {
+        el.setSelectionRange(start, start + prefix.length + selected.length + suffix.length);
+      } else {
+        el.setSelectionRange(start + prefix.length, start + prefix.length);
+      }
+    }, 0);
+  };
+
   if (guestLimitReached || dailyLimitReached) {
     return (
       <div className="shrink-0 bg-bg-main border-t border-border-light px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-4 z-20 transition-opacity duration-300">
@@ -143,9 +168,36 @@ export function ChatInput({
           </button>
         )}
 
-        <div className="flex items-end gap-2 bg-bg-input rounded-3xl border border-border-light p-1 pr-1.5 focus-within:border-brand-accent/50 transition-colors shadow-sm">
+        <div className="flex flex-col bg-bg-input rounded-3xl border border-border-light focus-within:border-brand-accent/50 transition-colors shadow-sm overflow-hidden">
+          
+          {/* Toolbar */}
+          <div className="flex items-center gap-1 px-3 py-1.5 border-b border-border-light bg-black/10">
+            <button
+              onClick={() => applyFormatting("**")}
+              className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95"
+              title="Bold (Ctrl+B)"
+            >
+              <Bold className="size-4" />
+            </button>
+            <button
+              onClick={() => applyFormatting("*")}
+              className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95"
+              title="Italic (Ctrl+I)"
+            >
+              <Italic className="size-4" />
+            </button>
+            <div className="w-px h-4 bg-border-light mx-1" />
+            <button
+              onClick={() => applyFormatting("||")}
+              className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95"
+              title="Spoiler"
+            >
+              <Eye className="size-4" />
+            </button>
+          </div>
 
-          <div className="relative flex-1 flex min-h-[44px] sm:min-h-[48px]">
+          <div className="flex items-end gap-2 p-1 pr-1.5">
+            <div className="relative flex-1 flex min-h-[44px] sm:min-h-[48px]">
             {/* Custom Animated Placeholder */}
             {!inputText && (
               <div className="absolute inset-0 pointer-events-none px-4 flex items-center overflow-hidden">
@@ -205,6 +257,7 @@ export function ChatInput({
               <ArrowUp className="size-5 stroke-[2.5]" />
             )}
           </button>
+          </div>
         </div>
 
         {/* Daily Usage Indicator */}
