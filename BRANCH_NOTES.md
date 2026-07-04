@@ -1,66 +1,56 @@
-# Branch Notes: Supabase & Chat Integration
+# Branch Status: feature/theme-rebuild
 
-This branch (`feature/supabase-db`) contains the complete wiring for Supabase SSR and database-backed chat persistence.
-
----
-
-## 1. Relevant File Structure
-
-```text
-├── proxy.ts                     # Root request interceptor (formerly middleware)
-├── app/
-│   ├── page.tsx                 # Main chat user interface & state integration
-│   ├── actions/
-│   │   └── chat.ts              # Server actions for sessions and messages
-│   └── globals.css              # Custom styling definitions
-├── lib/
-│   └── supabase/
-│       ├── client.ts            # Client builder for browser components
-│       ├── server.ts            # Client builder for server-side actions
-│       └── middleware.ts        # Helper to refresh session cookies in proxy
-└── components/ui/               # Reusable UI primitives (avatar, badge, input, etc.)
-```
+This document provides a non-technical overview of the current status, structure, and features of the BuyWise AI project on this branch.
 
 ---
 
-## 2. File Explanations
-
-* **`proxy.ts`**
-  * Intercepts incoming traffic to check session cookies before page render.
-* **`app/page.tsx`**
-  * The front-end view for the chat application. Manages state, loading indicators, auto-scroll, and message sending.
-* **`app/actions/chat.ts`**
-  * Database operations for creating chat sessions, fetching history, and saving messages.
-* **`lib/supabase/client.ts`**
-  * Supabase initializer for client-side components.
-* **`lib/supabase/server.ts`**
-  * Supabase initializer for server actions (uses async cookies).
-* **`lib/supabase/middleware.ts`**
-  * Helper to automatically refresh expired user sessions in the background.
+## 1. Overview
+This branch contains a unified build of the BuyWise AI platform, combining:
+* **Premium Chat Interface:** A sleek, Claude-style dark theme dashboard.
+* **Database & Authentication:** Secure logins and user profiles powered by Supabase.
+* **Persistent History:** Auto-saving and reloading of chat sessions.
+* **AI Auto-Titling:** Automated, smart chat titles generated from your first message.
 
 ---
 
-## 3. Implemented vs. Missing Features
+## 2. Key Project Folders & Files
+Here is where the relevant parts of the application live:
 
-### Implemented ✅
-* Database persistence for active chat sessions and individual chat messages.
-* Automatic loading and mapping of past chat messages on page load.
-* Full Supabase SSR session-refresh flow using cookies.
-* Typing animations and skeleton loader UIs.
-* Basic unauthorized redirect to `/login`.
-
-### Missing / TODO ⏳
-* **Real AI Responses**: Messages are currently populated using a pre-defined array of mockup responses.
-* **Authentication Pages**: The `/login` page itself is not yet implemented on this branch.
-* **Extra Database Operations**: Support for updating chat session requirements (e.g. `requirements` JSONB column) is not yet exposed.
+* **[app/](file:///d:/WEBDEV/nyc%20project/app/) (Routes & Pages)**
+  Contains all web pages including Login (`/login`), Signup (`/signup`), Welcome onboard profile wizard (`/welcome`), and the Chat dashboard (`/chat`).
+* **[lib/supabase/](file:///d:/WEBDEV/nyc%20project/lib/supabase/) (Database Setup)**
+  Configuration for securely connecting the client website and server APIs to the Supabase database.
+* **[components/chat/](file:///d:/WEBDEV/nyc%20project/components/chat/) (Visual Parts)**
+  All UI components for the chat screen, such as the sidebar history list, input box, and message bubbles.
+* **[app/actions/chat.ts](file:///d:/WEBDEV/nyc%20project/app/actions/chat.ts) (Database Actions)**
+  The logic for reading, writing, renaming, and deleting chat records directly from Supabase.
 
 ---
 
-## 4. Environment Variables Required
+## 3. What is Implemented & Working
+* **User Authentication:** Sign up/in via email or Google, plus security verification codes.
+* **Theme & UI:** Sleek, responsive dark mode chat dashboard matching premium design standards.
+* **Session Persistence:** All chats are automatically saved in the database; history loads instantly when you refresh the page.
+* **Smart Auto-Titling:** Sends the first user message of any new session to Gemini in the background to automatically write a 3–6 word chat title.
+* **Chat Management:** Rename (pencil icon) or delete chats from the sidebar; updates sync instantly to the database.
+* **Security (RLS):** Row Level Security enabled on Supabase so users can only access their own private chats.
 
-Make sure the following variables are set up in your local environment file:
+---
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-```
+## 4. What's Still Missing (TODO)
+* **Real Product Scraping:** The AI currently simulates shopping recommendations using general training knowledge. Direct integration for live price/link scraping from Amazon, Flipkart, etc., is not yet connected.
+* **Checkout Flow:** Placing actual orders and processing payment options.
+* **Production Hardening:** Advanced rate-limiting (preventing API abuse) and error monitoring.
+
+---
+
+## 5. Required Environment Variables
+To run the project locally, copy `.env.example` to `.env.local` and add values for:
+* `NEXT_PUBLIC_SUPABASE_URL` (Supabase connection endpoint)
+* `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Supabase public API key)
+* `GEMINI_API_KEY` (Google Generative AI credentials)
+
+---
+
+## 6. Known Issues during Testing
+* **Gemini API Limits:** The free-tier Gemini API key might hit 429 rate limit errors (quota limit exceeded) if messages are sent too quickly in succession. Error boxes display gracefully to prompt the user to retry.
