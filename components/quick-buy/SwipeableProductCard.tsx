@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, useMotionValue, useTransform, useAnimation, PanInfo, AnimatePresence } from "framer-motion";
 import { QuickBuyProduct } from "@/lib/quickBuyMockData";
+import { useSwipeFeedback } from "@/hooks/useSwipeFeedback";
 import { Star, Check, ShoppingCart, Zap, Heart, ArrowRight, Package } from "lucide-react";
 import { CheckoutFlow, CheckoutItem } from "../checkout/CheckoutFlow";
 
@@ -19,6 +20,8 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
   const x = useMotionValue(0);
   const controls = useAnimation();
   
+  const { playAccept, playReject } = useSwipeFeedback();
+
   // Responsive layout state
   const [isMobile, setIsMobile] = useState(true);
   useEffect(() => {
@@ -84,9 +87,11 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
 
     if (offset > swipeThreshold || velocity > 500) {
       await controls.start({ x: 500, rotateZ: 15, rotateY: -30, opacity: 0, transition: { duration: 0.3 } });
+      playAccept();
       onSwipeRight(product.id);
     } else if (offset < -swipeThreshold || velocity < -500) {
       await controls.start({ x: -500, rotateZ: -15, rotateY: 30, opacity: 0, transition: { duration: 0.3 } });
+      playReject();
       onSwipeLeft(product.id);
     } else {
       // Snap back
@@ -97,9 +102,11 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
   const manualSwipe = async (direction: "left" | "right") => {
     if (direction === "right") {
       await controls.start({ x: 500, rotateZ: 15, rotateY: -30, opacity: 0, transition: { duration: 0.3 } });
+      playAccept();
       onSwipeRight(product.id);
     } else {
       await controls.start({ x: -500, rotateZ: -15, rotateY: 30, opacity: 0, transition: { duration: 0.3 } });
+      playReject();
       onSwipeLeft(product.id);
     }
   };

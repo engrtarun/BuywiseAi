@@ -5,6 +5,7 @@ import { QuickBuyProduct } from "@/lib/quickBuyMockData";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Shuffle, LayoutDashboard } from "lucide-react";
 import { OutfitCanvas } from "./OutfitCanvas";
+import { useSwipeFeedback } from "@/hooks/useSwipeFeedback";
 
 interface VirtualWardrobeProps {
   items: QuickBuyProduct[];
@@ -12,6 +13,7 @@ interface VirtualWardrobeProps {
 
 export function VirtualWardrobe({ items }: VirtualWardrobeProps) {
   const [mode, setMode] = useState<"mix" | "canvas">("mix");
+  const { playAccept, playReject } = useSwipeFeedback();
 
   // Helper to categorize
   const { tops, bottoms } = React.useMemo(() => {
@@ -114,8 +116,10 @@ export function VirtualWardrobe({ items }: VirtualWardrobeProps) {
                 onDragEnd={(e, { offset, velocity }) => {
                   const swipe = swipePower(offset.x, velocity.x);
                   if (swipe < -swipeConfidenceThreshold) {
+                    playReject();
                     paginate(1);
                   } else if (swipe > swipeConfidenceThreshold) {
+                    playAccept();
                     paginate(-1);
                   }
                 }}
@@ -139,13 +143,13 @@ export function VirtualWardrobe({ items }: VirtualWardrobeProps) {
               <>
                 <button
                   className="absolute left-4 z-20 size-10 flex items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md hover:bg-black/80 transition border border-white/10"
-                  onClick={() => paginate(-1)}
+                  onClick={() => { playAccept(); paginate(-1); }}
                 >
                   <ChevronLeft className="size-6" />
                 </button>
                 <button
                   className="absolute right-4 z-20 size-10 flex items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md hover:bg-black/80 transition border border-white/10"
-                  onClick={() => paginate(1)}
+                  onClick={() => { playReject(); paginate(1); }}
                 >
                   <ChevronRight className="size-6" />
                 </button>
@@ -158,6 +162,7 @@ export function VirtualWardrobe({ items }: VirtualWardrobeProps) {
   };
 
   const handleRandomize = () => {
+    playAccept();
     if (tops.length > 1) {
       setTopDir(1);
       setTopIndex(Math.floor(Math.random() * tops.length));
