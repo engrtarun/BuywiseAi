@@ -8,20 +8,38 @@ import { WelcomeScreen } from "./WelcomeScreen";
 import { OfflineBanner } from "./OfflineBanner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { HamburgerButton } from "./HamburgerButton";
-import { TemporaryChatBadge } from "./TemporaryChatBadge";
+import { TemporaryChatButton } from "./TemporaryChatButton";
 
 /* ── Header ──────────────────────────────────────────── */
 
 interface ChatHeaderProps {
   isSidebarOpen: boolean;
   onMenuToggle: () => void;
+  isGuest: boolean;
+  isTemporaryChat: boolean;
+  onNewTemporaryChat?: () => void;
 }
 
-function ChatHeader({ isSidebarOpen, onMenuToggle }: ChatHeaderProps) {
+function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onNewTemporaryChat }: ChatHeaderProps) {
   return (
-    <header className="shrink-0 z-20 flex items-center gap-3 bg-bg-main px-4 py-3 border-b border-border-light md:hidden">
-      <div className="w-full max-w-3xl mx-auto flex items-center gap-3">
-        <HamburgerButton isOpen={isSidebarOpen} onClick={onMenuToggle} />
+    <header className="shrink-0 z-20 flex items-center bg-bg-main px-4 py-3 border-b border-border-light h-14 md:hidden">
+      <div className="w-full flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <HamburgerButton isOpen={isSidebarOpen} onClick={onMenuToggle} />
+          {/* Subtle Chat Indicator Area */}
+          {isTemporaryChat && (
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-xs font-medium text-text-primary-dark select-none">
+              <span className="text-marigold">⚡</span> Instant
+            </div>
+          )}
+        </div>
+
+        {/* Top-Right Action Area */}
+        <div className="flex items-center gap-2">
+          {!isGuest && onNewTemporaryChat && (
+            <TemporaryChatButton onClick={onNewTemporaryChat} isTemporaryChat={isTemporaryChat} />
+          )}
+        </div>
       </div>
     </header>
   );
@@ -47,6 +65,7 @@ interface ChatWindowProps {
   cooldownUntil?: number | null;
   isTemporaryChat?: boolean;
   onNewChat: () => void;
+  onNewTemporaryChat?: () => void;
 }
 
 export function ChatWindow({
@@ -66,14 +85,20 @@ export function ChatWindow({
   cooldownUntil = null,
   isTemporaryChat = false,
   onNewChat,
+  onNewTemporaryChat,
 }: ChatWindowProps) {
   const showWelcome = messages.length === 0 && !isTyping;
 
   return (
     <div className="flex flex-col h-dvh w-full bg-bg-main text-text-primary-light overflow-hidden relative">
-      <ChatHeader isSidebarOpen={isSidebarOpen} onMenuToggle={onMenuToggle} />
+      <ChatHeader 
+        isSidebarOpen={isSidebarOpen} 
+        onMenuToggle={onMenuToggle} 
+        isGuest={isGuest} 
+        isTemporaryChat={isTemporaryChat} 
+        onNewTemporaryChat={onNewTemporaryChat} 
+      />
       <OfflineBanner />
-      {isTemporaryChat && <TemporaryChatBadge onExit={onNewChat} />}
       {showWelcome ? (
         <WelcomeScreen
           onSuggestionClick={onSend}

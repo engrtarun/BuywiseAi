@@ -605,7 +605,6 @@ function SidebarContent({
   onClose,
   isCollapsed,
   onToggleCollapse,
-  onNewTemporaryChat,
   isGuest,
 }: {
   chatHistory: ChatSession[];
@@ -617,7 +616,6 @@ function SidebarContent({
   onClose: () => void;
   isCollapsed: boolean;
   onToggleCollapse?: () => void;
-  onNewTemporaryChat?: () => void;
   isGuest?: boolean;
 }) {
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -744,27 +742,7 @@ function SidebarContent({
         
         {/* Actions */}
         <div className={`flex flex-col gap-2 w-full ${isCollapsed ? "items-center" : ""}`}>
-          <div className={`flex ${isCollapsed ? "flex-col" : "flex-row"} gap-2 w-full`}>
-            <div className="flex-1 min-w-0">
-              <NewChatButton onClick={() => { onNewChat(); onClose(); }} isCollapsed={isCollapsed} />
-            </div>
-            {!isGuest && onNewTemporaryChat && (
-              <Tooltip text="Temporary Chat" isCollapsed={isCollapsed}>
-                <button
-                  onClick={() => { onNewTemporaryChat(); onClose(); }}
-                  className={`
-                    group flex items-center justify-center
-                    rounded-xl bg-white/[0.04] border border-white/[0.08] text-text-dim-ondark
-                    hover:bg-white/[0.08] hover:text-text-ondark active:scale-[0.98] transition-all duration-200 cursor-pointer shrink-0
-                    ${isCollapsed ? "size-10" : "w-12"}
-                  `}
-                  aria-label="Temporary Chat"
-                >
-                  <Ghost className={`transition-transform duration-300 group-hover:scale-110 ${isCollapsed ? "size-5" : "size-4.5"}`} />
-                </button>
-              </Tooltip>
-            )}
-          </div>
+          <NewChatButton onClick={() => { onNewChat(); onClose(); }} isCollapsed={isCollapsed} />
           <SearchField 
             isCollapsed={isCollapsed} 
             onExpand={onToggleCollapse}
