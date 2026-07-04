@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 /* ── Constants ──────────────────────────────────────── */
 const GUEST_MODE_KEY = "buywise_guest_mode";
@@ -39,10 +40,25 @@ export function useGuestAccess() {
   const [isGuest, setIsGuest] = useState(false);
   const [guestMessageCount, setGuestMessageCount] = useState(0);
 
-  /* Hydrate from localStorage on mount (client only) */
+  /* Hydrate from localStorage on mount (client only), then verify actual auth */
   useEffect(() => {
     setIsGuest(readLocalBool(GUEST_MODE_KEY, false));
     setGuestMessageCount(readLocalInt(GUEST_COUNT_KEY, 0));
+
+    const checkAuthAndClearIfLoggedin = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.log("[useGuestAccess] User is authenticated. Resetting guest state.");
+        setIsGuest(false);
+        setGuestMessageCount(0);
+        localStorage.removeItem(GUEST_MODE_KEY);
+        localStorage.removeItem(GUEST_COUNT_KEY);
+        document.cookie = `${GUEST_MODE_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+      }
+    };
+
+    checkAuthAndClearIfLoggedin();
   }, []);
 
   /* Derived */

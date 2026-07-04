@@ -80,6 +80,7 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
   const [isTyping, setIsTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  const [isTemporaryChat, setIsTemporaryChat] = useState(false);
 
   // Guest access hook
   const {
@@ -194,11 +195,22 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
   const handleNewChat = useCallback(() => {
     setActiveChatId(null);
     setIsTyping(false);
+    setIsTemporaryChat(false);
+    setChatSessions((prev) => prev.filter((s) => !s.isTemporary));
+  }, []);
+
+  const handleNewTemporaryChat = useCallback(() => {
+    setActiveChatId(null);
+    setIsTyping(false);
+    setIsTemporaryChat(true);
+    setChatSessions((prev) => prev.filter((s) => !s.isTemporary));
   }, []);
 
   const handleSelectChat = useCallback((id: string) => {
     setActiveChatId(id);
     setIsTyping(false);
+    setIsTemporaryChat(false);
+    setChatSessions((prev) => prev.filter((s) => !s.isTemporary));
   }, []);
 
   const handleDeleteChat = useCallback((id: string) => {
@@ -241,9 +253,10 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
         chatIdToUpdate = newId;
         const newSession: ChatSession = {
           id: newId,
-          title: generateTitle(content),
+          title: isTemporaryChat ? "Temporary Chat" : generateTitle(content),
           messages: [userMsg],
           createdAt: Date.now(),
+          isTemporary: isTemporaryChat,
         };
         setChatSessions((prev) => [newSession, ...prev]);
         setActiveChatId(newId);
@@ -269,7 +282,7 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
 
       getAiReply(chatIdToUpdate, history, content);
     },
-    [activeChatId, chatSessions, getAiReply, isGuest, canSendMessage, incrementGuestMessageCount]
+    [activeChatId, chatSessions, getAiReply, isGuest, canSendMessage, incrementGuestMessageCount, isTemporaryChat]
   );
 
   /**
@@ -358,13 +371,15 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
     <div className="flex h-dvh w-full bg-ink-deeper overflow-hidden">
       {/* Sidebar — always visible on desktop, overlay on mobile */}
       <Sidebar
-        chatHistory={chatSessions}
+        chatHistory={chatSessions.filter((s) => !s.isTemporary)}
         activeChatId={activeChatId}
         onNewChat={handleNewChat}
+        onNewTemporaryChat={handleNewTemporaryChat}
         onSelectChat={handleSelectChat}
         onDeleteChat={handleDeleteChat}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        isGuest={isGuest}
       />
 
       {/* Main chat area */}
@@ -384,6 +399,8 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
           guestLimitReached={guestLimitReached}
           onLoginClick={handleLoginClick}
           cooldownUntil={cooldownUntil}
+          isTemporaryChat={isTemporaryChat}
+          onNewChat={handleNewChat}
         />
       </div>
     </div>

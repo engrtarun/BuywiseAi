@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Menu, Camera, Palette, Check } from "lucide-react";
+import { Search, Menu, Camera, Palette, Check, Ghost } from "lucide-react";
 import { ChatSession } from "./types";
 import { useSidebarResize } from "./useSidebarResize";
 import { useTheme } from "@/hooks/useTheme";
@@ -477,6 +477,8 @@ function SidebarContent({
   onClose,
   isCollapsed,
   onToggleCollapse,
+  onNewTemporaryChat,
+  isGuest,
 }: {
   chatHistory: ChatSession[];
   activeChatId: string | null;
@@ -486,6 +488,8 @@ function SidebarContent({
   onClose: () => void;
   isCollapsed: boolean;
   onToggleCollapse?: () => void;
+  onNewTemporaryChat?: () => void;
+  isGuest?: boolean;
 }) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const router = useRouter();
@@ -620,7 +624,27 @@ function SidebarContent({
         
         {/* Actions */}
         <div className={`flex flex-col gap-2 w-full ${isCollapsed ? "items-center" : ""}`}>
-          <NewChatButton onClick={() => { onNewChat(); onClose(); }} isCollapsed={isCollapsed} />
+          <div className={`flex ${isCollapsed ? "flex-col" : "flex-row"} gap-2 w-full`}>
+            <div className="flex-1 min-w-0">
+              <NewChatButton onClick={() => { onNewChat(); onClose(); }} isCollapsed={isCollapsed} />
+            </div>
+            {!isGuest && onNewTemporaryChat && (
+              <Tooltip text="Temporary Chat" isCollapsed={isCollapsed}>
+                <button
+                  onClick={() => { onNewTemporaryChat(); onClose(); }}
+                  className={`
+                    group flex items-center justify-center
+                    rounded-xl bg-white/[0.04] border border-white/[0.08] text-text-dim-ondark
+                    hover:bg-white/[0.08] hover:text-text-ondark active:scale-[0.98] transition-all duration-200 cursor-pointer shrink-0
+                    ${isCollapsed ? "size-10" : "w-12"}
+                  `}
+                  aria-label="Temporary Chat"
+                >
+                  <Ghost className={`transition-transform duration-300 group-hover:scale-110 ${isCollapsed ? "size-5" : "size-4.5"}`} />
+                </button>
+              </Tooltip>
+            )}
+          </div>
           <SearchField 
             isCollapsed={isCollapsed} 
             onExpand={onToggleCollapse}
@@ -918,6 +942,8 @@ interface SidebarProps {
   onDeleteChat: (id: string) => void;
   isOpen: boolean;
   onClose: () => void;
+  onNewTemporaryChat?: () => void;
+  isGuest?: boolean;
 }
 
 export function Sidebar({
@@ -928,6 +954,8 @@ export function Sidebar({
   onDeleteChat,
   isOpen,
   onClose,
+  onNewTemporaryChat,
+  isGuest,
 }: SidebarProps) {
   const { width, isCollapsed, isDragging, toggleCollapse, handleProps } = useSidebarResize();
 
@@ -943,7 +971,7 @@ export function Sidebar({
     };
   }, [isOpen]);
 
-  const contentProps = { chatHistory, activeChatId, onNewChat, onSelectChat, onDeleteChat, onClose };
+  const contentProps = { chatHistory, activeChatId, onNewChat, onSelectChat, onDeleteChat, onClose, onNewTemporaryChat, isGuest };
 
   return (
     <>
