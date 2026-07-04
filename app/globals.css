@@ -29,6 +29,17 @@
   --color-line-ondark: #2A4A44;
   --color-line-onlight: #DDD2B4;
 
+  /* ── Claude-style theme palette ───────────── */
+  --color-bg-main: #F5F4EE;
+  --color-bg-sidebar: #1A1A18;
+  --color-bg-input: #FFFFFF;
+  --color-text-primary-light: #2D2D2A;
+  --color-text-primary-dark: #F5F4EE;
+  --color-text-secondary: #8A8A85;
+  --color-accent: #C96442;
+  --color-border-light: #E5E3D8;
+  --color-border-dark: #2E2E2B;
+
   /* ── shadcn semantic aliases ──────────────── */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -89,6 +100,17 @@
   --text-dim-ondark: #9DB3AC;
   --line-ondark: #2A4A44;
   --line-onlight: #DDD2B4;
+
+  /* ── Claude-style theme palette ───────────── */
+  --bg-main: #F5F4EE;
+  --bg-sidebar: #1A1A18;
+  --bg-input: #FFFFFF;
+  --text-primary-light: #2D2D2A;
+  --text-primary-dark: #F5F4EE;
+  --text-secondary: #8A8A85;
+  --accent: #C96442;
+  --border-light: #E5E3D8;
+  --border-dark: #2E2E2B;
 
   /* ── shadcn light theme ───────────────────── */
   --background: oklch(1 0 0);

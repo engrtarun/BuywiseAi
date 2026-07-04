@@ -355,7 +355,7 @@ function NewChatButton({ onClick, isCollapsed }: NewChatButtonProps) {
         className={`
           group flex items-center justify-center gap-2.5
           rounded-xl bg-marigold/10 border border-marigold/20
-          text-marigold font-heading font-bold text-sm
+          text-text-primary-dark font-heading font-bold text-sm
           hover:bg-marigold/20 hover:border-marigold/40
           active:scale-[0.98] transition-all duration-200 touch-manipulation
           ${isCollapsed ? "size-10 shrink-0" : "w-full px-4 py-3"}
@@ -384,12 +384,12 @@ function SearchField({ isCollapsed, onExpand, value, onChange }: SearchFieldProp
           onClick={onExpand}
           className="
             group flex items-center justify-center size-10 shrink-0 rounded-xl
-            bg-white/[0.04] border border-white/[0.08] text-text-ondark
+            bg-white/[0.04] border border-border-dark text-text-primary-dark
             hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-200
           "
           aria-label="Search chats"
         >
-          <Search className="size-5 text-text-dim-ondark group-hover:text-text-ondark transition-colors" />
+          <Search className="size-5 text-text-secondary group-hover:text-text-primary-dark transition-colors" />
         </button>
       </Tooltip>
     );
@@ -397,16 +397,16 @@ function SearchField({ isCollapsed, onExpand, value, onChange }: SearchFieldProp
 
   return (
     <div className="relative w-full">
-      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4.5 text-text-dim-ondark" />
+      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4.5 text-text-secondary" />
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search chats..."
         className="
-          w-full bg-white/[0.04] border border-white/[0.08] rounded-xl
-          py-2.5 pl-10 pr-4 text-[13px] font-sans text-text-ondark
-          placeholder:text-text-dim-ondark outline-none
+          w-full bg-white/[0.04] border border-border-dark rounded-xl
+          py-2.5 pl-10 pr-4 text-[13px] font-sans text-text-primary-dark
+          placeholder:text-text-secondary outline-none
           focus:border-marigold/40 focus:bg-white/[0.06] transition-all
         "
       />
@@ -429,14 +429,14 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete }: ChatHistoryI
         group w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left
         transition-all duration-200 relative
         ${isActive
-          ? "bg-white/[0.08] border-l-2 border-l-marigold text-text-ondark"
-          : "bg-transparent border-l-2 border-l-transparent text-text-dim-ondark hover:bg-white/[0.04] hover:text-text-ondark"
+          ? "bg-white/[0.08] border-l-2 border-l-marigold text-text-primary-dark"
+          : "bg-transparent border-l-2 border-l-transparent text-text-secondary hover:bg-white/[0.04] hover:text-text-primary-dark"
         }
       `}
     >
       <ChatBubbleIcon
         className={`shrink-0 transition-all duration-300 ${
-          isActive ? "text-marigold scale-110" : "text-text-dim-ondark group-hover:text-marigold/70"
+          isActive ? "text-marigold scale-110" : "text-text-secondary group-hover:text-marigold/70"
         }`}
       />
       <span className="flex-1 text-[13px] truncate font-sans leading-tight">
@@ -451,7 +451,7 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete }: ChatHistoryI
           opacity-0 group-hover:opacity-100
           pointer-events-none group-hover:pointer-events-auto
           shrink-0 p-1 rounded-md
-          text-text-dim-ondark hover:text-chili hover:bg-white/[0.06]
+          text-text-secondary hover:text-chili hover:bg-white/[0.06]
           transition-all duration-200
           cursor-pointer
         "
@@ -598,7 +598,7 @@ function SidebarContent({
               `}
               aria-label="Toggle Sidebar"
             >
-              <Menu className={`text-text-ondark ${isCollapsed ? "size-5" : "size-4.5"}`} />
+              <Menu className={`text-text-primary-dark ${isCollapsed ? "size-5" : "size-4.5"}`} />
             </button>
           </Tooltip>
 
@@ -607,7 +607,7 @@ function SidebarContent({
               <div className="size-8 shrink-0 rounded-lg bg-marigold flex items-center justify-center shadow-sm">
                 <span className="text-ink-deeper font-heading font-extrabold text-sm">B</span>
               </div>
-              <span className="font-heading font-bold text-[15px] text-text-ondark tracking-tight truncate">
+              <span className="font-heading font-bold text-[15px] text-text-primary-dark tracking-tight truncate">
                 BuyWise AI
               </span>
             </div>
@@ -633,13 +633,13 @@ function SidebarContent({
           ${isCollapsed ? "opacity-0 hidden" : "opacity-100"}
         `}
       >
-        <p className="px-4 mb-2 text-[11px] font-mono text-text-dim-ondark uppercase tracking-wider">
+        <p className="px-4 mb-2 text-[11px] font-mono text-text-secondary uppercase tracking-wider">
           Recent chats
         </p>
         <ScrollArea className="h-full px-2">
           <div className="flex flex-col gap-0.5">
             {filteredHistory.length === 0 ? (
-              <p className="px-3 py-4 text-[12px] text-text-dim-ondark/60 text-center font-sans italic">
+              <p className="px-3 py-4 text-[12px] text-text-secondary/60 text-center font-sans italic">
                 {searchQuery ? "No matching chats." : "No chats yet. Start one!"}
               </p>
             ) : (
@@ -669,7 +669,7 @@ function SidebarContent({
               bottom: isCollapsed ? window.innerHeight - (menuRect?.bottom ?? 0) : window.innerHeight - (menuRect?.top ?? 0) + 8,
               width: isCollapsed ? 240 : (menuRect?.width ?? 240),
             }}
-            className="z-[100] bg-[#0d2a24] border border-line-ondark rounded-2xl p-2 shadow-2xl flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-200"
+            className="z-[100] bg-bg-sidebar border border-border-dark rounded-2xl p-2 shadow-2xl flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-200"
           >
             {/* User Info Header */}
             <div 
@@ -689,16 +689,16 @@ function SidebarContent({
                 )}
               </div>
               <div className="flex flex-col min-w-0 flex-1">
-                <span className="font-sans text-[13px] font-bold text-text-ondark truncate">
+                <span className="font-sans text-[13px] font-bold text-text-primary-dark truncate">
                   {profile?.full_name || "User"}
                 </span>
-                <span className="font-mono text-[10px] text-text-dim-ondark truncate">
+                <span className="font-mono text-[10px] text-text-secondary truncate">
                   {profile?.email || ""}
                 </span>
               </div>
             </div>
             
-            <div className="h-px bg-white/[0.06] my-1 mx-2" />
+            <div className="h-px bg-border-dark my-1 mx-2" />
 
             {/* Menu Items */}
             <button 
@@ -707,9 +707,9 @@ function SidebarContent({
                 setMenuOpen(false);
                 setShowProfileModal(true);
               }}
-              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none"
+              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none"
             >
-              <UserIcon className="text-text-dim-ondark group-hover:text-marigold group-hover:scale-110 transition-all duration-300" />
+              <UserIcon className="text-text-secondary group-hover:text-marigold group-hover:scale-110 transition-all duration-300" />
               <span>Profile</span>
             </button>
             
@@ -719,31 +719,31 @@ function SidebarContent({
                 setMenuOpen(false);
                 alert("Settings page placeholder");
               }}
-              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none"
+              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none"
             >
-              <SettingsIcon className="text-text-dim-ondark group-hover:text-marigold group-hover:rotate-45 transition-all duration-300" />
+              <SettingsIcon className="text-text-secondary group-hover:text-marigold group-hover:rotate-45 transition-all duration-300" />
               <span>Settings</span>
             </button>
             
-            <div className="h-px bg-white/[0.06] my-1 mx-2" />
+            <div className="h-px bg-border-dark my-1 mx-2" />
 
             {/* Help with flyout */}
             <div className="group/help relative">
               <button 
                 type="button"
-                className="group flex items-center justify-between w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none"
+                className="group flex items-center justify-between w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none"
               >
                 <div className="flex items-center gap-3">
-                  <HelpIcon className="text-text-dim-ondark group-hover:text-marigold group-hover:scale-110 transition-all duration-300" />
+                  <HelpIcon className="text-text-secondary group-hover:text-marigold group-hover:scale-110 transition-all duration-300" />
                   <span>Help</span>
                 </div>
-                <ChevronRightIcon className="text-text-dim-ondark group-hover:text-marigold group-hover:translate-x-0.5 transition-all duration-300" />
+                <ChevronRightIcon className="text-text-secondary group-hover:text-marigold group-hover:translate-x-0.5 transition-all duration-300" />
               </button>
               
               {/* Flyout submenu */}
               {console.log('Help submenu rendered') as any}
               <div className="
-                absolute left-full bottom-0 w-48 bg-[#0d2a24] border border-line-ondark rounded-xl p-1.5 shadow-xl
+                absolute left-full bottom-0 w-48 bg-bg-sidebar border border-border-dark rounded-xl p-1.5 shadow-xl
                 opacity-0 -translate-x-2 pointer-events-none z-50
                 group-hover/help:opacity-100 group-hover/help:translate-x-0 group-hover/help:pointer-events-auto
                 transition-all duration-200 flex flex-col gap-1
@@ -759,9 +759,9 @@ function SidebarContent({
                     // TODO: Replace # with actual help documentation URL
                     setMenuOpen(false);
                   }}
-                  className="group/item flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-[12px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
+                  className="group/item flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-[12px] font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
                 >
-                  <HelpIcon className="size-3.5 text-text-dim-ondark group-hover/item:text-marigold transition-colors" />
+                  <HelpIcon className="size-3.5 text-text-secondary group-hover/item:text-marigold transition-colors" />
                   <span className="select-none">Help center</span>
                 </a>
                 <a 
@@ -771,15 +771,15 @@ function SidebarContent({
                     // TODO: Update email address or replace with actual bug report form URL
                     setMenuOpen(false);
                   }}
-                  className="group/item flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-[12px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
+                  className="group/item flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-[12px] font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
                 >
-                  <BugIcon className="size-3.5 text-text-dim-ondark group-hover/item:text-marigold transition-colors" />
+                  <BugIcon className="size-3.5 text-text-secondary group-hover/item:text-marigold transition-colors" />
                   <span className="select-none">Report a bug</span>
                 </a>
               </div>
             </div>
             
-            <div className="h-px bg-white/[0.06] my-1 mx-2" />
+            <div className="h-px bg-border-dark my-1 mx-2" />
 
             <button
               type="button"
@@ -830,7 +830,7 @@ function SidebarContent({
                 {loadingProfile ? (
                   <div className="h-4 w-24 bg-white/[0.08] animate-pulse rounded" />
                 ) : (
-                  <span className="font-sans text-[13px] text-text-ondark truncate block">
+                  <span className="font-sans text-[13px] text-text-primary-dark truncate block">
                     {profile?.full_name || "Guest User"}
                   </span>
                 )}
@@ -903,8 +903,8 @@ export function Sidebar({
         className={`
           fixed top-0 left-0 bottom-0 z-50
           w-[80vw] max-w-[320px] flex flex-col
-          bg-[#091e1a]/95 backdrop-blur-md
-          border-r border-line-ondark
+          bg-bg-sidebar
+          border-r border-border-dark
           transition-transform duration-300 ease-in-out
           md:hidden
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
@@ -928,7 +928,7 @@ export function Sidebar({
         <div
           className={`
             h-full flex flex-col overflow-hidden w-full
-            bg-[#091e1a]/95 backdrop-blur-md border-r border-line-ondark
+            bg-bg-sidebar border-r border-border-dark
           `}
         >
           <SidebarContent 
