@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useCallback, useRef, use } from "react";
+import { useRouter } from "next/navigation";
 import { Message, ChatSession, Feedback } from "@/components/chat/types";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { Sidebar } from "@/components/chat/Sidebar";
+import { useGuestAccess } from "@/hooks/useGuestAccess";
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -70,14 +72,27 @@ function extractAiText(raw: any): string {
 export default function Page(props: { params: Promise<any>; searchParams: Promise<any> }) {
   const params = use(props.params);
   const searchParams = use(props.searchParams);
+  const router = useRouter();
+
   // Chat sessions state
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Guest access hook
+  const {
+    isGuest,
+    canSendMessage,
+    messagesRemaining,
+    incrementGuestMessageCount,
+  } = useGuestAccess();
+
   // Ref for the AbortController to cancel fetch requests
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Derived state for guest limit
+  const guestLimitReached = isGuest && !canSendMessage;
 
   // Derive the active session's messages
   const activeSession = chatSessions.find((s) => s.id === activeChatId);
@@ -103,8 +118,18 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error("API Error:", errorData.error || errorData);
-          appendErrorMessage(chatId);
+          
+          if (response.status === 429) {
+            console.warn('[Handled] Gemini rate limit hit, showing user-facing retry UI');
+            appendErrorMessage(chatId, "rate_limit", errorData.retryDelay);
+          } else {
+            if (process.env.NODE_ENV === "development") {
+              console.warn("API Error (Handled):", errorData.error || errorData);
+            } else {
+              console.warn("API Error Summary:", response.status);
+            }
+            appendErrorMessage(chatId, "generic");
+          }
           return;
         }
 
@@ -124,8 +149,12 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
         if (error.name === "AbortError") {
           console.log("Fetch aborted");
         } else {
-          console.error("Fetch Error:", error);
-          appendErrorMessage(chatId);
+          if (process.env.NODE_ENV === "development") {
+            console.warn("Fetch Error (Handled):", error);
+          } else {
+            console.warn("Fetch Error Summary:", error.message);
+          }
+          appendErrorMessage(chatId, "generic");
         }
       } finally {
         setIsTyping(false);
@@ -136,12 +165,14 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
   );
 
   /** Append an error placeholder message to a chat session */
-  const appendErrorMessage = useCallback((chatId: string) => {
+  const appendErrorMessage = useCallback((chatId: string, errorType: "generic" | "rate_limit" = "generic", retryDelay?: number) => {
     const errMsg: Message = {
       id: generateId(),
       role: "assistant",
       content: "",
       status: "error",
+      errorType,
+      retryDelay,
     };
     setChatSessions((prev) =>
       prev.map((s) =>
@@ -180,8 +211,18 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
    * Fix: Generate the new ID in a ref BEFORE calling any state setters,
    * then use separate setState calls (not nested functional updaters).
    */
+  /** Navigate to login (used by guest limit prompt) */
+  const handleLoginClick = useCallback(() => {
+    router.push("/login");
+  }, [router]);
+
   const handleSend = useCallback(
     (content: string) => {
+      /* ── Guest limit gate ────────────────────── */
+      if (isGuest && !canSendMessage) {
+        return; // Block the message
+      }
+
       const userMsg: Message = { id: generateId(), role: "user", content };
 
       let chatIdToUpdate: string;
@@ -214,9 +255,14 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
         );
       }
 
+      /* Increment guest message counter (no-op for non-guests) */
+      if (isGuest) {
+        incrementGuestMessageCount();
+      }
+
       getAiReply(chatIdToUpdate, history, content);
     },
-    [activeChatId, chatSessions, getAiReply]
+    [activeChatId, chatSessions, getAiReply, isGuest, canSendMessage, incrementGuestMessageCount]
   );
 
   /**
@@ -326,6 +372,10 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
           onRetry={handleRetry}
           onFeedback={handleFeedback}
           onMenuToggle={() => setSidebarOpen((o) => !o)}
+          isGuest={isGuest}
+          guestMessagesRemaining={messagesRemaining}
+          guestLimitReached={guestLimitReached}
+          onLoginClick={handleLoginClick}
         />
       </div>
     </div>
