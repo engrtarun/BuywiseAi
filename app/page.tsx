@@ -132,7 +132,16 @@ export default function Page() {
         if (!response.ok) {
           const errorData = await response.json();
           console.error("API Error:", errorData.error || errorData);
-          appendErrorMessage(chatId);
+          const apiError = errorData.error || "";
+          let errorText = "Something went wrong while getting a response. Please try again.";
+          if (apiError.includes("429") || apiError.toLowerCase().includes("quota")) {
+            errorText = "You've exceeded your Gemini API quota limit (20 requests/day for Gemini 2.5 Flash on free tier). Please check your plan details, try again later, or configure a different API key.";
+          } else if (apiError.includes("API key")) {
+            errorText = "Missing or invalid Gemini API key. Please configure GEMINI_API_KEY in your .env.local file.";
+          } else if (apiError) {
+            errorText = apiError;
+          }
+          appendErrorMessage(chatId, errorText);
           return;
         }
 
@@ -158,7 +167,7 @@ export default function Page() {
           console.log("Fetch aborted");
         } else {
           console.error("Fetch Error:", error);
-          appendErrorMessage(chatId);
+          appendErrorMessage(chatId, error.message || "Network error. Please check your connection and try again.");
         }
       } finally {
         setIsTyping(false);
@@ -169,11 +178,11 @@ export default function Page() {
   );
 
   /** Append an error placeholder message to a chat session */
-  const appendErrorMessage = useCallback((chatId: string) => {
+  const appendErrorMessage = useCallback((chatId: string, content = "") => {
     const errMsg: Message = {
       id: generateId(),
       role: "assistant",
-      content: "",
+      content: content,
       status: "error",
     };
     setChatSessions((prev) =>
