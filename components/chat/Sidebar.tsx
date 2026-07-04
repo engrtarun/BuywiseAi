@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Menu } from "lucide-react";
+import { Search, Menu, Camera } from "lucide-react";
 import { ChatSession } from "./types";
 import { useSidebarResize } from "./useSidebarResize";
 
@@ -65,23 +66,276 @@ function TrashIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+function UserIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
+function SettingsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  );
+}
+
+function HelpIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <path d="M12 17h.01" />
+    </svg>
+  );
+}
+
+function LogOutIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
+function XIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
+function BugIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m8 2 1.88 1.88" />
+      <path d="M14.12 3.88 16 2" />
+      <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" />
+      <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6" />
+      <path d="M12 20v-9" />
+      <path d="M6.53 9C4.6 8.8 3 7.1 3 5" />
+      <path d="M17.47 9c1.93-.2 3.53-1.9 3.53-4" />
+      <path d="M8 14H4" />
+      <path d="M20 14h-4" />
+      <path d="M9 18h6" />
+    </svg>
+  );
+}
+
+/* ── Profile Modal ────────────── */
+function ProfileModal({ 
+  isOpen, 
+  onClose, 
+  profile,
+  onSave
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  profile: any;
+  onSave?: (updates: { avatar_url?: string; full_name?: string }) => void;
+}) {
+  const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
+  const [fullName, setFullName] = React.useState<string>(profile?.full_name || "");
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Sync state when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      setAvatarPreview(null);
+      setFullName(profile?.full_name || "");
+    }
+  }, [isOpen, profile]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert("Please select a valid image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size should be under 5MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setAvatarPreview(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = () => {
+    if (onSave) {
+      // Note: For real persistence across sessions, the base64 avatarPreview 
+      // would need to be uploaded to Supabase storage.
+      onSave({
+        avatar_url: avatarPreview || undefined,
+        full_name: fullName !== profile?.full_name ? fullName : undefined
+      });
+    }
+    onClose();
+  };
+
+  if (!isOpen || typeof document === 'undefined') return null;
+
+  const currentAvatar = avatarPreview || profile?.avatar_url;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-[#091e1a] border border-line-ondark w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between p-4 border-b border-line-ondark">
+          <h2 className="font-heading font-bold text-lg text-text-ondark">Edit Profile</h2>
+          <button 
+            onClick={onClose}
+            className="p-1 rounded-md text-text-dim-ondark hover:text-text-ondark hover:bg-white/[0.08] transition-all"
+          >
+            <XIcon />
+          </button>
+        </div>
+        <div className="p-6 flex flex-col gap-6">
+          <div className="flex flex-col items-center gap-3">
+            <div 
+              className="relative group cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {currentAvatar ? (
+                <img 
+                  src={currentAvatar} 
+                  alt="Avatar" 
+                  className="size-20 rounded-full object-cover border-2 border-white/[0.1] group-hover:opacity-80 transition-opacity"
+                />
+              ) : (
+                <div className="size-20 rounded-full bg-marigold/20 border-2 border-marigold/30 flex items-center justify-center group-hover:bg-marigold/30 transition-colors">
+                  <span className="text-marigold font-bold text-2xl">
+                    {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : "U"}
+                  </span>
+                </div>
+              )}
+              {/* Camera Icon Overlay */}
+              <div className="absolute bottom-0 right-0 bg-[#0d2a24] p-1.5 rounded-full border border-line-ondark text-marigold shadow-md group-hover:scale-110 transition-transform">
+                <Camera className="size-3.5" />
+              </div>
+            </div>
+            <input 
+              type="file" 
+              accept="image/*" 
+              ref={fileInputRef} 
+              className="hidden" 
+              onChange={handleFileChange} 
+            />
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="text-[12px] font-sans font-semibold text-marigold hover:text-marigold/80 transition-colors"
+            >
+              Change avatar
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[12px] font-sans font-medium text-text-dim-ondark uppercase tracking-wide">
+                Display Name
+              </label>
+              <input 
+                type="text" 
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full bg-white/[0.04] border border-white/[0.1] rounded-lg px-3 py-2 text-sm text-text-ondark outline-none focus:border-marigold/50 transition-colors"
+                placeholder="Enter your name"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[12px] font-sans font-medium text-text-dim-ondark uppercase tracking-wide">
+                Email / Username
+              </label>
+              <input 
+                type="text" 
+                defaultValue={profile?.email || ""}
+                disabled
+                className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-3 py-2 text-sm text-text-dim-ondark outline-none cursor-not-allowed"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="p-4 border-t border-line-ondark flex justify-end gap-3 bg-white/[0.02]">
+          <button 
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-sm font-sans font-medium text-text-ondark bg-white/[0.05] hover:bg-white/[0.1] transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={handleSave}
+            className="px-4 py-2 rounded-lg text-sm font-sans font-medium text-ink-deeper bg-marigold hover:bg-marigold/90 transition-colors"
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 /* ── Tooltip Helper ───────────── */
 function Tooltip({ text, children, isCollapsed }: { text: string; children: React.ReactNode; isCollapsed: boolean }) {
+  const [isHovered, setIsHovered] = React.useState(false);
+  const [rect, setRect] = React.useState<DOMRect | null>(null);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (isHovered && ref.current) {
+      setRect(ref.current.getBoundingClientRect());
+    }
+  }, [isHovered]);
+
   if (!isCollapsed) return <>{children}</>;
 
   return (
-    <div className="relative group/tooltip flex justify-center w-full">
+    <div 
+      ref={ref}
+      className="relative flex justify-center w-full"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {children}
-      <div className="
-        absolute left-[110%] top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1.5 rounded-lg
-        bg-ink-deep border border-line-ondark text-text-ondark text-xs font-sans whitespace-nowrap
-        opacity-0 -translate-x-2 pointer-events-none z-50 shadow-md
-        group-hover/tooltip:opacity-100 group-hover/tooltip:translate-x-0
-        transition-all duration-200 ease-out
-      ">
-        {text}
-      </div>
+      {isHovered && typeof window !== 'undefined' && createPortal(
+        <div 
+          style={{
+            position: 'fixed',
+            left: (rect?.right ?? 0) + 12,
+            top: (rect?.top ?? 0) + (rect?.height ?? 0) / 2,
+            transform: 'translateY(-50%)'
+          }}
+          className="
+            px-2.5 py-1.5 rounded-lg
+            bg-ink-deep border border-line-ondark text-text-ondark text-xs font-sans whitespace-nowrap
+            z-[100] shadow-md animate-in fade-in slide-in-from-left-1 duration-200 pointer-events-none
+          "
+        >
+          {text}
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
@@ -241,7 +495,10 @@ function SidebarContent({
   } | null>(null);
   const [loadingProfile, setLoadingProfile] = React.useState(true);
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const [showProfileModal, setShowProfileModal] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const [menuRect, setMenuRect] = React.useState<DOMRect | null>(null);
 
   useEffect(() => {
     async function loadUserProfile() {
@@ -277,15 +534,43 @@ function SidebarContent({
     loadUserProfile();
   }, [supabase]);
 
+  const updateMenuRect = React.useCallback(() => {
+    if (menuRef.current) {
+      setMenuRect(menuRef.current.getBoundingClientRect());
+    }
+  }, []);
+
+  useEffect(() => {
+    if (menuOpen) {
+      updateMenuRect();
+      window.addEventListener('resize', updateMenuRect);
+      return () => window.removeEventListener('resize', updateMenuRect);
+    }
+  }, [menuOpen, updateMenuRect, isCollapsed]);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedOutsideMenu = menuRef.current && !menuRef.current.contains(target);
+      const clickedOutsideDropdown = !dropdownRef.current || !dropdownRef.current.contains(target);
+      
+      console.log('Outside click handler fired!', {
+        target,
+        clickedOutsideMenu,
+        clickedOutsideDropdown,
+        menuRef: menuRef.current,
+        dropdownRef: dropdownRef.current
+      });
+      
+      if (clickedOutsideMenu && clickedOutsideDropdown) {
+        console.log('Closing dropdown from outside click');
         setMenuOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
+    // Using click instead of mousedown to prevent timing issues with button clicks
+    document.addEventListener("click", handleClickOutside, { capture: true });
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("click", handleClickOutside, { capture: true });
     };
   }, []);
 
@@ -373,39 +658,147 @@ function SidebarContent({
       </div>
 
       {/* Bottom User Avatar Section */}
-      <div className="shrink-0 p-3 mt-auto relative" ref={menuRef}>
-        {/* Dropdown Menu Popover */}
-        {menuOpen && (
-          <div className="absolute bottom-full left-3 right-3 mb-2 bg-[#0d2a24] border border-line-ondark rounded-2xl p-3 shadow-2xl z-50 flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+      <div className={`shrink-0 p-3 mt-auto relative ${isCollapsed ? "flex justify-center" : ""}`} ref={menuRef}>
+        {/* Dropdown Menu Popover via Portal */}
+        {menuOpen && typeof window !== 'undefined' && createPortal(
+          <div 
+            ref={dropdownRef}
+            style={{
+              position: 'fixed',
+              left: isCollapsed ? (menuRect?.right ?? 0) + 12 : (menuRect?.left ?? 0),
+              bottom: isCollapsed ? window.innerHeight - (menuRect?.bottom ?? 0) : window.innerHeight - (menuRect?.top ?? 0) + 8,
+              width: isCollapsed ? 240 : (menuRect?.width ?? 240),
+            }}
+            className="z-[100] bg-[#0d2a24] border border-line-ondark rounded-2xl p-2 shadow-2xl flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-200"
+          >
             {/* User Info Header */}
-            <div className="flex flex-col gap-0.5 px-2 pb-2 border-b border-white/[0.06]">
-              <span className="font-sans text-[13px] font-bold text-text-ondark truncate">
-                {profile?.full_name || "User"}
-              </span>
-              <span className="font-mono text-[10px] text-text-dim-ondark truncate">
-                {profile?.email || ""}
-              </span>
-            </div>
-            
-            {/* Menu Items */}
-            <button 
+            <div 
               onClick={() => {
                 setMenuOpen(false);
-                // Placeholder settings message or path
+                setShowProfileModal(true);
+              }}
+              className="flex items-center gap-3 px-3 py-3 mb-1 rounded-xl cursor-pointer hover:bg-white/[0.06] transition-all select-none"
+            >
+              <div className="size-9 rounded-full bg-marigold/20 flex items-center justify-center shrink-0">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} className="size-full rounded-full object-cover" alt="avatar" />
+                ) : (
+                  <span className="text-marigold font-bold text-sm">
+                    {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : "U"}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="font-sans text-[13px] font-bold text-text-ondark truncate">
+                  {profile?.full_name || "User"}
+                </span>
+                <span className="font-mono text-[10px] text-text-dim-ondark truncate">
+                  {profile?.email || ""}
+                </span>
+              </div>
+            </div>
+            
+            <div className="h-px bg-white/[0.06] my-1 mx-2" />
+
+            {/* Menu Items */}
+            <button 
+              type="button"
+              onClick={() => {
+                setMenuOpen(false);
+                setShowProfileModal(true);
+              }}
+              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none"
+            >
+              <UserIcon className="text-text-dim-ondark group-hover:text-marigold group-hover:scale-110 transition-all duration-300" />
+              <span>Profile</span>
+            </button>
+            
+            <button 
+              type="button"
+              onClick={() => {
+                setMenuOpen(false);
                 alert("Settings page placeholder");
               }}
-              className="w-full text-left px-2 py-1.5 rounded-lg text-[12px] font-sans text-text-dim-ondark hover:text-marigold hover:bg-white/[0.04] transition-all"
+              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none"
             >
-              Settings
+              <SettingsIcon className="text-text-dim-ondark group-hover:text-marigold group-hover:rotate-45 transition-all duration-300" />
+              <span>Settings</span>
             </button>
+            
+            <div className="h-px bg-white/[0.06] my-1 mx-2" />
+
+            {/* Help with flyout */}
+            <div className="group/help relative">
+              <button 
+                type="button"
+                className="group flex items-center justify-between w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none"
+              >
+                <div className="flex items-center gap-3">
+                  <HelpIcon className="text-text-dim-ondark group-hover:text-marigold group-hover:scale-110 transition-all duration-300" />
+                  <span>Help</span>
+                </div>
+                <ChevronRightIcon className="text-text-dim-ondark group-hover:text-marigold group-hover:translate-x-0.5 transition-all duration-300" />
+              </button>
+              
+              {/* Flyout submenu */}
+              {console.log('Help submenu rendered') as any}
+              <div className="
+                absolute left-full bottom-0 w-48 bg-[#0d2a24] border border-line-ondark rounded-xl p-1.5 shadow-xl
+                opacity-0 -translate-x-2 pointer-events-none z-50
+                group-hover/help:opacity-100 group-hover/help:translate-x-0 group-hover/help:pointer-events-auto
+                transition-all duration-200 flex flex-col gap-1
+                before:absolute before:content-[''] before:-left-3 before:top-0 before:bottom-0 before:w-3
+              ">
+                <a 
+                  href="#" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    console.log('Help center clicked!');
+                    // TODO: Replace # with actual help documentation URL
+                    setMenuOpen(false);
+                  }}
+                  className="group/item flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-[12px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
+                >
+                  <HelpIcon className="size-3.5 text-text-dim-ondark group-hover/item:text-marigold transition-colors" />
+                  <span className="select-none">Help center</span>
+                </a>
+                <a 
+                  href="mailto:support@buywiseai.com?subject=Bug Report"
+                  onClick={() => {
+                    console.log('Report a bug clicked!');
+                    // TODO: Update email address or replace with actual bug report form URL
+                    setMenuOpen(false);
+                  }}
+                  className="group/item flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-[12px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
+                >
+                  <BugIcon className="size-3.5 text-text-dim-ondark group-hover/item:text-marigold transition-colors" />
+                  <span className="select-none">Report a bug</span>
+                </a>
+              </div>
+            </div>
+            
+            <div className="h-px bg-white/[0.06] my-1 mx-2" />
+
             <button
+              type="button"
               onClick={handleLogout}
-              className="w-full text-left px-2 py-1.5 rounded-lg text-[12px] font-sans text-chili hover:bg-chili/10 transition-all font-semibold"
+              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-chili hover:bg-chili/10 transition-all font-semibold select-none"
             >
-              Log out
+              <LogOutIcon className="text-chili/70 group-hover:text-chili group-hover:-translate-x-0.5 transition-all duration-300" />
+              <span>Log out</span>
             </button>
-          </div>
+          </div>,
+          document.body
         )}
+
+        <ProfileModal 
+          isOpen={showProfileModal} 
+          onClose={() => setShowProfileModal(false)} 
+          profile={profile} 
+          onSave={(updates) => setProfile(prev => prev ? { ...prev, ...updates } : { full_name: null, avatar_url: null, email: null, ...updates })}
+        />
 
         <Tooltip text="User Profile" isCollapsed={isCollapsed}>
           <button 
