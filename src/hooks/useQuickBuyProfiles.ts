@@ -274,7 +274,7 @@ export function useQuickBuyProfiles() {
           max_budget: newProfile.maxBudget,
           is_default: newProfile.isDefault,
           created_at: newProfile.createdAt
-        }).then(({ error }) => {
+        }).then(({ error }: any) => {
           if (error) {
             console.error("Failed to sync created profile to Supabase:", error.message);
           }
@@ -337,7 +337,7 @@ export function useQuickBuyProfiles() {
         if (input.maxBudget !== undefined) updates.max_budget = input.maxBudget;
         updates.updated_at = new Date().toISOString();
 
-        void supabase.from("quickbuy_profiles").update(updates).eq("id", id).then(({ error }) => {
+        void supabase.from("quickbuy_profiles").update(updates).eq("id", id).then(({ error }: any) => {
           if (error) {
             console.error("Failed to sync updated profile to Supabase:", error.message);
           }
@@ -378,7 +378,7 @@ export function useQuickBuyProfiles() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        void supabase.from("quickbuy_profiles").delete().eq("id", id).then(({ error }) => {
+        void supabase.from("quickbuy_profiles").delete().eq("id", id).then(({ error }: any) => {
           if (error) {
             console.error("Failed to sync deleted profile from Supabase:", error.message);
           }
