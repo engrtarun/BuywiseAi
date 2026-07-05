@@ -144,17 +144,27 @@ export function ChatWindow({
       />
       <OfflineBanner />
       {showWelcome ? (
-        <WelcomeScreen
-          onSuggestionClick={onSend}
-          isGuest={isGuest}
-          guestMessagesRemaining={guestMessagesRemaining}
-          guestLimitReached={guestLimitReached}
-          dailyLimitReached={dailyLimitReached}
-          dailyLimitMessage={dailyLimitMessage}
-          onLoginClick={onLoginClick}
-          selectedMode={selectedMode}
-          onModeChange={onModeChange}
-        />
+        isTemporaryChat ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 z-10 text-center animate-in fade-in zoom-in-95 duration-500">
+            <Ghost className="size-24 text-gray-500 mb-6 drop-shadow-2xl opacity-60" strokeWidth={1} />
+            <h2 className="text-3xl font-bold text-gray-200 font-heading mb-3 tracking-tight">You are in Ghost Mode</h2>
+            <p className="text-gray-400 text-sm max-w-sm leading-relaxed">
+              Your messages in this temporary chat will not be saved to your history. Once you leave, they vanish forever.
+            </p>
+          </div>
+        ) : (
+          <WelcomeScreen
+            onSuggestionClick={onSend}
+            isGuest={isGuest}
+            guestMessagesRemaining={guestMessagesRemaining}
+            guestLimitReached={guestLimitReached}
+            dailyLimitReached={dailyLimitReached}
+            dailyLimitMessage={dailyLimitMessage}
+            onLoginClick={onLoginClick}
+            selectedMode={selectedMode}
+            onModeChange={onModeChange}
+          />
+        )
       ) : (
         <MessageList
           messages={messages}

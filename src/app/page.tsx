@@ -391,11 +391,21 @@ export default function Page() {
   }, []);
 
   const handleNewTemporaryChat = useCallback(() => {
-    setActiveChatId(null);
-    setIsTyping(false);
-    setIsTemporaryChat(true);
-    setChatSessions((prev) => prev.filter((s) => !s.isTemporary));
-  }, []);
+    if (isTemporaryChat) {
+      // Exit temporary chat
+      setIsTemporaryChat(false);
+      const firstChat = chatSessions.find(s => !s.isTemporary);
+      if (firstChat) {
+        setActiveChatId(firstChat.id);
+      }
+    } else {
+      // Enter temporary chat
+      setActiveChatId(null);
+      setIsTyping(false);
+      setIsTemporaryChat(true);
+      setChatSessions((prev) => prev.filter((s) => !s.isTemporary));
+    }
+  }, [isTemporaryChat, chatSessions]);
 
   const handleSelectChat = useCallback((id: string) => {
     setActiveChatId(id);
