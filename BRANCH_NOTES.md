@@ -55,3 +55,16 @@ To run the project locally, copy `.env.example` to `.env.local` and add values f
 
 ## 6. Known Issues during Testing
 * **Gemini API Limits:** The free-tier Gemini API key might hit 429 rate limit errors (quota limit exceeded) if messages are sent too quickly in succession. Error boxes display gracefully to prompt the user to retry.
+
+---
+
+## 7. Two-Mode Chat Experience
+This branch introduces a structured two-mode chat redesign, retiring the old free-form conversations:
+* **Explore Mode (Default)**: A lightweight, visual, browse-first experience. It displays a short context summary followed by a horizontal, scrollable row of product cards matching the search term.
+* **Deep Research**: A guided, interactive shopping assistant flow. It asks 2–3 clarifying questions (budget, use-case, brand preference, etc.) using tappable option chips, a custom input option, and a skip option, then displays a "Best Match" hero product followed by 2–3 secondary backup recommendations.
+* **Mode Locking**: The selected mode is locked on the first message sent and cannot be changed mid-conversation. The user must start a new chat to use the other mode.
+* **Proactive Suggestions**: The AI can suggest starting a fresh chat in the other mode if a query is complex/simple. Clicking the suggested button opens a new chat session pre-set to that mode.
+* **Open Assumption**: The formatting toolbar (Bold/Italic/Spoiler buttons) inside the input container is replaced by the read-only mode badge once the chat mode is active/locked. The product owner should confirm if these formatting tools should be relocated (e.g., inside the "+" menu) rather than fully replaced.
+* **Lazy Product Loading Optimization**: To ensure the user interface loads instantly and behaves extremely smoothly:
+  * Message parsing runs synchronously on page load, avoiding all blocking HTTP requests.
+  * Recommendation products are fetched in parallel client-side from the database API *only when the specific message bubble mounts and is displayed*. A subtle loading spinner appears during fetching, entirely preventing page freezes and loading delay spikes.

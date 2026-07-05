@@ -14,6 +14,7 @@ export interface ChatSession {
   requirements: Record<string, unknown>
   created_at: string
   title?: string
+  mode: "deep_research" | "explore"
 }
 
 export interface ChatMessage {
@@ -218,7 +219,7 @@ export async function checkAndIncrementMessageLimit(): Promise<MessageLimitResul
  * Creates a new chat session for the logged-in user.
  * Throws an error if the user is not authenticated.
  */
-export async function createChatSession(): Promise<string> {
+export async function createChatSession(mode?: "deep_research" | "explore"): Promise<string> {
   const supabase = await createClient()
 
   const user = await getAuthenticatedUser(supabase)
@@ -233,6 +234,7 @@ export async function createChatSession(): Promise<string> {
       user_id: user.id,
       status: "active",
       requirements: {},
+      mode: mode || "explore",
     })
     .select("id")
     .single()

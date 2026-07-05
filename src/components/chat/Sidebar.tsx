@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Search, Menu, Camera, Palette, Check, MoreVertical, Pencil, Ghost, LogOut, Shirt, Sparkles, UserCog } from "lucide-react";
-import { ChatSession } from "@/types/chat";
+import { ChatSession, ChatMode } from "@/types/chat";
 import { useSidebarResize } from "./useSidebarResize";
 import { useTheme } from "@/hooks/useTheme";
 import { THEME_PRESETS } from "@/lib/themes";
@@ -611,7 +611,7 @@ function SidebarContent({
 }: {
   chatHistory: ChatSession[];
   activeChatId: string | null;
-  onNewChat: () => void;
+  onNewChat: (mode?: ChatMode) => void;
   onSelectChat: (id: string) => void;
   onDeleteChat: (id: string) => void;
   onRenameChat?: (id: string, title: string) => void;
@@ -1157,7 +1157,7 @@ function SidebarContent({
 interface SidebarProps {
   chatHistory: ChatSession[];
   activeChatId: string | null;
-  onNewChat: () => void;
+  onNewChat: (mode?: ChatMode) => void;
   onSelectChat: (id: string) => void;
   onDeleteChat: (id: string) => void;
   onRenameChat?: (id: string, title: string) => void;

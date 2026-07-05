@@ -2,9 +2,10 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import TextareaAutosize from "react-textarea-autosize";
-import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye, Plus } from "lucide-react";
+import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye, Plus, Compass, Brain } from "lucide-react";
 import { QuickAccessMenu } from "./QuickAccessMenu";
 import { SoundMuteToggle } from "@/components/shared/SoundMuteToggle";
+import { ChatMode } from "@/types/chat";
 
 const placeholders = [
   "BuyWise anything...",
@@ -16,6 +17,8 @@ const placeholders = [
 ];
 
 interface ChatInputProps {
+  inputText: string;
+  setInputText: (text: string) => void;
   onSend: (message: string) => void;
   onStop?: () => void;
   disabled: boolean;
@@ -28,9 +31,12 @@ interface ChatInputProps {
   dailyLimitMessage?: string;
   dailyMessagesRemaining?: number;
   dailyLimit?: number;
+  mode?: ChatMode | null;
 }
 
 export function ChatInput({ 
+  inputText,
+  setInputText,
   onSend, 
   onStop, 
   disabled, 
@@ -42,9 +48,9 @@ export function ChatInput({
   dailyLimitReached = false,
   dailyLimitMessage,
   dailyMessagesRemaining,
-  dailyLimit
+  dailyLimit,
+  mode = null
 }: ChatInputProps) {
-  const [inputText, setInputText] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [isQuickMenuOpen, setIsQuickMenuOpen] = useState(false);
@@ -63,7 +69,9 @@ export function ChatInput({
   const [timeLeft, setTimeLeft] = useState(0);
   useEffect(() => {
     if (!cooldownUntil || cooldownUntil <= Date.now()) {
-      setTimeLeft(0);
+      Promise.resolve().then(() => {
+        setTimeLeft(0);
+      });
       return;
     }
 
@@ -75,10 +83,12 @@ export function ChatInput({
       } else {
         setTimeLeft(remaining);
       }
-    }, 100);
+    }, 250);
 
-    // Set initial value immediately
-    setTimeLeft(Math.ceil((cooldownUntil - Date.now()) / 1000));
+    const initial = Math.ceil((cooldownUntil - Date.now()) / 1000);
+    Promise.resolve().then(() => {
+      setTimeLeft(initial);
+    });
 
     return () => clearInterval(interval);
   }, [cooldownUntil]);
@@ -177,31 +187,53 @@ export function ChatInput({
 
         <div className="flex flex-col bg-bg-input rounded-3xl border border-border-light focus-within:border-brand-accent/50 transition-colors shadow-sm overflow-hidden">
           
-          {/* Toolbar */}
-          <div className="flex items-center gap-1 px-3 py-1.5 border-b border-border-light bg-black/10">
-            <button
-              onClick={() => applyFormatting("**")}
-              className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95"
-              title="Bold (Ctrl+B)"
-            >
-              <Bold className="size-4" />
-            </button>
-            <button
-              onClick={() => applyFormatting("*")}
-              className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95"
-              title="Italic (Ctrl+I)"
-            >
-              <Italic className="size-4" />
-            </button>
-            <div className="w-px h-4 bg-border-light mx-1" />
-            <button
-              onClick={() => applyFormatting("||")}
-              className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95"
-              title="Spoiler"
-            >
-              <Eye className="size-4" />
-            </button>
-          </div>
+          {/* Toolbar or Mode Badge */}
+          {mode ? (
+            <div className="flex items-center px-3 py-1.5 border-b border-border-light bg-black/10 select-none">
+              {/* TODO(chat-modes): formatting toolbar preserved / hidden here */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs font-semibold text-text-primary-light animate-in fade-in duration-200">
+                {mode === "deep_research" ? (
+                  <>
+                    <Brain className="size-3 text-marigold" />
+                    <span className="text-text-secondary">🔬 Deep Research</span>
+                  </>
+                ) : (
+                  <>
+                    <Compass className="size-3 text-marigold" />
+                    <span className="text-text-secondary">🧭 Explore Mode</span>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 px-3 py-1.5 border-b border-border-light bg-black/10">
+              <button
+                type="button"
+                onClick={() => applyFormatting("**")}
+                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95"
+                title="Bold (Ctrl+B)"
+              >
+                <Bold className="size-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => applyFormatting("*")}
+                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95"
+                title="Italic (Ctrl+I)"
+              >
+                <Italic className="size-4" />
+              </button>
+              <div className="w-px h-4 bg-border-light mx-1" />
+              <button
+                type="button"
+                onClick={() => applyFormatting("||")}
+                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95"
+                title="Spoiler"
+              >
+                <Eye className="size-4" />
+              </button>
+            </div>
+          )}
 
           <div className="flex items-end gap-2 p-1 pl-2 pr-1.5 pb-1.5">
             {/* Quick Actions + Button */}

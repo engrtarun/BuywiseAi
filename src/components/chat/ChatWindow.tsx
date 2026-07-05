@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Message, Feedback } from "@/types/chat";
+import { Message, Feedback, ChatMode } from "@/types/chat";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
 import { WelcomeScreen } from "./WelcomeScreen";
@@ -71,8 +71,11 @@ interface ChatWindowProps {
   onLoginClick?: () => void;
   cooldownUntil?: number | null;
   isTemporaryChat?: boolean;
-  onNewChat: () => void;
+  onNewChat: (mode?: ChatMode) => void;
   onNewTemporaryChat?: () => void;
+  selectedMode: ChatMode;
+  onModeChange: (mode: ChatMode) => void;
+  activeMode: ChatMode | null;
 }
 
 export function ChatWindow({
@@ -97,8 +100,12 @@ export function ChatWindow({
   isTemporaryChat = false,
   onNewChat,
   onNewTemporaryChat,
+  selectedMode,
+  onModeChange,
+  activeMode,
 }: ChatWindowProps) {
   const [showQuickBuy, setShowQuickBuy] = React.useState(false);
+  const [inputText, setInputText] = React.useState("");
   
   const showWelcome = messages.length === 0 && !isTyping;
 
@@ -122,6 +129,8 @@ export function ChatWindow({
           dailyLimitReached={dailyLimitReached}
           dailyLimitMessage={dailyLimitMessage}
           onLoginClick={onLoginClick}
+          selectedMode={selectedMode}
+          onModeChange={onModeChange}
         />
       ) : (
         <MessageList
@@ -130,11 +139,14 @@ export function ChatWindow({
           onRegenerate={onRegenerate}
           onRetry={onRetry}
           onFeedback={onFeedback}
-          guestLimitReached={guestLimitReached}
-          onLoginClick={onLoginClick}
+          onSend={onSend}
+          onNewChat={onNewChat}
+          setInputText={setInputText}
         />
       )}
       <ChatInput
+        inputText={inputText}
+        setInputText={setInputText}
         onSend={onSend}
         onStop={onStop}
         disabled={isTyping}
@@ -147,6 +159,7 @@ export function ChatWindow({
         isGuest={isGuest}
         cooldownUntil={cooldownUntil}
         onLoginClick={onLoginClick}
+        mode={activeMode}
       />
 
       {/* Quick Buy Overlay */}
