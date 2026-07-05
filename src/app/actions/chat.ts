@@ -227,8 +227,8 @@ export async function createChatSession(mode?: "deep_research" | "explore"): Pro
     return getGuestSessionId()
   }
 
-  // Insert a new chat session row
-  const { data, error } = await supabase
+  // Try to insert with mode first
+  let { data, error } = await supabase
     .from("chat_sessions")
     .insert({
       user_id: user.id,
@@ -238,6 +238,25 @@ export async function createChatSession(mode?: "deep_research" | "explore"): Pro
     })
     .select("id")
     .single()
+
+  // Graceful fallback if the remote database is missing the 'mode' column
+  if (error && error.message.includes("'mode' column")) {
+    console.warn("Graceful fallback: 'mode' column missing in remote Supabase, inserting without it.");
+    
+    // Retry without the mode column
+    const fallbackResult = await supabase
+      .from("chat_sessions")
+      .insert({
+        user_id: user.id,
+        status: "active",
+        requirements: {},
+      })
+      .select("id")
+      .single()
+      
+    data = fallbackResult.data;
+    error = fallbackResult.error;
+  }
 
   if (error) {
     throw new Error(`Failed to create chat session: ${error.message}`)
