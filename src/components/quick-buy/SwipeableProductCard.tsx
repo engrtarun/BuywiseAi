@@ -69,7 +69,6 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
   const yOffset = isTop ? 0 : index * 12;
 
   // Local state for actions
-  const [inCart, setInCart] = useState(false);
   const [showToast, setShowToast] = useState<string | null>(null);
 
   const handleDragEnd = async (event: any, info: PanInfo) => {
@@ -237,7 +236,7 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
         {isTop && (
           <>
             <motion.div style={{ opacity: likeOpacity }} className="absolute top-8 left-8 z-50 pointer-events-none border-4 border-brand-accent text-brand-accent font-black text-4xl px-4 py-1 rounded-xl rotate-[-15deg] shadow-[0_0_20px_rgba(255,176,103,0.3)] bg-black/20 flex items-center gap-2">
-              <Heart className="size-8 fill-brand-accent text-brand-accent" /> SAVED
+              <ShoppingCart className="size-8 fill-brand-accent text-brand-accent" /> CART
             </motion.div>
             <motion.div style={{ opacity: skipOpacity }} className="absolute top-8 right-8 z-50 pointer-events-none border-4 border-white/50 text-white/50 font-black text-4xl px-4 py-1 rounded-xl rotate-[15deg] shadow-[0_0_20px_rgba(255,255,255,0.1)] bg-black/20">
               SKIP
@@ -257,16 +256,10 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
           {/* Add to Cart Checkbox (Top Right) */}
           <div className="absolute top-6 right-6 z-40 pointer-events-auto">
             <button
-              onClick={(e) => { e.stopPropagation(); setInCart(!inCart); }}
-              className={`
-                size-10 rounded-xl flex items-center justify-center backdrop-blur-md transition-all duration-300
-                ${inCart 
-                  ? "bg-brand-accent text-bg-main shadow-[0_0_15px_rgba(255,176,103,0.5)]" 
-                  : "bg-black/40 border border-white/20 text-white hover:bg-black/60"
-                }
-              `}
+              onClick={(e) => { e.stopPropagation(); manualSwipe("right"); }}
+              className="size-10 rounded-xl flex items-center justify-center backdrop-blur-md transition-all duration-300 bg-black/40 border border-white/20 text-white hover:bg-brand-accent hover:text-bg-main shadow-[0_0_15px_rgba(0,0,0,0.5)]"
             >
-              {inCart ? <Check className="size-5" /> : <ShoppingCart className="size-5" />}
+              <ShoppingCart className="size-5" />
             </button>
           </div>
           
@@ -377,8 +370,8 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
             >
               {isMobile ? (
                 <>
-                  <Heart className="size-4.5 text-red-400" />
-                  Save
+                  <ShoppingCart className="size-4.5 text-brand-accent" />
+                  Cart
                 </>
               ) : (
                 <>

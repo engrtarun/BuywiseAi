@@ -173,11 +173,11 @@ export function useQuickBuy() {
     }
   }, []);
 
-  // Trigger initial fetch or fetch when preferences change
   useEffect(() => {
     // Only fetch if we're not initializing localStorage anymore
     if (!isInitializing) {
-      fetchProducts(1, preferences, false);
+      const t = setTimeout(() => fetchProducts(1, preferences, false), 0);
+      return () => clearTimeout(t);
     }
   }, [preferences, isInitializing, fetchProducts]);
 

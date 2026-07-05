@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Settings2 } from "lucide-react";
+import { X, Settings2, Bike } from "lucide-react";
 import { FoodSwipeCardDeck } from "./FoodSwipeCardDeck";
 
 interface FoodQuickBuyScreenProps {
@@ -12,6 +12,7 @@ export function FoodQuickBuyScreen({ onClose }: FoodQuickBuyScreenProps) {
   const [showSettings, setShowSettings] = useState(true);
   const [minBudget, setMinBudget] = useState<number | "">("");
   const [maxBudget, setMaxBudget] = useState<number | "">("");
+  const [orderCount, setOrderCount] = useState(0);
 
   if (showSettings) {
     return (
@@ -82,12 +83,21 @@ export function FoodQuickBuyScreen({ onClose }: FoodQuickBuyScreenProps) {
             </span>
             <Settings2 className="size-3.5 text-text-secondary" />
           </button>
+          <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 relative cursor-default">
+            <Bike className="size-4.5 text-orange-400" />
+            <span className="font-bold text-[13px]">{orderCount}</span>
+          </button>
         </div>
       </div>
 
       {/* Swipe Deck */}
       <div className="flex-1 mt-6 z-10 relative">
-        <FoodSwipeCardDeck customizations={[]} />
+        <FoodSwipeCardDeck 
+          customizations={[]} 
+          onOrder={() => setOrderCount(c => c + 1)} 
+          minBudget={minBudget}
+          maxBudget={maxBudget}
+        />
       </div>
     </div>
   );

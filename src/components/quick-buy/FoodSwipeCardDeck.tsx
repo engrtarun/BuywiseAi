@@ -6,8 +6,14 @@ import { quickBuyMockFoodData } from "@/lib/quickBuyMockFoodData";
 import { motion, AnimatePresence } from "framer-motion";
 import { UtensilsCrossed } from "lucide-react";
 
-export function FoodSwipeCardDeck({ customizations }: { customizations: string[] }) {
-  const [items, setItems] = useState(quickBuyMockFoodData);
+export function FoodSwipeCardDeck({ customizations, onOrder, minBudget, maxBudget }: { customizations: string[], onOrder?: () => void, minBudget?: number | "", maxBudget?: number | "" }) {
+  const [items, setItems] = useState(() => {
+    return quickBuyMockFoodData.filter((item) => {
+      if (minBudget !== "" && minBudget !== undefined && item.price < minBudget) return false;
+      if (maxBudget !== "" && maxBudget !== undefined && item.price > maxBudget) return false;
+      return true;
+    });
+  });
 
   const handleSwipeLeft = (id: string) => {
     setItems((prev) => {
@@ -23,7 +29,7 @@ export function FoodSwipeCardDeck({ customizations }: { customizations: string[]
       const rest = prev.filter((i) => i.id !== id);
       return item ? [...rest, item] : rest;
     });
-    // Could save to a 'cart' or 'ordered' list here
+    if (onOrder) onOrder();
   };
 
   if (items.length === 0) {

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { QuickBuyProfile } from "@/types/quickBuyProfile";
-import { Plus, Trash2, ChevronDown } from "lucide-react";
+import { Plus, Trash2, ChevronDown, Settings2 } from "lucide-react";
 
 interface ProfileSwitcherProps {
   profiles: QuickBuyProfile[];
@@ -11,6 +11,7 @@ interface ProfileSwitcherProps {
   switchProfile: (id: string) => void;
   deleteProfile: (id: string) => void;
   onAddProfile: () => void;
+  onEditProfile: () => void;
 }
 
 const PALETTE = [
@@ -35,7 +36,8 @@ export function ProfileSwitcher({
   activeProfile,
   switchProfile,
   deleteProfile,
-  onAddProfile
+  onAddProfile,
+  onEditProfile
 }: ProfileSwitcherProps) {
   const [open, setOpen] = useState(false);
 
@@ -70,8 +72,10 @@ export function ProfileSwitcher({
                 onClick={() => {
                   if (!isActive) {
                     switchProfile(p.id);
-                    setOpen(false);
+                  } else {
+                    onEditProfile();
                   }
+                  setOpen(false);
                 }}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -90,18 +94,34 @@ export function ProfileSwitcher({
                   </div>
                 </div>
 
-                {!p.isDefault && (
+                <div className="flex items-center gap-0.5">
                   <button
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
-                      deleteProfile(p.id);
+                      if (!isActive) switchProfile(p.id);
+                      onEditProfile();
+                      setOpen(false);
                     }}
-                    className="p-1.5 rounded-lg text-text-secondary hover:text-red-400 hover:bg-white/5 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 active:scale-90"
-                    title="Delete Profile"
+                    className="p-1.5 rounded-lg text-text-secondary hover:text-brand-accent hover:bg-white/5 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 active:scale-90"
+                    title="Edit Profile Settings"
                   >
-                    <Trash2 className="size-3.5" />
+                    <Settings2 className="size-3.5" />
                   </button>
-                )}
+                  {!p.isDefault && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        deleteProfile(p.id);
+                      }}
+                      className="p-1.5 rounded-lg text-text-secondary hover:text-red-400 hover:bg-white/5 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 active:scale-90"
+                      title="Delete Profile"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}

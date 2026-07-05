@@ -6,7 +6,7 @@ import { SizeBudgetForm } from "./SizeBudgetForm";
 import { SwipeCardDeck } from "./SwipeCardDeck";
 import { SavedItemsList } from "./SavedItemsList";
 import { FoodSwipeCardDeck } from "./FoodSwipeCardDeck";
-import { X, Settings2, Heart, Mic } from "lucide-react";
+import { X, Settings2, Heart, Mic, ShoppingCart } from "lucide-react";
 import { useAppMode } from "@/contexts/AppModeContext";
 import { useVoiceCustomizationExtraction } from "@/hooks/useVoiceCustomizationExtraction";
 import { ProfileSwitcher } from "./ProfileSwitcher";
@@ -223,6 +223,7 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
               switchProfile={switchProfile}
               deleteProfile={deleteProfile}
               onAddProfile={() => setShowAddProfileForm(true)}
+              onEditProfile={() => setShowSettings(true)}
             />
           )}
 
@@ -263,7 +264,7 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
             onClick={() => setShowSaved(true)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-text-primary-light transition-colors relative"
           >
-            <Heart className="size-4.5 text-red-400" />
+            <ShoppingCart className="size-4.5 text-brand-accent" />
             <span className="font-bold text-[13px]">{savedItemIds.length}</span>
           </button>
         </div>

@@ -13,6 +13,7 @@ import { QuickBuyButton } from "@/components/quick-buy/QuickBuyButton";
 import { QuickBuyScreen } from "@/components/quick-buy/QuickBuyScreen";
 import { FoodQuickBuyButton } from "@/components/quick-buy/FoodQuickBuyButton";
 import { FoodQuickBuyScreen } from "@/components/quick-buy/FoodQuickBuyScreen";
+import { Ghost } from "lucide-react";
 
 /* ── Header ──────────────────────────────────────────── */
 
@@ -28,21 +29,21 @@ interface ChatHeaderProps {
 
 function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onNewTemporaryChat, onQuickBuyClick, onFoodQuickBuyClick }: ChatHeaderProps) {
   return (
-    <header className="shrink-0 z-20 flex items-center bg-bg-main px-4 py-3 border-b border-border-light h-14">
+    <header className={`shrink-0 z-20 flex items-center px-4 py-3 border-b h-14 transition-colors duration-500 ${isTemporaryChat ? 'bg-[#1e1e1e] border-white/5' : 'bg-bg-main border-border-light'}`}>
       <div className="w-full flex items-center justify-between">
         <div className="flex items-center gap-3">
           <HamburgerButton isOpen={isSidebarOpen} onClick={onMenuToggle} />
           {/* Subtle Chat Indicator Area */}
           {isTemporaryChat && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-xs font-medium text-text-primary-dark select-none">
-              <span className="text-marigold">⚡</span> Instant
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2a2a2a] border border-white/10 text-xs font-semibold text-text-primary-dark select-none shadow-sm">
+              <Ghost className="size-3.5 text-gray-400" /> Temporary Chat
             </div>
           )}
         </div>
 
         {/* Top-Right Action Area */}
         <div className="flex items-center gap-2">
-          {!isGuest && onNewTemporaryChat && (
+          {onNewTemporaryChat && (
             <TemporaryChatButton onClick={onNewTemporaryChat} isTemporaryChat={isTemporaryChat} />
           )}
           <QuickBuyButton onClick={onQuickBuyClick} />
@@ -123,7 +124,15 @@ export function ChatWindow({
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-dvh w-full bg-bg-main text-text-primary-light overflow-hidden relative">
+    <div className={`flex flex-col h-dvh w-full text-text-primary-light overflow-hidden relative transition-colors duration-500 ${isTemporaryChat ? 'bg-[#121212]' : 'bg-bg-main'}`}>
+      
+      {/* Ghost Watermark Background for Temporary Chat */}
+      {isTemporaryChat && (
+        <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none opacity-[0.02]">
+          <Ghost className="w-[400px] h-[400px] text-white" strokeWidth={1} />
+        </div>
+      )}
+
       <ChatHeader 
         isSidebarOpen={isSidebarOpen} 
         onMenuToggle={onMenuToggle} 
@@ -135,17 +144,27 @@ export function ChatWindow({
       />
       <OfflineBanner />
       {showWelcome ? (
-        <WelcomeScreen
-          onSuggestionClick={onSend}
-          isGuest={isGuest}
-          guestMessagesRemaining={guestMessagesRemaining}
-          guestLimitReached={guestLimitReached}
-          dailyLimitReached={dailyLimitReached}
-          dailyLimitMessage={dailyLimitMessage}
-          onLoginClick={onLoginClick}
-          selectedMode={selectedMode}
-          onModeChange={onModeChange}
-        />
+        isTemporaryChat ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 z-10 text-center animate-in fade-in zoom-in-95 duration-500">
+            <Ghost className="size-24 text-gray-500 mb-6 drop-shadow-2xl opacity-60" strokeWidth={1} />
+            <h2 className="text-3xl font-bold text-gray-200 font-heading mb-3 tracking-tight">You are in Ghost Mode</h2>
+            <p className="text-gray-400 text-sm max-w-sm leading-relaxed">
+              Your messages in this temporary chat will not be saved to your history. Once you leave, they vanish forever.
+            </p>
+          </div>
+        ) : (
+          <WelcomeScreen
+            onSuggestionClick={onSend}
+            isGuest={isGuest}
+            guestMessagesRemaining={guestMessagesRemaining}
+            guestLimitReached={guestLimitReached}
+            dailyLimitReached={dailyLimitReached}
+            dailyLimitMessage={dailyLimitMessage}
+            onLoginClick={onLoginClick}
+            selectedMode={selectedMode}
+            onModeChange={onModeChange}
+          />
+        )
       ) : (
         <MessageList
           messages={messages}
