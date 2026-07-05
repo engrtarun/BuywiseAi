@@ -50,10 +50,9 @@ You MUST return ONLY a raw valid JSON object in the following format (no other c
   "ui_type": "explore_carousel",
   "headline": "Here are the best budget products matching your prompt!",
   "products": [
-    { "id": "1", "name": "Product Name 1", "price": "₹14,999", "rating": 4.2, "image": "/placeholder.png" },
-    { "id": "2", "name": "Product Name 2", "price": "₹15,499", "rating": 4.5, "image": "/placeholder.png" }
+    { "id": "string_uuid", "name": "Product Descriptive Name", "price": "₹14,999", "rating": 4.5, "image": "/placeholder.png" }
   ],
-  "deep_dive": "### Deep Dive\\nHere is a detailed breakdown of these models. The first option features high-durability design, while the second option focuses on pure performance specs."
+  "deep_dive": "### Technical Deep Dive\\nMarkdown-formatted detailed comparison, as a JSON string value."
 }
 
 Ensure the products returned are highly relevant to the user request. Construct reasonable product objects dynamically with approximate real-world specifications, names, prices, and ratings. Use "/placeholder.png" for the image path.
@@ -69,7 +68,7 @@ Return ONLY the raw JSON in both cases.`;
 
 const DEEP_RESEARCH_SYSTEM_PROMPT = `You are BuyWise AI, a shopping assistant.
 The user is in Deep Research Mode (an interactive, guided flow).
-Based on the conversation history, you must decide whether to ask a clarifying question to narrow down the choices or to present the final recommendation results.
+Based on the conversation history and previously accumulated requirements, you must decide whether to ask a clarifying question to narrow down the choices or to present the final recommendation results.
 Usually, ask 2 to 3 clarifying questions (one per turn) about key preferences like budget, use-case, brand, style, size, etc., before presenting results.
 
 If more context is needed, you MUST return ONLY a JSON object in the following format (no other text, do not wrap in markdown code blocks):
@@ -98,6 +97,20 @@ If you have gathered enough details (or if the user insists on seeing results), 
 }
 
 Ensure the queries match typical products in the catalog. Return ONLY the raw JSON string. Do not wrap in markdown code blocks.`;
+
+export function validateModeJSONPayload(rawText: string, expectedMode: 'explore' | 'deep_research'): boolean {
+  try {
+    const cleanedText = rawText.replace(/```json|```/gi, "").trim();
+    const parsedData = JSON.parse(cleanedText);
+    if (expectedMode === 'explore') {
+      return (parsedData.ui_type === 'explore_carousel' && Array.isArray(parsedData.products)) || parsedData.ui_type === 'text_response';
+    } else {
+      return parsedData.ui_type === 'clarifying_question' || parsedData.ui_type === 'results';
+    }
+  } catch {
+    return false;
+  }
+}
 
 export async function POST(req: NextRequest) {
   let userMessage = "";
@@ -129,7 +142,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { history = [], message, mode = "explore" } = body;
+    const { history = [], message, mode = "explore", requirements = {} } = body;
     userMessage = message;
 
     const access = await enforceChatAccess(req);
@@ -149,7 +162,11 @@ export async function POST(req: NextRequest) {
     });
 
     const isDeepResearch = mode === "deep_research" || mode === "deep-research";
-    const systemInstruction = isDeepResearch ? DEEP_RESEARCH_SYSTEM_PROMPT : EXPLORE_SYSTEM_PROMPT;
+    let systemInstruction = isDeepResearch ? DEEP_RESEARCH_SYSTEM_PROMPT : EXPLORE_SYSTEM_PROMPT;
+    
+    if (isDeepResearch && Object.keys(requirements).length > 0) {
+      systemInstruction += `\n\nUser's accumulated requirements so far: ${JSON.stringify(requirements)}`;
+    }
 
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
@@ -164,9 +181,34 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const result = await chat.sendMessage(message);
-    const response = await result.response;
-    const text = response.text();
+    let text = (await result.response).text();
+
+    let isValid = validateModeJSONPayload(text, isDeepResearch ? 'deep_research' : 'explore');
+    if (!isValid) {
+      console.warn("AI generated invalid JSON payload. Retrying or falling back...");
+      if (isDeepResearch) {
+        try {
+          const retryResult = await chat.sendMessage("Your last response was not valid JSON or was missing required fields. Please return strictly the JSON payload.");
+          text = (await retryResult.response).text();
+          isValid = validateModeJSONPayload(text, 'deep_research');
+        } catch (e) {
+          isValid = false;
+        }
+        if (!isValid) {
+          text = JSON.stringify({
+            ui_type: "results",
+            acknowledgement: "We had some trouble processing the details, but here are some safe recommendations.",
+            primary_query: "Top rated products",
+            backup_queries: []
+          });
+        }
+      } else {
+        text = JSON.stringify({
+          ui_type: "text_response",
+          text: getFallbackChatResponse(userMessage)
+        });
+      }
+    }
 
     return NextResponse.json({ text });
   } catch (error: unknown) {
@@ -188,6 +230,7 @@ interface ChatRequestBody {
   message: string;
   history?: ChatHistoryMessage[];
   mode?: "deep_research" | "deep-research" | "explore";
+  requirements?: Record<string, unknown>;
 }
 
 function isChatRequestBody(body: unknown): body is ChatRequestBody {
