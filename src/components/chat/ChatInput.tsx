@@ -227,15 +227,6 @@ export function ChatInput({
               >
                 <Italic className="size-4" />
               </button>
-              <div className="w-px h-4 bg-border-light mx-1" />
-              <button
-                type="button"
-                onClick={() => applyFormatting("||")}
-                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95 cursor-pointer"
-                title="Spoiler"
-              >
-                <Eye className="size-4" />
-              </button>
             </div>
           </div>
 
