@@ -1,9 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-export function useTheme() {
+interface ThemeContextType {
+  theme: string;
+  setTheme: (theme: string) => Promise<void>;
+  mode: string;
+  setMode: (mode: string) => Promise<void>;
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<string>("default");
   const [mode, setModeState] = useState<string>("light");
 
@@ -109,5 +118,23 @@ export function useTheme() {
     }
   };
 
-  return { theme, setTheme, mode, setMode };
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme, mode, setMode }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+export function useTheme() {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    // Return fallback state if used outside provider
+    return {
+      theme: "default",
+      setTheme: async () => {},
+      mode: "light",
+      setMode: async () => {},
+    };
+  }
+  return context;
 }

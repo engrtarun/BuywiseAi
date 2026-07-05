@@ -30,6 +30,8 @@ export const metadata: Metadata = {
   description: "AI-powered smart shopping assistant",
 };
 
+import { ThemeProvider } from "@/hooks/useTheme";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -45,9 +47,11 @@ export default function RootLayout({
         <ThemeInitializer />
       </head>
       <body className="bg-ink-deeper">
-        <AppModeProvider>
-          {children}
-        </AppModeProvider>
+        <ThemeProvider>
+          <AppModeProvider>
+            {children}
+          </AppModeProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
