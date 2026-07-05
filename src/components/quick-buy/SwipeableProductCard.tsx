@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform, useAnimation, PanInfo, AnimatePresence } from "framer-motion";
 import { QuickBuyProduct } from "@/lib/quickBuyMockData";
 import { useSwipeFeedback } from "@/hooks/useSwipeFeedback";
@@ -24,11 +24,25 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
 
   // Responsive layout state
   const [isMobile, setIsMobile] = useState(true);
+  const cardRectRef = useRef<DOMRect | null>(null);
+  const rafRef = useRef<number | null>(null);
+
   useEffect(() => {
     setIsMobile(window.innerWidth < 768);
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      cardRectRef.current = null;
+    };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
   }, []);
 
   // 3D Tilt State (Mouse)
@@ -49,28 +63,6 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
   // Visual Overlays (LIKE / SKIP)
   const likeOpacity = useTransform(x, [50, 150], [0, 1]);
   const skipOpacity = useTransform(x, [-50, -150], [0, 1]);
-
-  // Card Background Color shift
-  const bgGradient = useTransform(
-    x,
-    [-150, 0, 150],
-    [
-      "linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(20,20,22,1) 100%)",
-      "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
-      "linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(20,20,22,1) 100%)"
-    ]
-  );
-
-  // Border Color shift
-  const borderColor = useTransform(
-    x,
-    [-150, 0, 150],
-    [
-      "rgba(239,68,68,0.3)",
-      "rgba(255,255,255,0.1)",
-      "rgba(34,197,94,0.3)"
-    ]
-  );
 
   // Z-Index calculations for stacked deck
   const scale = isTop ? 1 : 1 - (index * 0.05);
@@ -134,71 +126,131 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
     }, 1200);
   };
 
+  const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isTop) return;
+    cardRectRef.current = e.currentTarget.getBoundingClientRect();
+  };
+
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isTop) return;
-    const rect = e.currentTarget.getBoundingClientRect();
+    
+    if (!cardRectRef.current) {
+      cardRectRef.current = e.currentTarget.getBoundingClientRect();
+    }
+    
+    const rect = cardRectRef.current;
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     
-    // Normalize to -100 to 100
-    tiltX.set(((mouseX / rect.width) - 0.5) * 200);
-    tiltY.set(((mouseY / rect.height) - 0.5) * 200);
+    const nextTiltX = ((mouseX / rect.width) - 0.5) * 200;
+    const nextTiltY = ((mouseY / rect.height) - 0.5) * 200;
+    
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+    
+    rafRef.current = requestAnimationFrame(() => {
+      tiltX.set(nextTiltX);
+      tiltY.set(nextTiltY);
+    });
   };
 
   const handleMouseLeave = () => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
     tiltX.set(0);
     tiltY.set(0);
   };
 
+  const cardStyle = {
+    x,
+    rotateZ,
+    scale,
+    y: yOffset,
+    background: "rgba(20,20,22,0.9)",
+    borderColor: "rgba(255,255,255,0.08)",
+    touchAction: "pan-y"
+  } as any;
+
+  if (isTop) {
+    cardStyle.rotateX = rotateX;
+    cardStyle.rotateY = rotateY;
+    cardStyle.background = "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)";
+    cardStyle.borderColor = "rgba(255,255,255,0.1)";
+    cardStyle.transformStyle = "preserve-3d";
+    cardStyle.perspective = 1000;
+  }
+
   return (
     <motion.div
-      drag="x"
+      drag={isTop ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.7}
       onDragEnd={handleDragEnd}
+      onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       animate={controls}
-      style={{
-        x,
-        rotateZ,
-        rotateX,
-        rotateY,
-        scale,
-        y: yOffset,
-        background: bgGradient,
-        borderColor: borderColor,
-        transformStyle: "preserve-3d", // Important for 3D children
-        perspective: 1000,
-        touchAction: "pan-y" // Allow vertical scrolling on mobile while locking horizontal
-      }}
+      style={cardStyle}
       className={`
         absolute w-full max-w-[340px] h-[520px] 
-        rounded-[32px] border border-white/[0.08] backdrop-blur-md shadow-2xl
+        rounded-[32px] border border-white/[0.08] shadow-2xl
         flex flex-col overflow-hidden will-change-transform
-        ${!isTop ? "pointer-events-none" : "pointer-events-auto"}
+        ${isTop ? "backdrop-blur-md pointer-events-auto" : "pointer-events-none"}
       `}
     >
+      {/* Accept Tint Overlay */}
+      {isTop && (
+        <motion.div
+          style={{
+            opacity: likeOpacity,
+            background: "linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(20,20,22,1) 100%)",
+            borderColor: "rgba(34,197,94,0.3)",
+            borderStyle: "solid",
+            borderWidth: "1px"
+          }}
+          className="absolute inset-0 pointer-events-none rounded-[32px]"
+        />
+      )}
+      {/* Reject Tint Overlay */}
+      {isTop && (
+        <motion.div
+          style={{
+            opacity: skipOpacity,
+            background: "linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(20,20,22,1) 100%)",
+            borderColor: "rgba(239,68,68,0.3)",
+            borderStyle: "solid",
+            borderWidth: "1px"
+          }}
+          className="absolute inset-0 pointer-events-none rounded-[32px]"
+        />
+      )}
+
       {/* 3D Inner Content Container */}
       <div 
-        style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}
+        style={{ transform: isTop ? "translateZ(30px)" : undefined, transformStyle: isTop ? "preserve-3d" : undefined }}
         className="w-full h-full flex flex-col pointer-events-none" // Disable pointer events so drag works on main div
       >
         
         {/* Swipe Overlays */}
-        <motion.div style={{ opacity: likeOpacity }} className="absolute top-8 left-8 z-50 pointer-events-none border-4 border-brand-accent text-brand-accent font-black text-4xl px-4 py-1 rounded-xl rotate-[-15deg] shadow-[0_0_20px_rgba(255,176,103,0.3)] bg-black/20 flex items-center gap-2">
-          <Heart className="size-8 fill-brand-accent text-brand-accent" /> SAVED
-        </motion.div>
-        <motion.div style={{ opacity: skipOpacity }} className="absolute top-8 right-8 z-50 pointer-events-none border-4 border-white/50 text-white/50 font-black text-4xl px-4 py-1 rounded-xl rotate-[15deg] shadow-[0_0_20px_rgba(255,255,255,0.1)] bg-black/20">
-          SKIP
-        </motion.div>
+        {isTop && (
+          <>
+            <motion.div style={{ opacity: likeOpacity }} className="absolute top-8 left-8 z-50 pointer-events-none border-4 border-brand-accent text-brand-accent font-black text-4xl px-4 py-1 rounded-xl rotate-[-15deg] shadow-[0_0_20px_rgba(255,176,103,0.3)] bg-black/20 flex items-center gap-2">
+              <Heart className="size-8 fill-brand-accent text-brand-accent" /> SAVED
+            </motion.div>
+            <motion.div style={{ opacity: skipOpacity }} className="absolute top-8 right-8 z-50 pointer-events-none border-4 border-white/50 text-white/50 font-black text-4xl px-4 py-1 rounded-xl rotate-[15deg] shadow-[0_0_20px_rgba(255,255,255,0.1)] bg-black/20">
+              SKIP
+            </motion.div>
+          </>
+        )}
 
         {/* Product Image Area */}
         <div className="relative w-full h-[65%] shrink-0 overflow-hidden bg-white/5 p-4 pb-0 pointer-events-auto">
           <motion.img 
             src={product.image} 
             alt={product.name}
-            style={{ transform: "translateZ(20px)" }}
+            style={{ transform: isTop ? "translateZ(20px)" : undefined }}
             className="w-full h-full object-cover rounded-2xl rounded-b-none shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
           />
           
@@ -254,7 +306,7 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
         </div>
 
         {/* Product Details Area */}
-        <div className="flex-1 px-5 pt-3 pb-4 flex flex-col justify-between pointer-events-auto" style={{ transform: "translateZ(40px)" }}>
+        <div className="flex-1 px-5 pt-3 pb-4 flex flex-col justify-between pointer-events-auto" style={{ transform: isTop ? "translateZ(40px)" : undefined }}>
           
           {/* Info */}
           <div className="relative">
@@ -288,7 +340,7 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
                 <Star 
                   key={star} 
                   className={`size-4 ${star <= Math.round(product.rating) ? "fill-brand-accent text-brand-accent" : "fill-bg-input text-border-light"}`} 
-                />
+                  />
               ))}
               <span className="text-sm font-sans text-text-secondary ml-1 font-bold">
                 {product.rating}

@@ -88,55 +88,42 @@ export function SwipeCardDeck({ products, onSave, onOpenSettings, hasMore, onPre
       );
     }
 
-    // Truly empty
+    // Truly empty (No matches from the filters)
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in duration-500 relative overflow-hidden">
-        
-        {/* Subtle Confetti background element */}
-        <div className="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-marigold/40 via-bg-main to-bg-main"></div>
-
         <motion.div 
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", bounce: 0.5, delay: 0.1 }}
-          className="size-24 rounded-full bg-brand-accent/20 flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(255,176,103,0.3)] border border-brand-accent/30"
+          className="size-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6 shadow-xl"
         >
-          <PartyPopper className="size-10 text-brand-accent" />
+          <SlidersHorizontal className="size-8 text-text-secondary" />
         </motion.div>
         
-        <h2 className="text-2xl sm:text-3xl font-heading font-black text-text-primary-light mb-3 max-w-sm leading-tight">
-          You've unlocked all personalized recommendations for today! 🎉
+        <h2 className="text-xl sm:text-2xl font-heading font-black text-text-primary-light mb-3 max-w-sm leading-tight">
+          No matches found
         </h2>
         
-        <p className="text-text-secondary mb-10 max-w-sm text-sm sm:text-base leading-relaxed">
-          Great job! You've reviewed your entire curated stack. Want to change your sizing or budget to see more?
+        <p className="text-text-secondary mb-8 max-w-sm text-sm leading-relaxed">
+          Try adjusting your sizes, budget, or preferred categories in settings to see recommendations.
         </p>
         
         <div className="flex flex-col gap-3 w-full max-w-[280px] relative z-10">
           <button
-            onClick={() => router.push('/chat')}
+            onClick={onOpenSettings}
             className="w-full py-4 rounded-xl bg-brand-accent text-bg-main font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-brand-accent/20 flex items-center justify-center gap-2"
           >
-            <MessageSquare className="size-5" />
-            Back to AI Chat
+            <SlidersHorizontal className="size-5" />
+            Adjust Filters
           </button>
           
-          <div className="flex items-center gap-3 w-full">
-            <button
-              onClick={handleReset}
-              className="flex-1 py-3.5 rounded-xl bg-white/5 border border-white/10 text-text-primary-light font-bold hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm"
-            >
-              <RefreshCcw className="size-4" />
-              Refresh
-            </button>
-            <button
-              onClick={onOpenSettings}
-              className="flex-1 py-3.5 rounded-xl bg-white/5 border border-white/10 text-text-primary-light font-bold hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm"
-            >
-              <SlidersHorizontal className="size-4" />
-              Settings
-            </button>
-          </div>
+          <button
+            onClick={() => router.push('/chat')}
+            className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-text-primary-light font-bold hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm"
+          >
+            <MessageSquare className="size-4" />
+            Back to AI Chat
+          </button>
         </div>
       </div>
     );

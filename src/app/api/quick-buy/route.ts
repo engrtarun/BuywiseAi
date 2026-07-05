@@ -139,10 +139,27 @@ export async function GET(request: Request) {
     }
 
     const totalFiltered = filteredProducts.length;
-    const startIndex = (safePage - 1) * safeLimit;
-    const endIndex = startIndex + safeLimit;
-    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
-    const hasMore = endIndex < totalFiltered;
+    let paginatedProducts = [];
+    let hasMore = false;
+
+    if (totalFiltered > 0) {
+      const startGlobalIndex = (safePage - 1) * safeLimit;
+      const endGlobalIndex = safePage * safeLimit;
+
+      for (let i = startGlobalIndex; i < endGlobalIndex; i++) {
+        const cycle = Math.floor(i / totalFiltered);
+        const localIndex = i % totalFiltered;
+
+        const shuffledForCycle = seededShuffle(filteredProducts, cycle);
+        const product = shuffledForCycle[localIndex] as any;
+
+        paginatedProducts.push({
+          ...product,
+          id: `${product.id}_${cycle}`
+        });
+      }
+      hasMore = true;
+    }
 
     return NextResponse.json({
       success: true,
@@ -158,4 +175,21 @@ export async function GET(request: Request) {
     console.error("API Error:", error);
     return NextResponse.json({ success: false, error: 'Failed to fetch products' }, { status: 500 });
   }
+}
+
+function seededShuffle<T>(array: T[], seed: number): T[] {
+  const shuffled = [...array];
+  let currentSeed = seed + 123456789;
+  const random = () => {
+    const x = Math.sin(currentSeed++) * 10000;
+    return x - Math.floor(x);
+  };
+
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    const temp = shuffled[i];
+    shuffled[i] = shuffled[j];
+    shuffled[j] = temp;
+  }
+  return shuffled;
 }
