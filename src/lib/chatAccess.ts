@@ -21,7 +21,7 @@ function currentISTDate(): string {
  * Result returned from enforceChatAccess.
  *
  * - `response` — set when the request must be rejected; return this early from the route.
- * - `isGuest`  — true for unauthenticated/guest visitors who are still allowed.
+ * - `isGuest`  — true when no authenticated session was available.
  */
 export interface ChatAccessResult {
   response: NextResponse | null;
@@ -32,12 +32,9 @@ export interface ChatAccessResult {
  * enforceChatAccess — gate-keeper called at the top of POST /api/chat.
  *
  * 1. Reads the Supabase session from the incoming request cookies.
- * 2. Guests (unauthenticated): allowed through; isGuest = true.
- *    The client enforces a separate 5-message guest cap.
+ * 2. Rejects unauthenticated calls with 401.
  * 3. Authenticated users: checks daily token usage.
  *    Returns 429 if the next message would exceed the 20 000-token daily limit.
- *
- * Fails open on unexpected errors so a DB hiccup never hard-blocks users.
  */
 export async function enforceChatAccess(
   req: NextRequest
@@ -45,18 +42,21 @@ export async function enforceChatAccess(
   const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // If Supabase env vars are missing (e.g. local dev without .env), let through.
   if (!supabaseUrl || !supabaseAnonKey) {
     console.warn(
-      "[enforceChatAccess] Supabase env vars missing — skipping access check."
+      "[enforceChatAccess] Supabase env vars missing — denying access."
     );
-    return { response: null, isGuest: true };
+    return {
+      response: NextResponse.json(
+        {
+          error: "Unauthorized",
+          message: "Please log in to continue.",
+        },
+        { status: 401 }
+      ),
+      isGuest: false,
+    };
   }
-
-  // Build a lightweight Supabase client from the request cookies.
-  // We use createServerClient here because API routes cannot use next/headers
-  // cookies() — that is only available in Server Components / Server Actions.
-  let userId: string | null = null;
 
   try {
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -72,54 +72,50 @@ export async function enforceChatAccess(
 
     const {
       data: { user },
+      error,
     } = await supabase.auth.getUser();
 
-    userId = user?.id ?? null;
-  } catch (err) {
-    console.error(
-      "[enforceChatAccess] Failed to read Supabase session — allowing through:",
-      err
-    );
-    return { response: null, isGuest: true };
-  }
-
-  // ── Guest path ────────────────────────────────────────────────────────────
-  if (!userId) {
-    return { response: null, isGuest: true };
-  }
-
-  // ── Authenticated path: token-limit check ─────────────────────────────────
-  try {
-    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-      cookies: {
-        getAll() {
-          return req.cookies.getAll();
-        },
-        setAll() {},
-      },
-    });
+    if (error || !user?.id) {
+      console.warn("[enforceChatAccess] No valid Supabase session found.");
+      return {
+        response: NextResponse.json(
+          {
+            error: "Unauthorized",
+            message: "Please log in to continue.",
+          },
+          { status: 401 }
+        ),
+        isGuest: true,
+      };
+    }
 
     const todayIST = currentISTDate();
-
-    const { data: profile, error } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("tokens_used, last_reset_at")
-      .eq("id", userId)
+      .eq("id", user.id)
       .maybeSingle();
 
-    if (error) {
-      // Cannot read profile → fail open rather than blocking the user.
+    if (profileError) {
       console.error(
-        "[enforceChatAccess] Profile fetch failed — allowing through:",
-        error.message
+        "[enforceChatAccess] Profile fetch failed — denying access:",
+        profileError.message
       );
-      return { response: null, isGuest: false };
+      return {
+        response: NextResponse.json(
+          {
+            error: "Unauthorized",
+            message: "Unable to verify access right now.",
+          },
+          { status: 401 }
+        ),
+        isGuest: false,
+      };
     }
 
     let tokensUsed = profile?.tokens_used ?? 0;
     const lastResetAt = profile?.last_reset_at;
 
-    // Reset counter if it's a new calendar day (IST).
     if (lastResetAt && getISTDateString(lastResetAt) !== todayIST) {
       tokensUsed = 0;
     }
@@ -141,10 +137,19 @@ export async function enforceChatAccess(
     }
   } catch (err) {
     console.error(
-      "[enforceChatAccess] Unexpected error during token check — allowing through:",
+      "[enforceChatAccess] Unexpected error during access check — denying access:",
       err
     );
-    return { response: null, isGuest: false };
+    return {
+      response: NextResponse.json(
+        {
+          error: "Unauthorized",
+          message: "Unable to verify access right now.",
+        },
+        { status: 401 }
+      ),
+      isGuest: false,
+    };
   }
 
   return { response: null, isGuest: false };

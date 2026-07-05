@@ -8,9 +8,7 @@ import { updateSession } from "@/lib/supabase/middleware"
  * so Next.js actually picks this up as an edge middleware file.
  */
 export async function middleware(request: NextRequest) {
-  if (process.env.NODE_ENV === "development") {
-    console.log(`[middleware] ${request.method} ${request.nextUrl.pathname}`);
-  }
+  console.log(`[middleware] ${request.method} ${request.nextUrl.pathname}`);
   return await updateSession(request)
 }
 
