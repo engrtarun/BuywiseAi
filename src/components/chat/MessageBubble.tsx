@@ -264,8 +264,8 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
     }));
   }
 
-  // Determine Explore layout variables
-  const isExploreModeLayout = isExploreCarousel || !!message.searchTag;
+  // Determine Explore layout variables (Strictly enforce mode === 'explore')
+  const isExploreModeLayout = (isExploreCarousel || !!message.searchTag) && mode === "explore";
   
   const exploreProductsToShow = isExploreCarousel 
     ? exploreProductsList 
@@ -572,18 +572,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
                 </div>
               )}
 
-              {/* 3. Context 80% (The Deep Dive) */}
-              {exploreDeepDiveTextToRender && (
-                <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-5 text-[14px] sm:text-[15px] leading-relaxed break-words font-sans text-zinc-300 shadow-xl backdrop-blur-md mt-1">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[rehypeRaw]}
-                    components={markdownComponents}
-                  >
-                    {exploreDeepDiveTextToRender}
-                  </ReactMarkdown>
-                </div>
-              )}
+              {/* 3. Deep Dive Text has been removed per Explore Mode sketch to maintain "quick and fast" aesthetic */}
             </div>
           )}
 
