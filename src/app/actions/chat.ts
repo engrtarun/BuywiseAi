@@ -460,3 +460,49 @@ function fallbackTitle(message: string): string {
   const trimmed = message.trim();
   return trimmed.length > max ? trimmed.slice(0, max) + "…" : trimmed;
 }
+
+/**
+ * Updates the requirements for a chat session.
+ */
+export async function updateSessionRequirements(sessionId: string, requirements: Record<string, unknown>): Promise<void> {
+  const supabase = await createClient()
+  const user = await getAuthenticatedUser(supabase)
+
+  if (!user || sessionId.startsWith("guest-")) {
+    return
+  }
+
+  const { error } = await supabase
+    .from("chat_sessions")
+    .update({ requirements })
+    .eq("id", sessionId)
+
+  if (error) {
+    throw new Error(`Failed to update session requirements: ${error.message}`)
+  }
+}
+
+/**
+ * Gets the requirements for a chat session.
+ */
+export async function getSessionRequirements(sessionId: string): Promise<Record<string, unknown>> {
+  const supabase = await createClient()
+  const user = await getAuthenticatedUser(supabase)
+
+  if (!user || sessionId.startsWith("guest-")) {
+    return {}
+  }
+
+  const { data, error } = await supabase
+    .from("chat_sessions")
+    .select("requirements")
+    .eq("id", sessionId)
+    .single()
+
+  if (error) {
+    console.error(`Failed to get session requirements: ${error.message}`)
+    return {}
+  }
+
+  return data?.requirements || {}
+}

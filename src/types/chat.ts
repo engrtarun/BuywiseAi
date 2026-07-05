@@ -44,4 +44,5 @@ export interface ChatSession {
   createdAt: number;
   isTemporary?: boolean;
   mode?: ChatMode;
+  requirements?: Record<string, unknown>;
 }

@@ -18,6 +18,7 @@ import {
   createChatSession,
   generateChatTitle,
   checkAndIncrementMessageLimit,
+  updateSessionRequirements,
 } from "@/app/actions/chat";
 
 function parseJSONSafe(text: string) {
@@ -103,6 +104,8 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
         primaryQuery: parsedJson.primary_query,
         backupQueries: parsedJson.backup_queries || [],
       };
+    } else if (parsedJson.ui_type === "text_response") {
+      aiMsg.content = parsedJson.text || "";
     }
   } else {
     // Explore Mode (prose + tags)
@@ -250,6 +253,7 @@ export default function Page() {
               messages,
               createdAt: new Date(s.created_at).getTime(),
               mode: s.mode,
+              requirements: (s as any).requirements || {},
             };
           })
         );
@@ -322,7 +326,7 @@ export default function Page() {
    * Get an AI response by calling the API route.
    */
   const getAiReply = useCallback(
-    async (chatId: string, history: Message[], message: string) => {
+    async (chatId: string, history: Message[], message: string, currentReqs?: Record<string, unknown>) => {
       setIsTyping(true);
       const startTime = Date.now();
       abortControllerRef.current = new AbortController();
@@ -335,7 +339,7 @@ export default function Page() {
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ history, message, mode: currentMode }),
+          body: JSON.stringify({ history, message, mode: currentMode, requirements: currentReqs || session?.requirements || {} }),
           signal: abortControllerRef.current.signal,
         });
 
@@ -491,7 +495,8 @@ export default function Page() {
       let chatIdToUpdate: string;
       let history: Message[] = [];
       let isFirstMessage = false;
- 
+      let currentReqs: Record<string, unknown> = {};
+
       try {
         if (activeChatId === null) {
           isFirstMessage = true;
@@ -509,6 +514,7 @@ export default function Page() {
               createdAt: Date.now(),
               isTemporary: true,
               mode: selectedMode,
+              requirements: {},
             };
           } else {
             newId = await createChatSession(selectedMode);
@@ -518,6 +524,7 @@ export default function Page() {
               messages: [userMsg],
               createdAt: Date.now(),
               mode: selectedMode,
+              requirements: {},
             };
             // Persist user message to Supabase
             await apiSendMessage(newId, "user", content);
@@ -554,11 +561,20 @@ export default function Page() {
           const session = chatSessions.find((s) => s.id === activeChatId);
           history = session?.messages ?? [];
           const isFirst = history.length === 0;
+          currentReqs = session?.requirements || {};
+
+          // Check if we are answering a clarifying question
+          const lastMsg = history[history.length - 1];
+          if (lastMsg && lastMsg.clarifyingQuestion && !session?.isTemporary) {
+            const questionText = lastMsg.clarifyingQuestion.question;
+            currentReqs = { ...currentReqs, [questionText]: content };
+            updateSessionRequirements(activeChatId, currentReqs).catch(e => console.error("Failed to update requirements", e));
+          }
 
           setChatSessions((prev) =>
             prev.map((s) =>
               s.id === activeChatId
-                ? { ...s, messages: [...s.messages, userMsg], mode: isFirst ? selectedMode : s.mode }
+                ? { ...s, messages: [...s.messages, userMsg], mode: isFirst ? selectedMode : s.mode, requirements: currentReqs }
                 : s
             )
           );
@@ -595,7 +611,7 @@ export default function Page() {
         }
  
         // Trigger AI reply first (so it generates immediately and doesn't wait for titling)
-        getAiReply(chatIdToUpdate, history, content);
+        getAiReply(chatIdToUpdate, history, content, currentReqs);
  
         // Asynchronously generate chat title in the background if it's the first message
         if (isFirstMessage && !isTemporaryChat) {
