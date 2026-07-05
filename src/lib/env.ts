@@ -36,6 +36,8 @@ const clientEnvSchema = z
 
 const serverEnvSchema = clientEnvSchema.extend({
   GEMINI_API_KEY: z.string().trim().min(1, "GEMINI_API_KEY is required"),
+  // Optional: when absent the app falls back to FakeStore product data.
+  SERPER_API_KEY: z.string().trim().optional(),
 });
 
 const envSchema = isServer ? serverEnvSchema : clientEnvSchema;
@@ -43,7 +45,7 @@ const envSchema = isServer ? serverEnvSchema : clientEnvSchema;
 const rawEnv = {
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  ...(isServer ? { GEMINI_API_KEY: process.env.GEMINI_API_KEY } : {}),
+  ...(isServer ? { GEMINI_API_KEY: process.env.GEMINI_API_KEY, SERPER_API_KEY: process.env.SERPER_API_KEY } : {}),
 };
 
 const parsedResult = envSchema.safeParse(rawEnv);
@@ -62,7 +64,7 @@ if (!parsedResult.success && isServer && isProduction) {
 const fallbackEnv = {
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-  ...(isServer ? { GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? "" } : {}),
+  ...(isServer ? { GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? "", SERPER_API_KEY: process.env.SERPER_API_KEY } : {}),
 };
 
 export const env = (parsedResult.success ? parsedResult.data : fallbackEnv) as z.infer<typeof serverEnvSchema>;
