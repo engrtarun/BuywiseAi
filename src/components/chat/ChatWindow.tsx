@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Message, Feedback } from "@/types/chat";
+import { Message, Feedback, ChatMode } from "@/types/chat";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
 import { WelcomeScreen } from "./WelcomeScreen";
@@ -11,7 +11,13 @@ import { HamburgerButton } from "./HamburgerButton";
 import { TemporaryChatButton } from "./TemporaryChatButton";
 import { QuickBuyButton } from "@/components/quick-buy/QuickBuyButton";
 import { QuickBuyScreen } from "@/components/quick-buy/QuickBuyScreen";
+<<<<<<< HEAD
 import { ModeToggle } from "./ModeToggle";
+=======
+import { FoodQuickBuyButton } from "@/components/quick-buy/FoodQuickBuyButton";
+import { FoodQuickBuyScreen } from "@/components/quick-buy/FoodQuickBuyScreen";
+import { Ghost } from "lucide-react";
+>>>>>>> feature/Modle
 
 /* ── Header ──────────────────────────────────────────── */
 
@@ -22,29 +28,35 @@ interface ChatHeaderProps {
   isTemporaryChat: boolean;
   onNewTemporaryChat?: () => void;
   onQuickBuyClick: () => void;
+  onFoodQuickBuyClick: () => void;
 }
 
-function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onNewTemporaryChat, onQuickBuyClick }: ChatHeaderProps) {
+function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onNewTemporaryChat, onQuickBuyClick, onFoodQuickBuyClick }: ChatHeaderProps) {
   return (
-    <header className="shrink-0 z-20 flex items-center bg-bg-main px-4 py-3 border-b border-border-light h-14">
+    <header className={`shrink-0 z-20 flex items-center px-4 py-3 border-b h-14 transition-colors duration-500 ${isTemporaryChat ? 'bg-[#1e1e1e] border-white/5' : 'bg-bg-main border-border-light'}`}>
       <div className="w-full flex items-center justify-between">
         <div className="flex items-center gap-3">
           <HamburgerButton isOpen={isSidebarOpen} onClick={onMenuToggle} />
           {/* Subtle Chat Indicator Area */}
           {isTemporaryChat && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-xs font-medium text-text-primary-dark select-none">
-              <span className="text-marigold">⚡</span> Instant
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2a2a2a] border border-white/10 text-xs font-semibold text-text-primary-dark select-none shadow-sm">
+              <Ghost className="size-3.5 text-gray-400" /> Temporary Chat
             </div>
           )}
         </div>
 
         {/* Top-Right Action Area */}
         <div className="flex items-center gap-2">
+<<<<<<< HEAD
           <ModeToggle />
           {!isGuest && onNewTemporaryChat && (
+=======
+          {onNewTemporaryChat && (
+>>>>>>> feature/Modle
             <TemporaryChatButton onClick={onNewTemporaryChat} isTemporaryChat={isTemporaryChat} />
           )}
           <QuickBuyButton onClick={onQuickBuyClick} />
+          <FoodQuickBuyButton onClick={onFoodQuickBuyClick} />
         </div>
       </div>
     </header>
@@ -73,8 +85,11 @@ interface ChatWindowProps {
   onLoginClick?: () => void;
   cooldownUntil?: number | null;
   isTemporaryChat?: boolean;
-  onNewChat: () => void;
+  onNewChat: (mode?: ChatMode) => void;
   onNewTemporaryChat?: () => void;
+  selectedMode: ChatMode;
+  onModeChange: (mode: ChatMode) => void;
+  activeMode: ChatMode | null;
 }
 
 export function ChatWindow({
@@ -99,13 +114,34 @@ export function ChatWindow({
   isTemporaryChat = false,
   onNewChat,
   onNewTemporaryChat,
+  selectedMode,
+  onModeChange,
+  activeMode,
 }: ChatWindowProps) {
   const [showQuickBuy, setShowQuickBuy] = React.useState(false);
+  const [showFoodQuickBuy, setShowFoodQuickBuy] = React.useState(false);
+  const [inputText, setInputText] = React.useState("");
   
   const showWelcome = messages.length === 0 && !isTyping;
 
+  const isClarifyingActive = React.useMemo(() => {
+    if (messages.length === 0) return false;
+    const last = messages[messages.length - 1];
+    if (last.role !== "assistant") return false;
+    // Fast check for clarifying_question or questionnaire in the raw JSON payload
+    return !!last.clarifyingQuestion || last.content.includes('"ui_type":"clarifying_question"') || last.content.includes('"ui_type": "clarifying_question"') || last.content.includes('"ui_type":"questionnaire"') || last.content.includes('"ui_type": "questionnaire"');
+  }, [messages]);
+
   return (
-    <div className="flex flex-col h-dvh w-full bg-bg-main text-text-primary-light overflow-hidden relative">
+    <div className={`flex flex-col h-dvh w-full text-text-primary-light overflow-hidden relative transition-colors duration-500 ${isTemporaryChat ? 'bg-[#121212]' : 'bg-bg-main'}`}>
+      
+      {/* Ghost Watermark Background for Temporary Chat */}
+      {isTemporaryChat && (
+        <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none opacity-[0.02]">
+          <Ghost className="w-[400px] h-[400px] text-white" strokeWidth={1} />
+        </div>
+      )}
+
       <ChatHeader 
         isSidebarOpen={isSidebarOpen} 
         onMenuToggle={onMenuToggle} 
@@ -113,18 +149,31 @@ export function ChatWindow({
         isTemporaryChat={isTemporaryChat} 
         onNewTemporaryChat={onNewTemporaryChat} 
         onQuickBuyClick={() => setShowQuickBuy(true)}
+        onFoodQuickBuyClick={() => setShowFoodQuickBuy(true)}
       />
       <OfflineBanner />
       {showWelcome ? (
-        <WelcomeScreen
-          onSuggestionClick={onSend}
-          isGuest={isGuest}
-          guestMessagesRemaining={guestMessagesRemaining}
-          guestLimitReached={guestLimitReached}
-          dailyLimitReached={dailyLimitReached}
-          dailyLimitMessage={dailyLimitMessage}
-          onLoginClick={onLoginClick}
-        />
+        isTemporaryChat ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 z-10 text-center animate-in fade-in zoom-in-95 duration-500">
+            <Ghost className="size-24 text-gray-500 mb-6 drop-shadow-2xl opacity-60" strokeWidth={1} />
+            <h2 className="text-3xl font-bold text-gray-200 font-heading mb-3 tracking-tight">You are in Ghost Mode</h2>
+            <p className="text-gray-400 text-sm max-w-sm leading-relaxed">
+              Your messages in this temporary chat will not be saved to your history. Once you leave, they vanish forever.
+            </p>
+          </div>
+        ) : (
+          <WelcomeScreen
+            onSuggestionClick={onSend}
+            isGuest={isGuest}
+            guestMessagesRemaining={guestMessagesRemaining}
+            guestLimitReached={guestLimitReached}
+            dailyLimitReached={dailyLimitReached}
+            dailyLimitMessage={dailyLimitMessage}
+            onLoginClick={onLoginClick}
+            selectedMode={selectedMode}
+            onModeChange={onModeChange}
+          />
+        )
       ) : (
         <MessageList
           messages={messages}
@@ -132,11 +181,15 @@ export function ChatWindow({
           onRegenerate={onRegenerate}
           onRetry={onRetry}
           onFeedback={onFeedback}
-          guestLimitReached={guestLimitReached}
-          onLoginClick={onLoginClick}
+          onSend={onSend}
+          onNewChat={onNewChat}
+          setInputText={setInputText}
+          mode={activeMode}
         />
       )}
       <ChatInput
+        inputText={inputText}
+        setInputText={setInputText}
         onSend={onSend}
         onStop={onStop}
         disabled={isTyping}
@@ -149,10 +202,17 @@ export function ChatWindow({
         isGuest={isGuest}
         cooldownUntil={cooldownUntil}
         onLoginClick={onLoginClick}
+        mode={activeMode || selectedMode}
+        isClarifyingActive={isClarifyingActive}
+        onModeChange={onModeChange}
+        isModeLocked={!!activeMode}
       />
 
       {/* Quick Buy Overlay */}
       {showQuickBuy && <QuickBuyScreen onClose={() => setShowQuickBuy(false)} />}
+      
+      {/* Food Quick Buy Overlay */}
+      {showFoodQuickBuy && <FoodQuickBuyScreen onClose={() => setShowFoodQuickBuy(false)} />}
     </div>
   );
 }

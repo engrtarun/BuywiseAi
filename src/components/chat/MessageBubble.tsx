@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
@@ -11,6 +11,37 @@ import { MessageActions } from "./MessageActions";
 import { ProductCard } from "./ProductCard";
 import { ProductCarousel } from "./ProductCarousel";
 import { SpoilerText } from "./SpoilerText";
+import { ClarifyingQuestionCard } from "./ClarifyingQuestionCard";
+import { DeepResearchClarifyingCard, ClarifyingQuestion } from "./DeepResearchClarifyingCard";
+import { ChatMode } from "@/types/chat";
+import { Brain, Pencil, ArrowRight, ChevronRight } from "lucide-react";
+import { getExploreLayoutParts } from "@/app/page";
+
+function getCuratedProductImage(productName: string): string {
+  const name = productName.toLowerCase();
+  if (name.includes("laptop") || name.includes("macbook") || name.includes("notebook")) {
+    return "https://images.unsplash.com/photo-1496181130204-7552cc14f1d0?auto=format&fit=crop&w=500&q=80";
+  }
+  if (name.includes("phone") || name.includes("pixel") || name.includes("oneplus") || name.includes("smartphone") || name.includes("iphone")) {
+    return "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=500&q=80";
+  }
+  if (name.includes("shirt") || name.includes("tee") || name.includes("t-shirt") || name.includes("clothing")) {
+    return "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=500&q=80";
+  }
+  if (name.includes("shoe") || name.includes("sneaker") || name.includes("boot")) {
+    return "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=500&q=80";
+  }
+  if (name.includes("watch") || name.includes("smartwatch")) {
+    return "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80";
+  }
+  if (name.includes("jacket") || name.includes("coat") || name.includes("hoodie")) {
+    return "https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=500&q=80";
+  }
+  if (name.includes("headphone") || name.includes("earbud")) {
+    return "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&q=80";
+  }
+  return "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=500&q=80";
+}
 
 /** Detect if raw markdown contains a GFM table */
 function hasTable(content: string): boolean {
@@ -21,15 +52,26 @@ function hasTable(content: string): boolean {
 
 /* ── Styled Markdown component overrides ──────────────── */
 
+interface MarkdownProps {
+  children?: React.ReactNode;
+  node?: unknown;
+  inline?: boolean;
+  'data-spoiler'?: string;
+  className?: string;
+  target?: string;
+  rel?: string;
+  href?: string;
+}
+
 const markdownComponents = {
-  span: ({ node, 'data-spoiler': isSpoiler, children, ...props }: any) => {
+  span: ({ 'data-spoiler': isSpoiler, children, ...props }: MarkdownProps) => {
     if (isSpoiler === "true") {
       return <SpoilerText>{children}</SpoilerText>;
     }
     return <span {...props}>{children}</span>;
   },
-  p: ({ node, ...props }: any) => <p className="mb-3 last:mb-0" {...props} />,
-  a: ({ node, ...props }: any) => (
+  p: ({ ...props }: MarkdownProps) => <p className="mb-3 last:mb-0" {...props} />,
+  a: ({ ...props }: MarkdownProps) => (
     <a
       className="text-brand-accent hover:text-brand-accent/80 hover:underline font-medium transition-colors duration-200"
       target="_blank"
@@ -37,35 +79,35 @@ const markdownComponents = {
       {...props}
     />
   ),
-  ul: ({ node, ...props }: any) => (
+  ul: ({ ...props }: MarkdownProps) => (
     <ul className="list-disc pl-5 mb-3 last:mb-0 space-y-1" {...props} />
   ),
-  ol: ({ node, ...props }: any) => (
+  ol: ({ ...props }: MarkdownProps) => (
     <ol className="list-decimal pl-5 mb-3 last:mb-0 space-y-1" {...props} />
   ),
-  li: ({ node, ...props }: any) => <li className="pl-1" {...props} />,
-  h1: ({ node, ...props }: any) => (
+  li: ({ ...props }: MarkdownProps) => <li className="pl-1" {...props} />,
+  h1: ({ ...props }: MarkdownProps) => (
     <h1 className="text-lg font-bold mb-2 mt-4 first:mt-0" {...props} />
   ),
-  h2: ({ node, ...props }: any) => (
+  h2: ({ ...props }: MarkdownProps) => (
     <h2 className="text-base font-bold mb-2 mt-3 first:mt-0" {...props} />
   ),
-  h3: ({ node, ...props }: any) => (
+  h3: ({ ...props }: MarkdownProps) => (
     <h3 className="text-sm font-bold mb-2 mt-3 first:mt-0" {...props} />
   ),
-  blockquote: ({ node, ...props }: any) => (
+  blockquote: ({ ...props }: MarkdownProps) => (
     <blockquote
       className="border-l-2 border-brand-accent/50 pl-3 italic text-text-secondary mb-3 last:mb-0"
       {...props}
     />
   ),
-  pre: ({ node, ...props }: any) => (
+  pre: ({ ...props }: MarkdownProps) => (
     <pre
       className="bg-bg-input text-text-primary-light p-3 rounded-lg overflow-x-auto mb-3 last:mb-0 border border-border-light text-[13px] shadow-sm"
       {...props}
     />
   ),
-  code: ({ node, inline, ...props }: any) =>
+  code: ({ inline, ...props }: MarkdownProps) =>
     inline ? (
       <code
         className="bg-[#2f2f2f] text-brand-accent px-1.5 py-0.5 rounded font-mono text-[13px]"
@@ -76,7 +118,7 @@ const markdownComponents = {
     ),
 
   /* ── Premium Comparison Table Styling ────────────── */
-  table: ({ node, ...props }: any) => (
+  table: ({ ...props }: MarkdownProps) => (
     <div className="relative mb-3 last:mb-0 -mx-1 group/scroll">
       <div className="overflow-x-auto rounded-xl border border-border-light scrollbar-thin scrollbar-track-transparent scrollbar-thumb-black/10">
         <table
@@ -88,23 +130,23 @@ const markdownComponents = {
       <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-black/[0.02] to-transparent pointer-events-none rounded-r-xl opacity-0 group-hover/scroll:opacity-100 transition-opacity" />
     </div>
   ),
-  thead: ({ node, ...props }: any) => (
+  thead: ({ ...props }: MarkdownProps) => (
     <thead className="bg-brand-accent/[0.08] border-b border-brand-accent/20" {...props} />
   ),
-  tbody: ({ node, ...props }: any) => <tbody {...props} />,
-  tr: ({ node, ...props }: any) => (
+  tbody: ({ ...props }: MarkdownProps) => <tbody {...props} />,
+  tr: ({ ...props }: MarkdownProps) => (
     <tr
       className="border-b border-border-light last:border-b-0 odd:bg-black/[0.015] transition-colors hover:bg-black/[0.04]"
       {...props}
     />
   ),
-  th: ({ node, ...props }: any) => (
+  th: ({ ...props }: MarkdownProps) => (
     <th
       className="px-3.5 py-2.5 font-semibold text-brand-accent text-[12px] sm:text-[13px] uppercase tracking-wider whitespace-nowrap border-r border-border-light last:border-r-0"
       {...props}
     />
   ),
-  td: ({ node, ...props }: any) => (
+  td: ({ ...props }: MarkdownProps) => (
     <td
       className="px-3.5 py-2.5 text-text-primary-light border-r border-border-light last:border-r-0 whitespace-nowrap"
       {...props}
@@ -119,9 +161,273 @@ interface MessageBubbleProps {
   isLastAiMessage?: boolean;
   onRegenerate?: () => void;
   onFeedback?: (id: string, feedback: Feedback) => void;
+  onSend?: (message: string) => void;
+  onNewChat?: (mode?: ChatMode) => void;
+  setInputText?: (text: string) => void;
+  mode?: ChatMode | null;
 }
 
-export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, onFeedback }: MessageBubbleProps) {
+export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, onFeedback, onSend, onNewChat, setInputText, mode }: MessageBubbleProps) {
+  // Local states for custom Questionnaire Card
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customText, setCustomText] = useState("");
+  const [hasAnswered, setHasAnswered] = useState(false);
+
+  // Lazy loading state for Deep Research recommendations:
+  const dr = message.deepResearchResults;
+  const hasDrQueries = !!(dr && (dr.primaryQuery || (dr.backupQueries && dr.backupQueries.length > 0)));
+  const isDrAlreadyLoaded = !!(message.deepResearchResults?.primaryProduct || (message.deepResearchResults?.backupProducts && message.deepResearchResults.backupProducts.length > 0));
+
+  const [primaryProduct, setPrimaryProduct] = useState<Product | undefined>(message.deepResearchResults?.primaryProduct);
+  const [backupProducts, setBackupProducts] = useState<Product[]>(message.deepResearchResults?.backupProducts || []);
+  const [loadingDeepResearch, setLoadingDeepResearch] = useState(hasDrQueries && !isDrAlreadyLoaded);
+
+  // Lazy loading state for Explore Mode:
+  const hasSearchTag = !!message.searchTag;
+  const isExploreAlreadyLoaded = !!(message.products && message.products.length > 0);
+
+  const [exploreProducts, setExploreProducts] = useState<Product[]>(message.products || []);
+  const [loadingExplore, setLoadingExplore] = useState(hasSearchTag && !isExploreAlreadyLoaded);
+
+  // Parser Middleware inside component:
+  let isQuestionnaire = false;
+  let questionnaireThought = "";
+  let questionnaireQuestion = "";
+  let questionnaireOptions: (string | { id: string; label: string; value: string })[] = [];
+  let questionnaireAllowSkip = true;
+  let questionnaireAllowCustom = true;
+  let questionnaireQuestions: ClarifyingQuestion[] = [];
+
+  let isExploreCarousel = false;
+  let exploreHeadline = "";
+  let exploreProductsList: Product[] = [];
+  let exploreDeepDiveText = "";
+
+  try {
+    const rawContent = message.content || "";
+    const cleaned = rawContent.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
+    if (cleaned.startsWith("{") && cleaned.endsWith("}")) {
+      const parsed = JSON.parse(cleaned);
+      if (parsed && typeof parsed === "object") {
+        if (parsed.ui_type === "clarifying_question" || parsed.ui_type === "questionnaire") {
+          isQuestionnaire = true;
+          questionnaireThought = parsed.thought || "";
+          
+          if (Array.isArray(parsed.questions)) {
+            questionnaireQuestions = parsed.questions;
+          } else {
+            questionnaireQuestion = parsed.question || "";
+            questionnaireOptions = parsed.options || [];
+            questionnaireAllowSkip = parsed.allow_skip !== false;
+            questionnaireAllowCustom = parsed.allow_custom !== false;
+          }
+        } else if (parsed.ui_type === "explore_carousel") {
+          isExploreCarousel = true;
+          exploreHeadline = parsed.headline || "";
+          exploreDeepDiveText = parsed.deep_dive || "";
+          const items = Array.isArray(parsed.products) ? parsed.products : [];
+          exploreProductsList = items.map((p: any) => ({
+            id: String(p.id || Math.random()),
+            name: String(p.name || "Unknown Product"),
+            price: String(p.price || "₹0"),
+            rating: typeof p.rating === "number" ? p.rating : 4.0,
+            reviewCount: String(p.reviewCount || "42"),
+            description: String(p.description || "Recommended product matching your request."),
+            platform: p.platform === "Flipkart" ? "Flipkart" : "Amazon",
+            image: p.image && !p.image.includes("placeholder.png") ? String(p.image) : getCuratedProductImage(p.name || ""),
+            link: String(p.link || "https://amazon.in"),
+          }));
+        }
+      }
+    }
+  } catch (e) {
+    // Non-JSON content
+  }
+
+  // Fallback to parsed properties if raw JSON wasn't matched/parsed
+  if (!isQuestionnaire && message.clarifyingQuestion) {
+    isQuestionnaire = true;
+    questionnaireThought = message.clarifyingQuestion.acknowledgement || "";
+    questionnaireQuestion = message.clarifyingQuestion.question || "";
+    questionnaireOptions = message.clarifyingQuestion.options || [];
+    questionnaireAllowSkip = message.clarifyingQuestion.allow_skip !== false;
+    questionnaireAllowCustom = message.clarifyingQuestion.allow_custom !== false;
+  }
+
+  if (!isExploreCarousel && message.products && message.products.length > 0 && !message.deepResearchResults && !message.searchTag) {
+    isExploreCarousel = true;
+    exploreHeadline = message.exploreIntro || message.content;
+    exploreDeepDiveText = message.exploreDeepDive || "";
+    exploreProductsList = message.products.map(p => ({
+      ...p,
+      image: p.image && !p.image.includes("placeholder.png") ? p.image : getCuratedProductImage(p.name || "")
+    }));
+  }
+
+  // Determine Explore layout variables
+  const isExploreModeLayout = isExploreCarousel || !!message.searchTag;
+  
+  const exploreProductsToShow = isExploreCarousel 
+    ? exploreProductsList 
+    : (message.searchTag ? exploreProducts : []);
+
+  const hasExploreProducts = exploreProductsToShow && exploreProductsToShow.length > 0;
+  const shouldRenderSplitLayout = isExploreModeLayout && hasExploreProducts;
+
+  let exploreIntroText = "";
+  let exploreDeepDiveTextToRender = "";
+
+  if (shouldRenderSplitLayout) {
+    if (isExploreCarousel) {
+      exploreIntroText = exploreHeadline;
+      exploreDeepDiveTextToRender = exploreDeepDiveText;
+      if (!exploreDeepDiveTextToRender && exploreIntroText) {
+        const parts = getExploreLayoutParts(exploreIntroText);
+        exploreIntroText = parts.intro;
+        exploreDeepDiveTextToRender = parts.deepDive;
+      }
+    } else {
+      exploreIntroText = message.exploreIntro || "";
+      exploreDeepDiveTextToRender = message.exploreDeepDive || "";
+      if (!exploreIntroText) {
+        const parts = getExploreLayoutParts(message.content);
+        exploreIntroText = parts.intro;
+        exploreDeepDiveTextToRender = parts.deepDive;
+      }
+    }
+  }
+
+  const fullTextFallback = isExploreCarousel
+    ? `${exploreHeadline}${exploreDeepDiveText ? `\n\n${exploreDeepDiveText}` : ""}`
+    : message.content;
+
+  const isInteractionDisabled = !isLastAiMessage || hasAnswered;
+
+  const handleOptionClick = (option: string) => {
+    if (isInteractionDisabled) return;
+    setHasAnswered(true);
+    setInputText?.(option);
+    onSend?.(option);
+  };
+
+  const handleCustomSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isInteractionDisabled || !customText.trim()) return;
+    setHasAnswered(true);
+    setInputText?.(customText.trim());
+    onSend?.(customText.trim());
+  };
+
+  const handleSkip = () => {
+    if (isInteractionDisabled) return;
+    setHasAnswered(true);
+    setInputText?.("Skip");
+    onSend?.("Skip");
+  };
+
+
+  // Fetch Deep Research products lazily
+  useEffect(() => {
+    const activeDr = message.deepResearchResults;
+    if (activeDr && (activeDr.primaryQuery || (activeDr.backupQueries && activeDr.backupQueries.length > 0))) {
+      // If already resolved, do not fetch again
+      if (primaryProduct || backupProducts.length > 0) return;
+
+      let isMounted = true;
+
+      const fetchProducts = async () => {
+        let pProd: Product | undefined = undefined;
+        const bProds: Product[] = [];
+
+        try {
+          if (activeDr.primaryQuery) {
+            const res = await fetch(`/api/quick-buy?q=${encodeURIComponent(activeDr.primaryQuery)}`);
+            if (res.ok) {
+              const pData = await res.json();
+              if (pData.success && pData.data && pData.data.length > 0) {
+                pProd = pData.data[0];
+              }
+            }
+          }
+
+          if (activeDr.backupQueries && activeDr.backupQueries.length > 0) {
+            const promises = activeDr.backupQueries.map(async (q) => {
+              try {
+                const res = await fetch(`/api/quick-buy?q=${encodeURIComponent(q)}`);
+                if (res.ok) {
+                  const pData = await res.json();
+                  if (pData.success && pData.data && pData.data.length > 0) {
+                    return pData.data[0];
+                  }
+                }
+              } catch (e) {
+                console.error("Failed to fetch backup product:", q, e);
+              }
+              return null;
+            });
+            const resolved = await Promise.all(promises);
+            resolved.forEach((item) => {
+              if (item) bProds.push(item);
+            });
+          }
+
+          if (isMounted) {
+            setPrimaryProduct(pProd);
+            setBackupProducts(bProds);
+          }
+        } catch (err) {
+          console.error("Failed to lazy load products:", err);
+        } finally {
+          if (isMounted) {
+            setLoadingDeepResearch(false);
+          }
+        }
+      };
+
+      fetchProducts();
+
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [message.content, message.deepResearchResults, primaryProduct, backupProducts.length]);
+
+  // Fetch Explore Mode products lazily
+  useEffect(() => {
+    const searchTag = message.searchTag;
+    if (searchTag) {
+      if (exploreProducts.length > 0) return;
+
+      let isMounted = true;
+
+      const fetchExplore = async () => {
+        try {
+          const res = await fetch(`/api/quick-buy?q=${encodeURIComponent(searchTag)}`);
+          if (res.ok) {
+            const pData = await res.json();
+            if (pData.success && pData.data) {
+              if (isMounted) {
+                setExploreProducts(pData.data);
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Failed to lazy load explore products:", err);
+        } finally {
+          if (isMounted) {
+            setLoadingExplore(false);
+          }
+        }
+      };
+
+      fetchExplore();
+
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [message.content, message.searchTag, exploreProducts.length]);
+
   if (message.role === "user") {
     return (
       <div className="flex justify-end w-full">
@@ -146,7 +452,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   return (
     <div
       className={
-        containsTable || hasProducts
+        containsTable || hasProducts || message.searchTag || message.deepResearchResults || isExploreCarousel
           ? "w-full max-w-[95%] sm:max-w-[90%] md:max-w-[85%]"
           : "w-full max-w-[85%] sm:max-w-[75%] md:max-w-[65%]"
       }
@@ -158,9 +464,10 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
             B
           </AvatarFallback>
         </Avatar>
-
+ 
         <div className="flex flex-col gap-2 w-full min-w-0">
-          {message.content && (
+          {/* Default AI Bubble (Standard markdown prose / Fallback) */}
+          {!isQuestionnaire && (!isExploreModeLayout || !shouldRenderSplitLayout) && message.content && (
             <div
               dir="auto"
               style={{
@@ -178,13 +485,123 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
                 rehypePlugins={[rehypeRaw]}
                 components={markdownComponents}
               >
-                {processedContent}
+                {isExploreModeLayout ? fullTextFallback : processedContent}
               </ReactMarkdown>
             </div>
           )}
 
-          {/* Product Cards / Carousel */}
-          {hasProducts && (
+          {/* Thought process block (as a normal chat bubble just above the card) */}
+          {isQuestionnaire && questionnaireThought && (
+            <div
+              dir="auto"
+              style={{
+                backgroundColor: "var(--ai-bubble-bg)",
+                color: "var(--ai-text)",
+                padding: "var(--ai-bubble-padding)",
+                borderRadius: "var(--ai-bubble-radius)",
+                borderBottomLeftRadius: "var(--ai-bubble-radius-bl, var(--ai-bubble-radius))",
+                boxShadow: "var(--ai-bubble-shadow)",
+              }}
+              className="text-[14px] sm:text-[15px] leading-relaxed break-words font-sans w-full min-w-0 inline-block mb-3 animate-in fade-in duration-300"
+            >
+              <div className="flex items-center gap-1.5 text-xs font-mono select-none uppercase tracking-wider font-semibold text-text-secondary mb-1">
+                <Brain className="size-3.5 text-marigold animate-pulse" /> Thought Process
+              </div>
+              <p className="text-text-primary-light whitespace-pre-wrap leading-relaxed">
+                {questionnaireThought}
+              </p>
+            </div>
+          )}
+
+          {/* Native Clarifying Question Card */}
+          {isQuestionnaire && onSend && (
+            mode === "deep_research" ? (
+              <DeepResearchClarifyingCard
+                questions={questionnaireQuestions.length > 0 ? questionnaireQuestions : [{
+                  question: questionnaireQuestion,
+                  options: questionnaireOptions,
+                  allowSkip: questionnaireAllowSkip,
+                  allowCustom: questionnaireAllowCustom
+                }]}
+                onSelect={(val) => {
+                  setInputText?.(val);
+                  onSend(val);
+                }}
+                disabled={!isLastAiMessage}
+              />
+            ) : (
+              <ClarifyingQuestionCard
+                question={questionnaireQuestion}
+                options={questionnaireOptions}
+                allowSkip={questionnaireAllowSkip}
+                allowCustom={questionnaireAllowCustom}
+                onSelect={(val) => {
+                  setInputText?.(val);
+                  onSend(val);
+                }}
+                disabled={!isLastAiMessage}
+              />
+            )
+          )}
+
+          {/* Case Explore Mode Split Layout Rendering */}
+          {shouldRenderSplitLayout && (
+            <div className="flex flex-col gap-4 w-full animate-in fade-in duration-300">
+              {/* 1. Context 20% (The Hook/Intro) */}
+              {exploreIntroText && (
+                <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-4 text-[14px] sm:text-[15px] leading-relaxed break-words font-sans text-zinc-200 shadow-xl backdrop-blur-md">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    components={markdownComponents}
+                  >
+                    {exploreIntroText}
+                  </ReactMarkdown>
+                </div>
+              )}
+
+              {/* 2. Dynamic Product Shelf */}
+              {loadingExplore && exploreProductsToShow.length === 0 ? (
+                <div className="flex items-center gap-2 text-xs text-zinc-400 select-none py-3 px-4 bg-zinc-950/80 border border-white/5 rounded-2xl w-fit animate-pulse">
+                  <div className="size-3.5 border-2 border-marigold/20 border-t-marigold rounded-full animate-spin shrink-0" />
+                  <span className="font-sans">Finding products...</span>
+                </div>
+              ) : (
+                <div className="ml-[-8px] sm:ml-[-12px] p-1 bg-zinc-950/40 rounded-2xl border border-white/5 shadow-inner">
+                  <ProductCarousel products={exploreProductsToShow} />
+                </div>
+              )}
+
+              {/* 3. Context 80% (The Deep Dive) */}
+              {exploreDeepDiveTextToRender && (
+                <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-5 text-[14px] sm:text-[15px] leading-relaxed break-words font-sans text-zinc-300 shadow-xl backdrop-blur-md mt-1">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    components={markdownComponents}
+                  >
+                    {exploreDeepDiveTextToRender}
+                  </ReactMarkdown>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Proactive Mode Suggestion */}
+          {message.suggestedMode && (
+            <div className="mt-2.5 animate-in fade-in duration-200">
+              <button
+                type="button"
+                onClick={() => onNewChat?.(message.suggestedMode)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-marigold/10 border border-marigold/20 text-marigold hover:bg-marigold/20 transition-all font-semibold text-xs sm:text-sm cursor-pointer shadow-sm active:scale-[0.98]"
+              >
+                Start fresh chat in {message.suggestedMode === "deep_research" ? "Deep Research 🔬" : "Explore Mode 🧭"}
+              </button>
+            </div>
+          )}
+
+          {/* Product Cards / Carousel Fallback */}
+          {hasProducts && !message.deepResearchResults && !message.searchTag && !isExploreCarousel && (
             <div className={`${!message.content ? "ml-[-8px] sm:ml-[-12px]" : ""}`}>
               {isSingleProduct ? (
                 <div className="w-full sm:max-w-[80%] md:max-w-[70%]">

@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Search, Menu, Camera, Palette, Check, MoreVertical, Pencil, Ghost, LogOut, Shirt, Sparkles, UserCog } from "lucide-react";
-import { ChatSession } from "@/types/chat";
+import { ChatSession, ChatMode } from "@/types/chat";
 import { useSidebarResize } from "./useSidebarResize";
 import { useTheme } from "@/hooks/useTheme";
 import { THEME_PRESETS } from "@/lib/themes";
@@ -485,8 +485,13 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
         }
       }}
       className={`
+<<<<<<< HEAD
         group w-full min-w-0 flex items-center gap-2.5 px-3 py-2 rounded-xl text-left
         transition-all duration-200 relative cursor-pointer select-none
+=======
+        group w-full flex items-center px-3 py-2 rounded-xl text-left
+        transition-all duration-200 cursor-pointer select-none
+>>>>>>> feature/Modle
         ${isActive
           ? "bg-sidebar-accent text-text-primary-dark font-medium"
           : "bg-transparent text-text-secondary hover:bg-sidebar-accent/50 hover:text-text-primary-dark"
@@ -494,7 +499,7 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
       `}
     >
       <ChatBubbleIcon
-        className={`shrink-0 size-3.5 transition-all duration-300 ${
+        className={`shrink-0 size-3.5 mr-2.5 transition-all duration-300 ${
           isActive ? "text-text-primary-dark opacity-60" : "text-text-secondary opacity-40 group-hover:opacity-75"
         }`}
       />
@@ -541,13 +546,22 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
           className="flex-1 bg-[#1A1A18] text-text-primary-dark text-fluid-sm font-sans px-1.5 py-0.5 rounded outline-none border border-brand-accent/50 min-w-0"
         />
       ) : (
+<<<<<<< HEAD
         <span className="flex-1 min-w-0 text-fluid-sm truncate font-sans leading-tight pr-14">
+=======
+        <span className="flex-1 min-w-0 text-[13px] truncate font-sans leading-tight">
+>>>>>>> feature/Modle
           {session.title}
         </span>
       )}
       
+<<<<<<< HEAD
       {!isEditing && !showDeleteConfirm && (
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+=======
+      {!isEditing && (
+        <div className="shrink-0 flex items-center gap-0.5 ml-2">
+>>>>>>> feature/Modle
           {isActive && (
             <button
               type="button"
@@ -640,7 +654,7 @@ function SidebarContent({
 }: {
   chatHistory: ChatSession[];
   activeChatId: string | null;
-  onNewChat: () => void;
+  onNewChat: (mode?: ChatMode) => void;
   onSelectChat: (id: string) => void;
   onDeleteChat: (id: string) => void;
   onRenameChat?: (id: string, title: string) => void;
@@ -766,7 +780,7 @@ function SidebarContent({
   );
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full w-full min-w-0 overflow-hidden">
       {/* Top Section */}
       <div className={`shrink-0 pt-5 pb-4 flex flex-col gap-4 transition-all duration-200 ${isCollapsed ? "px-2 items-center" : "px-4"}`}>
         {/* Brand header & Toggle */}
@@ -799,10 +813,6 @@ function SidebarContent({
         {/* Actions */}
         <div className={`flex flex-col gap-2 w-full ${isCollapsed ? "items-center" : ""}`}>
           <NewChatButton onClick={() => { onNewChat(); onClose(); }} isCollapsed={isCollapsed} />
-          
-          <div className="mt-2">
-            <FoodModeToggle isCollapsed={isCollapsed} />
-          </div>
           
           {/* Shopping Tools */}
           <div className="flex flex-col gap-1 w-full mt-2 mb-1">
@@ -851,7 +861,7 @@ function SidebarContent({
       {/* Chat History List (Hidden when collapsed) */}
       <div 
         className={`
-          flex-1 min-h-0 flex flex-col transition-opacity duration-200 
+          flex-1 min-h-0 min-w-0 flex flex-col transition-opacity duration-200 
           ${isCollapsed ? "opacity-0 hidden" : "opacity-100"}
         `}
       >
@@ -1196,7 +1206,7 @@ function SidebarContent({
 interface SidebarProps {
   chatHistory: ChatSession[];
   activeChatId: string | null;
-  onNewChat: () => void;
+  onNewChat: (mode?: ChatMode) => void;
   onSelectChat: (id: string) => void;
   onDeleteChat: (id: string) => void;
   onRenameChat?: (id: string, title: string) => void;

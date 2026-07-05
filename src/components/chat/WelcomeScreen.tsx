@@ -1,9 +1,11 @@
 "use client";
 
 import React from "react";
-import { Sparkles, Search, Gift, Smartphone, Laptop, Scale } from "lucide-react";
+import { Sparkles, Search, Gift, Smartphone, Laptop, Scale, Compass, Brain } from "lucide-react";
 import { LoginRequiredScreen } from "./LoginRequiredScreen";
 import { DailyLimitReachedCard } from "./DailyLimitReachedCard";
+import { motion } from "framer-motion";
+import { ChatMode } from "@/types/chat";
 
 interface WelcomeScreenProps {
   onSuggestionClick: (text: string) => void;
@@ -13,6 +15,8 @@ interface WelcomeScreenProps {
   dailyLimitReached?: boolean;
   dailyLimitMessage?: string;
   onLoginClick?: () => void;
+  selectedMode: ChatMode;
+  onModeChange: (mode: ChatMode) => void;
 }
 
 const suggestions = [
@@ -42,7 +46,7 @@ const suggestions = [
   },
 ];
 
-export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessagesRemaining = 0, guestLimitReached = false, dailyLimitReached = false, dailyLimitMessage, onLoginClick }: WelcomeScreenProps) {
+export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessagesRemaining = 0, guestLimitReached = false, dailyLimitReached = false, dailyLimitMessage, onLoginClick, selectedMode, onModeChange }: WelcomeScreenProps) {
   if (guestLimitReached) {
     return <LoginRequiredScreen onLoginClick={onLoginClick} />;
   }
@@ -69,10 +73,24 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
           <h1 className="text-fluid-3xl font-heading font-extrabold text-text-primary-light tracking-tight">
             Hi, I&apos;m <span className="text-marigold">BuyWise AI</span>
           </h1>
+<<<<<<< HEAD
           <p className="text-fluid-base text-text-secondary font-sans max-w-md mx-auto leading-relaxed">
             Your smart shopping assistant. Ask me to find, compare, or recommend
             products across Amazon &amp; Flipkart.
           </p>
+=======
+          <div className="text-sm sm:text-base text-text-secondary font-sans max-w-md mx-auto leading-relaxed space-y-2">
+            <p>
+              Your smart shopping assistant. Ask me to find, compare, or recommend
+              products across Amazon &amp; Flipkart.
+            </p>
+            <p className="text-[13px] sm:text-sm text-text-secondary/90">
+              BuyWise AI ek AI assistant hai aur kabhi-kabhi galat ho sakta hai.
+              Agar aapko selection sahi nahi lage, toh thoda aur detail dein ya
+              phir sawal ko dubara puchhein.
+            </p>
+          </div>
+>>>>>>> feature/Modle
 
           {/* Guest mode indicator badge */}
           {isGuest && (
@@ -86,6 +104,39 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
               </span>
             </div>
           )}
+        </div>
+
+        {/* Mode Picker Toggle */}
+        <div className="flex bg-white/5 rounded-xl p-1 border border-border-dark relative w-full max-w-xs sm:max-w-sm h-11 items-center shrink-0">
+          <motion.div
+            className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-brand-accent rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+            layoutId="mode-picker-bg"
+            initial={false}
+            animate={{
+              left: selectedMode === "deep_research" ? "4px" : "calc(50%)",
+            }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          />
+          <button
+            type="button"
+            onClick={() => onModeChange("deep_research")}
+            className={`flex-1 flex items-center justify-center gap-2 z-10 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
+              selectedMode === "deep_research" ? "text-bg-main" : "text-text-secondary hover:text-white"
+            }`}
+          >
+            <Brain className="size-4" />
+            Deep Research
+          </button>
+          <button
+            type="button"
+            onClick={() => onModeChange("explore")}
+            className={`flex-1 flex items-center justify-center gap-2 z-10 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
+              selectedMode === "explore" ? "text-bg-main" : "text-text-secondary hover:text-white"
+            }`}
+          >
+            <Compass className="size-4" />
+            Explore Mode
+          </button>
         </div>
 
         {/* Suggestion chips */}

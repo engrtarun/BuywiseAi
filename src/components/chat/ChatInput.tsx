@@ -2,10 +2,14 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import TextareaAutosize from "react-textarea-autosize";
-import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye, Plus } from "lucide-react";
+import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye, Plus, Compass, Brain } from "lucide-react";
 import { QuickAccessMenu } from "./QuickAccessMenu";
+<<<<<<< HEAD
 import { SoundMuteToggle } from "@/components/shared/SoundMuteToggle";
 import { UsageRing } from "@/components/ui/usage-ring";
+=======
+import { ChatMode } from "@/types/chat";
+>>>>>>> feature/Modle
 
 const placeholders = [
   "BuyWise anything...",
@@ -17,6 +21,8 @@ const placeholders = [
 ];
 
 interface ChatInputProps {
+  inputText: string;
+  setInputText: (text: string) => void;
   onSend: (message: string) => void;
   onStop?: () => void;
   disabled: boolean;
@@ -27,11 +33,22 @@ interface ChatInputProps {
   isGuest?: boolean;
   dailyLimitReached?: boolean;
   dailyLimitMessage?: string;
+<<<<<<< HEAD
   tokensUsed?: number;
   tokenLimit?: number;
+=======
+  dailyMessagesRemaining?: number;
+  dailyLimit?: number;
+  mode?: ChatMode | null;
+  isClarifyingActive?: boolean;
+  onModeChange?: (mode: ChatMode) => void;
+  isModeLocked?: boolean;
+>>>>>>> feature/Modle
 }
 
 export function ChatInput({ 
+  inputText,
+  setInputText,
   onSend, 
   onStop, 
   disabled, 
@@ -42,10 +59,18 @@ export function ChatInput({
   isGuest = false,
   dailyLimitReached = false,
   dailyLimitMessage,
+<<<<<<< HEAD
   tokensUsed,
   tokenLimit
+=======
+  dailyMessagesRemaining,
+  dailyLimit,
+  mode = "explore",
+  isClarifyingActive = false,
+  onModeChange,
+  isModeLocked = false
+>>>>>>> feature/Modle
 }: ChatInputProps) {
-  const [inputText, setInputText] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [isQuickMenuOpen, setIsQuickMenuOpen] = useState(false);
@@ -66,7 +91,9 @@ export function ChatInput({
   const [timeLeft, setTimeLeft] = useState(0);
   useEffect(() => {
     if (!cooldownUntil || cooldownUntil <= Date.now()) {
-      setTimeLeft(0);
+      Promise.resolve().then(() => {
+        setTimeLeft(0);
+      });
       return;
     }
 
@@ -78,10 +105,12 @@ export function ChatInput({
       } else {
         setTimeLeft(remaining);
       }
-    }, 100);
+    }, 250);
 
-    // Set initial value immediately
-    setTimeLeft(Math.ceil((cooldownUntil - Date.now()) / 1000));
+    const initial = Math.ceil((cooldownUntil - Date.now()) / 1000);
+    Promise.resolve().then(() => {
+      setTimeLeft(initial);
+    });
 
     return () => clearInterval(interval);
   }, [cooldownUntil]);
@@ -172,36 +201,47 @@ export function ChatInput({
         )}
 
         <div className="flex flex-col bg-bg-input rounded-3xl border border-border-light focus-within:border-brand-accent/50 transition-colors shadow-sm overflow-hidden">
-          
-          {/* Toolbar */}
-          <div className="flex items-center gap-1 px-3 py-1.5 border-b border-border-light bg-black/10">
-            <button
-              onClick={() => applyFormatting("**")}
-              className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95"
-              title="Bold (Ctrl+B)"
-            >
-              <Bold className="size-4" />
-            </button>
-            <button
-              onClick={() => applyFormatting("*")}
-              className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95"
-              title="Italic (Ctrl+I)"
-            >
-              <Italic className="size-4" />
-            </button>
-            <div className="w-px h-4 bg-border-light mx-1" />
-            <button
-              onClick={() => applyFormatting("||")}
-              className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95"
-              title="Spoiler"
-            >
-              <Eye className="size-4" />
-            </button>
+          {/* Toolbar with Mode Badge and Formatting Options */}
+          <div className="flex items-center justify-between px-3 py-1.5 border-b border-border-light bg-black/15 select-none">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs font-semibold text-text-primary-light animate-in fade-in duration-200">
+              {mode === "deep_research" ? (
+                <>
+                  <Brain className="size-3 text-marigold" />
+                  <span className="text-text-secondary">Deep Research</span>
+                </>
+              ) : (
+                <>
+                  <Compass className="size-3 text-marigold" />
+                  <span className="text-text-secondary">Explore Mode</span>
+                </>
+              )}
+              {isModeLocked && (
+                <span className="text-[9px] text-text-dim-ondark/60 font-mono ml-1 px-1 bg-white/5 rounded border border-white/5">Locked</span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => applyFormatting("**")}
+                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95 cursor-pointer"
+                title="Bold (Ctrl+B)"
+              >
+                <Bold className="size-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => applyFormatting("*")}
+                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95 cursor-pointer"
+                title="Italic (Ctrl+I)"
+              >
+                <Italic className="size-4" />
+              </button>
+            </div>
           </div>
 
           <div className="flex items-end gap-2 p-1 pl-2 pr-1.5 pb-1.5">
             {/* Quick Actions + Button */}
-            <SoundMuteToggle showTooltip={true} />
             <button
               ref={plusButtonRef}
               disabled={isDisabled}
@@ -220,13 +260,20 @@ export function ChatInput({
               isOpen={isQuickMenuOpen} 
               onClose={() => setIsQuickMenuOpen(false)} 
               anchorRect={plusButtonRect} 
+              selectedMode={mode || "explore"}
+              onModeChange={onModeChange || (() => {})}
+              isModeLocked={!!isModeLocked}
             />
 
             <div className="relative flex-1 flex min-h-[44px] sm:min-h-[48px]">
             {/* Custom Animated Placeholder */}
             {!inputText && (
               <div className="absolute inset-0 pointer-events-none px-4 flex items-center overflow-hidden">
-                {placeholders.map((text, i) => (
+                {isClarifyingActive ? (
+                  <span className="absolute left-4 right-4 text-[15px] text-text-secondary font-sans truncate opacity-100">
+                    Or reply directly...
+                  </span>
+                ) : placeholders.map((text, i) => (
                   <span
                     key={i}
                     className={`
@@ -255,8 +302,13 @@ export function ChatInput({
               placeholder={dailyLimitReached ? (dailyLimitMessage ?? "Daily limit reached — resets at 12:00 AM") : ""}
               minRows={1}
               maxRows={5}
+<<<<<<< HEAD
               disabled={guestLimitReached || dailyLimitReached}
               className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center ${(guestLimitReached || dailyLimitReached) ? "cursor-not-allowed placeholder:text-text-destructive/80" : ""}`}
+=======
+              disabled={guestLimitReached}
+              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${guestLimitReached ? "cursor-not-allowed placeholder:text-text-dim-ondark/80" : ""}`}
+>>>>>>> feature/Modle
             />
           </div>
 

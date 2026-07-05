@@ -25,6 +25,7 @@ export interface ChatSession {
   requirements: Record<string, unknown>
   created_at: string
   title?: string
+  mode: "deep_research" | "explore"
 }
 
 export interface ChatMessage {
@@ -223,7 +224,7 @@ export async function checkAndIncrementMessageLimit(): Promise<MessageLimitResul
  * Creates a new chat session for the logged-in user.
  * Throws an error if the user is not authenticated.
  */
-export async function createChatSession(): Promise<string> {
+export async function createChatSession(mode?: "deep_research" | "explore"): Promise<string> {
   const supabase = await createClient()
 
   const user = await getAuthenticatedUser(supabase)
@@ -231,16 +232,36 @@ export async function createChatSession(): Promise<string> {
     return getGuestSessionId()
   }
 
-  // Insert a new chat session row
-  const { data, error } = await supabase
+  // Try to insert with mode first
+  let { data, error } = await supabase
     .from("chat_sessions")
     .insert({
       user_id: user.id,
       status: "active",
       requirements: {},
+      mode: mode || "explore",
     })
     .select("id")
     .single()
+
+  // Graceful fallback if the remote database is missing the 'mode' column
+  if (error && error.message.includes("'mode' column")) {
+    console.warn("Graceful fallback: 'mode' column missing in remote Supabase, inserting without it.");
+    
+    // Retry without the mode column
+    const fallbackResult = await supabase
+      .from("chat_sessions")
+      .insert({
+        user_id: user.id,
+        status: "active",
+        requirements: {},
+      })
+      .select("id")
+      .single()
+      
+    data = fallbackResult.data;
+    error = fallbackResult.error;
+  }
 
   if (error) {
     throw new Error(`Failed to create chat session: ${error.message}`)

@@ -7,13 +7,14 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ProductCarouselProps {
   products: Product[];
+  onAddToCartToggle?: (productId: string, inCart: boolean) => void;
 }
 
-export function ProductCarousel({ products }: ProductCarouselProps) {
+export function ProductCarousel({ products, onAddToCartToggle }: ProductCarouselProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
-
+  
   // Drag to scroll state
   const isDragging = useRef(false);
   const startX = useRef(0);
@@ -106,7 +107,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
         onClickCapture={handleClickCapture}
         className="
           flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory 
-          scrollbar-hide select-none cursor-grab active:cursor-grabbing
+          scrollbar-none select-none cursor-grab active:cursor-grabbing
           py-2 px-1
         "
         style={{
@@ -120,7 +121,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
             key={product.id}
             className="snap-start shrink-0 w-[200px] sm:w-[220px] md:w-[250px]"
           >
-            <ProductCard product={product} />
+            <ProductCard product={product} onAddToCartToggle={onAddToCartToggle} />
           </div>
         ))}
       </div>

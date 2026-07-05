@@ -6,16 +6,30 @@ import { quickBuyMockFoodData } from "@/lib/quickBuyMockFoodData";
 import { motion, AnimatePresence } from "framer-motion";
 import { UtensilsCrossed } from "lucide-react";
 
-export function FoodSwipeCardDeck({ customizations }: { customizations: string[] }) {
-  const [items, setItems] = useState(quickBuyMockFoodData);
+export function FoodSwipeCardDeck({ customizations, onOrder, minBudget, maxBudget }: { customizations: string[], onOrder?: () => void, minBudget?: number | "", maxBudget?: number | "" }) {
+  const [items, setItems] = useState(() => {
+    return quickBuyMockFoodData.filter((item) => {
+      if (minBudget !== "" && minBudget !== undefined && item.price < minBudget) return false;
+      if (maxBudget !== "" && maxBudget !== undefined && item.price > maxBudget) return false;
+      return true;
+    });
+  });
 
   const handleSwipeLeft = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    setItems((prev) => {
+      const item = prev.find(i => i.id === id);
+      const rest = prev.filter((i) => i.id !== id);
+      return item ? [...rest, item] : rest;
+    });
   };
 
   const handleSwipeRight = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
-    // Could save to a 'cart' or 'ordered' list here
+    setItems((prev) => {
+      const item = prev.find(i => i.id === id);
+      const rest = prev.filter((i) => i.id !== id);
+      return item ? [...rest, item] : rest;
+    });
+    if (onOrder) onOrder();
   };
 
   useEffect(() => {

@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "./MessageBubble";
 import { ThinkingIndicator } from "./ThinkingIndicator";
 import { ErrorMessageCard } from "./ErrorMessageCard";
-import { Message, Feedback } from "@/types/chat";
+import { Message, Feedback, ChatMode } from "@/types/chat";
 import { ArrowDown } from "lucide-react";
 
 interface MessageListProps {
@@ -14,11 +14,13 @@ interface MessageListProps {
   onRegenerate: () => void;
   onRetry: () => void;
   onFeedback: (id: string, feedback: Feedback) => void;
-  guestLimitReached?: boolean;
-  onLoginClick?: () => void;
+  onSend: (message: string) => void;
+  onNewChat?: (mode?: ChatMode) => void;
+  setInputText?: (text: string) => void;
+  mode?: ChatMode | null;
 }
 
-export function MessageList({ messages, isTyping, onRegenerate, onRetry, onFeedback, guestLimitReached = false, onLoginClick }: MessageListProps) {
+export function MessageList({ messages, isTyping, onRegenerate, onRetry, onFeedback, onSend, onNewChat, setInputText, mode }: MessageListProps) {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -80,6 +82,10 @@ export function MessageList({ messages, isTyping, onRegenerate, onRetry, onFeedb
                 isLastAiMessage={msg.id === lastAiMessageId}
                 onRegenerate={onRegenerate}
                 onFeedback={onFeedback}
+                onSend={onSend}
+                onNewChat={onNewChat}
+                setInputText={setInputText}
+                mode={mode}
               />
             )
           )}
