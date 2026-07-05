@@ -73,11 +73,7 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
           <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-text-primary-light tracking-tight">
             Hi, I&apos;m <span className="text-marigold">BuyWise AI</span>
           </h1>
-<<<<<<< HEAD
-          <div className="text-fluid-base text-text-secondary font-sans max-w-md mx-auto leading-relaxed space-y-2">
-=======
           <div className="text-sm sm:text-base text-text-secondary font-sans max-w-md mx-auto leading-relaxed space-y-2">
->>>>>>> 44181a012f77a6b27eb5f92790cffe6645132cd0
             <p>
               Your smart shopping assistant. Ask me to find, compare, or recommend
               products across Amazon &amp; Flipkart.

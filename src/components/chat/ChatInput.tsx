@@ -4,11 +4,8 @@ import React, { useRef, useState, useEffect } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye, Plus, Compass, Brain } from "lucide-react";
 import { QuickAccessMenu } from "./QuickAccessMenu";
-<<<<<<< HEAD
 import { SoundMuteToggle } from "@/components/shared/SoundMuteToggle";
 import { UsageRing } from "@/components/ui/usage-ring";
-=======
->>>>>>> 44181a012f77a6b27eb5f92790cffe6645132cd0
 import { ChatMode } from "@/types/chat";
 
 const placeholders = [
@@ -33,11 +30,8 @@ interface ChatInputProps {
   isGuest?: boolean;
   dailyLimitReached?: boolean;
   dailyLimitMessage?: string;
-<<<<<<< HEAD
   tokensUsed?: number;
   tokenLimit?: number;
-=======
->>>>>>> 44181a012f77a6b27eb5f92790cffe6645132cd0
   dailyMessagesRemaining?: number;
   dailyLimit?: number;
   mode?: ChatMode | null;
@@ -59,11 +53,8 @@ export function ChatInput({
   isGuest = false,
   dailyLimitReached = false,
   dailyLimitMessage,
-<<<<<<< HEAD
   tokensUsed,
   tokenLimit,
-=======
->>>>>>> 44181a012f77a6b27eb5f92790cffe6645132cd0
   dailyMessagesRemaining,
   dailyLimit,
   mode = "explore",
@@ -306,13 +297,8 @@ export function ChatInput({
               placeholder=""
               minRows={1}
               maxRows={5}
-<<<<<<< HEAD
               disabled={guestLimitReached || dailyLimitReached}
               className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${(guestLimitReached || dailyLimitReached) ? "cursor-not-allowed placeholder:text-text-destructive/80" : ""}`}
-=======
-              disabled={guestLimitReached}
-              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${guestLimitReached ? "cursor-not-allowed placeholder:text-text-dim-ondark/80" : ""}`}
->>>>>>> 44181a012f77a6b27eb5f92790cffe6645132cd0
             />
           </div>
 

@@ -480,11 +480,7 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
         }
       }}
       className={`
-<<<<<<< HEAD
         group w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left
-=======
-        group w-full flex items-center px-3 py-2 rounded-xl text-left
->>>>>>> 44181a012f77a6b27eb5f92790cffe6645132cd0
         transition-all duration-200 cursor-pointer select-none
         ${isActive
           ? "bg-[#2a2a2a] text-text-primary-dark"
@@ -521,11 +517,7 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
         </span>
       )}
       
-<<<<<<< HEAD
-      {!isEditing && !showDeleteConfirm && (
-=======
       {!isEditing && (
->>>>>>> 44181a012f77a6b27eb5f92790cffe6645132cd0
         <div className="shrink-0 flex items-center gap-0.5 ml-2">
           {isActive && (
             <button

@@ -11,10 +11,7 @@ import { HamburgerButton } from "./HamburgerButton";
 import { TemporaryChatButton } from "./TemporaryChatButton";
 import { QuickBuyButton } from "@/components/quick-buy/QuickBuyButton";
 import { QuickBuyScreen } from "@/components/quick-buy/QuickBuyScreen";
-<<<<<<< HEAD
 import { ModeToggle } from "./ModeToggle";
-=======
->>>>>>> 44181a012f77a6b27eb5f92790cffe6645132cd0
 import { FoodQuickBuyButton } from "@/components/quick-buy/FoodQuickBuyButton";
 import { FoodQuickBuyScreen } from "@/components/quick-buy/FoodQuickBuyScreen";
 import { Ghost } from "lucide-react";
@@ -47,12 +44,8 @@ function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onN
 
         {/* Top-Right Action Area */}
         <div className="flex items-center gap-2">
-<<<<<<< HEAD
           <ModeToggle />
           {!isGuest && onNewTemporaryChat && (
-=======
-          {onNewTemporaryChat && (
->>>>>>> 44181a012f77a6b27eb5f92790cffe6645132cd0
             <TemporaryChatButton onClick={onNewTemporaryChat} isTemporaryChat={isTemporaryChat} />
           )}
           <QuickBuyButton onClick={onQuickBuyClick} />
