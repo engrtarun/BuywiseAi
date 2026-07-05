@@ -14,7 +14,6 @@ import { QuickBuyScreen } from "@/components/quick-buy/QuickBuyScreen";
 import { ModeToggle } from "./ModeToggle";
 import { FoodQuickBuyButton } from "@/components/quick-buy/FoodQuickBuyButton";
 import { FoodQuickBuyScreen } from "@/components/quick-buy/FoodQuickBuyScreen";
-import { ModeToggle } from "./ModeToggle";
 import { Ghost } from "lucide-react";
 
 /* ── Header ──────────────────────────────────────────── */
