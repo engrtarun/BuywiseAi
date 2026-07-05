@@ -771,10 +771,6 @@ function SidebarContent({
         <div className={`flex flex-col gap-2 w-full ${isCollapsed ? "items-center" : ""}`}>
           <NewChatButton onClick={() => { onNewChat(); onClose(); }} isCollapsed={isCollapsed} />
           
-          <div className="mt-2">
-            <FoodModeToggle isCollapsed={isCollapsed} />
-          </div>
-          
           {/* Shopping Tools */}
           <div className="flex flex-col gap-1 w-full mt-2 mb-1">
             {!isCollapsed && (
