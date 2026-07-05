@@ -12,9 +12,10 @@ import {
 interface UsageRingProps extends React.SVGProps<SVGSVGElement> {
   value: number
   max: number
+  size?: number
 }
 
-export function UsageRing({ value, max, className, ...props }: UsageRingProps) {
+export function UsageRing({ value, max, size = 28, className, ...props }: UsageRingProps) {
   const percentage = Math.min(100, Math.max(0, (value / max) * 100))
   const radius = 12
   const circumference = 2 * Math.PI * radius
@@ -32,10 +33,13 @@ export function UsageRing({ value, max, className, ...props }: UsageRingProps) {
     <TooltipProvider>
       <Tooltip delayDuration={200}>
         <TooltipTrigger asChild>
-          <div className="relative flex items-center justify-center size-8 cursor-pointer select-none">
+          <div 
+            style={{ width: size, height: size }}
+            className="relative flex items-center justify-center cursor-pointer select-none"
+          >
             <svg
-              width="32"
-              height="32"
+              width={size}
+              height={size}
               viewBox="0 0 32 32"
               className={cn("rotate-[-90deg]", className)}
               {...props}

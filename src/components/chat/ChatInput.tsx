@@ -252,13 +252,19 @@ export function ChatInput({
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={dailyLimitReached ? "Daily limit reached..." : ""}
+              placeholder={dailyLimitReached ? (dailyLimitMessage ?? "Daily limit reached — resets at 12:00 AM") : ""}
               minRows={1}
               maxRows={5}
               disabled={guestLimitReached || dailyLimitReached}
-              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center ${(guestLimitReached || dailyLimitReached) ? "cursor-not-allowed placeholder:text-text-dim-ondark/80" : ""}`}
+              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center ${(guestLimitReached || dailyLimitReached) ? "cursor-not-allowed placeholder:text-text-destructive/80" : ""}`}
             />
           </div>
+
+          {!isGuest && tokensUsed !== undefined && tokenLimit !== undefined && (
+            <div className="flex items-center self-end mb-[8px] mr-1 shrink-0">
+              <UsageRing value={tokensUsed} max={tokenLimit} size={26} />
+            </div>
+          )}
 
           <button
             type="button"
@@ -285,18 +291,6 @@ export function ChatInput({
           </button>
           </div>
         </div>
-
-        {/* Daily Usage Indicator */}
-        {!isGuest && tokensUsed !== undefined && tokenLimit !== undefined && (
-          <div className="flex flex-col items-center gap-1.5 mt-1">
-            <UsageRing value={tokensUsed} max={tokenLimit} />
-            {dailyLimitReached && (
-              <span className="text-[11px] font-mono text-destructive animate-pulse">
-                {dailyLimitMessage ?? "Daily limit reached — resets at 12:00 AM"}
-              </span>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
