@@ -195,12 +195,12 @@ export function ChatInput({
               {mode === "deep_research" ? (
                 <>
                   <Brain className="size-3 text-marigold" />
-                  <span className="text-text-secondary">🔬 Deep Research</span>
+                  <span className="text-text-secondary">Deep Research</span>
                 </>
               ) : (
                 <>
                   <Compass className="size-3 text-marigold" />
-                  <span className="text-text-secondary">🧭 Explore Mode</span>
+                  <span className="text-text-secondary">Explore Mode</span>
                 </>
               )}
               {isModeLocked && (
@@ -295,7 +295,7 @@ export function ChatInput({
               minRows={1}
               maxRows={5}
               disabled={guestLimitReached}
-              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center ${guestLimitReached ? "cursor-not-allowed placeholder:text-text-dim-ondark/80" : ""}`}
+              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${guestLimitReached ? "cursor-not-allowed placeholder:text-text-dim-ondark/80" : ""}`}
             />
           </div>
 
