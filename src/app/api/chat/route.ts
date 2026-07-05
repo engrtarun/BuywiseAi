@@ -32,6 +32,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import { getFallbackChatResponse } from "@/lib/fallbackResponses";
+import { enforceChatAccess } from "@/lib/chatAccess";
+
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
@@ -136,7 +138,7 @@ export async function POST(req: NextRequest) {
     if (access.response) {
       return access.response;
     }
-    guestCount = access.guestCount;
+    // access.isGuest indicates whether this is an unauthenticated guest request.
 
     // Map frontend conversation history ({ role: "assistant"|"user", content })
     // to the structure expected by the Gemini SDK ({ role: "model"|"user", parts: [{ text }] })
