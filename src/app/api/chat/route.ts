@@ -33,6 +33,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import { getFallbackChatResponse } from "@/lib/fallbackResponses";
 import { enforceChatAccess } from "@/lib/chatAccess";
+import { searchProducts } from "@/lib/productSearch";
+
 
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
@@ -257,6 +259,23 @@ export async function POST(req: NextRequest) {
       systemInstruction += `\n\nUser's accumulated requirements so far: ${JSON.stringify(requirements)}`;
     }
 
+    // Detect if the query is a product shopping query using a simple heuristic
+    const shoppingKeywords = /\b(buy|price|under|budget|rs|₹|laptop|phone|smartphone|headphone|earbud|shoe|sneaker|jacket|watch|tv|monitor|gift)\b/i;
+    const isShoppingQuery = shoppingKeywords.test(userMessage);
+
+    let serperProducts: any[] = [];
+    if (isShoppingQuery) {
+      try {
+        serperProducts = await searchProducts(userMessage, 5);
+      } catch (err) {
+        console.error("[chat route] Failed to search products:", err);
+      }
+    }
+
+    if (serperProducts.length > 0) {
+      systemInstruction += `\n\nHere are real current product listings matching the user's request: ${JSON.stringify(serperProducts)}. Write a natural, helpful response recommending the best 1-3 options and briefly explain why, referencing their actual names and prices.`;
+    }
+
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
       systemInstruction,
@@ -270,6 +289,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    const result = await chat.sendMessage(userMessage);
     let text = (await result.response).text();
 
     let isValid = validateModeJSONPayload(text, isDeepResearch ? 'deep_research' : 'explore');
@@ -299,13 +319,17 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ text });
+    return NextResponse.json({ 
+      text,
+      products: serperProducts.length > 0 ? serperProducts : null
+    });
   } catch (error: unknown) {
     logGeminiFailure(error);
 
     return NextResponse.json({
       text: getFallbackChatResponse(userMessage),
       fallback: true,
+      products: null
     });
   }
 }

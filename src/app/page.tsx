@@ -368,6 +368,21 @@ export default function Page() {
         // Parse and restore rich layout client-side
         const aiMsg = parseAiMessageContent(dbAiMsg.id, dbAiMsg.message);
 
+        // If the API returned real product results (Serper/FakeStore fallback), attach them
+        if (data.products && Array.isArray(data.products)) {
+          aiMsg.products = data.products.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            price: `₹${p.price.toLocaleString("en-IN")}`,
+            image: p.image,
+            platform: p.platform,
+            link: p.url,
+            rating: p.rating || 4.0,
+            reviewCount: "42",
+            description: "Product match"
+          }));
+        }
+
         setChatSessions((prev) =>
           prev.map((s) =>
             s.id === chatId ? { ...s, messages: [...s.messages, aiMsg] } : s
