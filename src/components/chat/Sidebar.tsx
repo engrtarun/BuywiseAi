@@ -361,10 +361,10 @@ function NewChatButton({ onClick, isCollapsed }: NewChatButtonProps) {
         className={`
           group flex items-center justify-center gap-2.5
           rounded-xl bg-marigold/10 border border-marigold/20
-          text-text-primary-dark font-heading font-bold text-sm
+          text-text-primary-dark font-heading font-bold text-fluid-sm
           hover:bg-marigold/20 hover:border-marigold/40
           active:scale-[0.98] transition-all duration-200 touch-manipulation cursor-pointer
-          ${isCollapsed ? "size-10 shrink-0" : "w-full px-4 py-3"}
+          ${isCollapsed ? "min-touch-target shrink-0" : "w-full px-4 py-3 min-touch-target"}
         `}
         aria-label="New Chat"
       >
@@ -411,7 +411,7 @@ function SearchField({ isCollapsed, onExpand, value, onChange }: SearchFieldProp
         placeholder="Search chats..."
         className="
           w-full bg-white/[0.04] border border-border-dark rounded-xl
-          py-2.5 pl-10 pr-4 text-[13px] font-sans text-text-primary-dark
+          py-2.5 pl-10 pr-4 text-fluid-sm font-sans text-text-primary-dark
           placeholder:text-text-secondary outline-none
           focus:border-marigold/40 focus:bg-white/[0.06] transition-all
         "
@@ -538,10 +538,10 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
           }}
           onBlur={handleSave}
           autoFocus
-          className="flex-1 bg-[#1A1A18] text-text-primary-dark text-[13px] font-sans px-1.5 py-0.5 rounded outline-none border border-brand-accent/50 min-w-0"
+          className="flex-1 bg-[#1A1A18] text-text-primary-dark text-fluid-sm font-sans px-1.5 py-0.5 rounded outline-none border border-brand-accent/50 min-w-0"
         />
       ) : (
-        <span className="flex-1 min-w-0 text-[13px] truncate font-sans leading-tight pr-14">
+        <span className="flex-1 min-w-0 text-fluid-sm truncate font-sans leading-tight pr-14">
           {session.title}
         </span>
       )}

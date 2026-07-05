@@ -52,7 +52,7 @@ export function ProductCard({ product }: ProductCardProps) {
       className="
         group flex flex-col w-full h-full cursor-pointer
         bg-ink-deep border border-line-ondark rounded-2xl overflow-hidden
-        transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:border-marigold/40 hover:shadow-marigold/10
+        transition-colors duration-300 hover-lift hover:border-marigold/40
       "
     >
       {/* Image container */}
@@ -79,25 +79,25 @@ export function ProductCard({ product }: ProductCardProps) {
       </div>
 
       {/* Content */}
-      <div className="flex flex-col flex-1 p-3.5 sm:p-4">
-        <h3 className="font-heading font-semibold text-text-ondark text-[14px] sm:text-[15px] leading-tight line-clamp-2 mb-1.5 group-hover:text-marigold transition-colors">
+      <div className="flex flex-col flex-1 p-fluid-base">
+        <h3 className="font-heading font-semibold text-text-ondark text-fluid-base leading-tight line-clamp-2 mb-1.5 group-hover:text-marigold transition-colors">
           {product.name}
         </h3>
 
         {/* Rating */}
         <div className="flex items-center gap-1.5 mb-2.5">
-          <span className="text-marigold text-[13px] tracking-widest">{renderStars(product.rating)}</span>
-          <span className="text-text-dim-ondark text-[11px] sm:text-[12px] font-mono mt-0.5">
+          <span className="text-marigold text-fluid-sm tracking-widest">{renderStars(product.rating)}</span>
+          <span className="text-text-dim-ondark text-fluid-sm font-mono mt-0.5">
             ({product.reviewCount})
           </span>
         </div>
 
         <div className="mt-auto pt-2 flex items-end justify-between">
           <div className="flex flex-col">
-            <span className="font-heading font-bold text-marigold text-lg sm:text-xl leading-none mb-1">
+            <span className="font-heading font-bold text-marigold text-fluid-xl leading-none mb-1">
               {product.price}
             </span>
-            <div className="flex items-center text-brand-accent/80 text-[11px] font-bold tracking-wide uppercase group-hover:text-brand-accent transition-colors">
+            <div className="flex items-center text-brand-accent/80 text-fluid-sm font-bold tracking-wide uppercase group-hover:text-brand-accent transition-colors">
               View Details <ChevronRight className="size-3 ml-0.5" />
             </div>
           </div>
@@ -107,17 +107,17 @@ export function ProductCard({ product }: ProductCardProps) {
               href={product.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center size-8 sm:size-9 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-text-ondark"
+              className="flex items-center justify-center min-touch-target rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-text-ondark touch-manipulation"
               aria-label="View Product"
             >
-              <ExternalLink className="size-3.5 sm:size-4" />
+              <ExternalLink className="size-4" />
             </a>
             
             <button
               onClick={() => setIsCheckoutOpen(true)}
-              className="flex items-center justify-center h-8 sm:h-9 px-3 rounded-full bg-brand-accent border border-brand-accent hover:bg-transparent hover:text-brand-accent transition-colors text-bg-main font-bold text-xs gap-1.5"
+              className="flex items-center justify-center min-touch-target px-4 rounded-full bg-brand-accent border border-brand-accent hover:bg-transparent hover:text-brand-accent transition-colors text-bg-main font-bold text-fluid-sm gap-1.5 touch-manipulation"
             >
-              <ShoppingCart className="size-3.5" /> Buy
+              <ShoppingCart className="size-4" /> Buy
             </button>
           </div>
         </div>

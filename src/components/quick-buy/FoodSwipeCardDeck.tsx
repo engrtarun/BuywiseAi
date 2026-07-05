@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FoodSwipeCard } from "./FoodSwipeCard";
 import { quickBuyMockFoodData } from "@/lib/quickBuyMockFoodData";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,6 +17,20 @@ export function FoodSwipeCardDeck({ customizations }: { customizations: string[]
     setItems((prev) => prev.filter((i) => i.id !== id));
     // Could save to a 'cart' or 'ordered' list here
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (items.length === 0) return;
+      const topItem = items[0];
+      if (e.key === "ArrowLeft") {
+        handleSwipeLeft(topItem.id);
+      } else if (e.key === "ArrowRight") {
+        handleSwipeRight(topItem.id);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [items]);
 
   if (items.length === 0) {
     return (
