@@ -11,6 +11,8 @@ import { HamburgerButton } from "./HamburgerButton";
 import { TemporaryChatButton } from "./TemporaryChatButton";
 import { QuickBuyButton } from "@/components/quick-buy/QuickBuyButton";
 import { QuickBuyScreen } from "@/components/quick-buy/QuickBuyScreen";
+import { FoodQuickBuyButton } from "@/components/quick-buy/FoodQuickBuyButton";
+import { FoodQuickBuyScreen } from "@/components/quick-buy/FoodQuickBuyScreen";
 
 /* ── Header ──────────────────────────────────────────── */
 
@@ -21,9 +23,10 @@ interface ChatHeaderProps {
   isTemporaryChat: boolean;
   onNewTemporaryChat?: () => void;
   onQuickBuyClick: () => void;
+  onFoodQuickBuyClick: () => void;
 }
 
-function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onNewTemporaryChat, onQuickBuyClick }: ChatHeaderProps) {
+function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onNewTemporaryChat, onQuickBuyClick, onFoodQuickBuyClick }: ChatHeaderProps) {
   return (
     <header className="shrink-0 z-20 flex items-center bg-bg-main px-4 py-3 border-b border-border-light h-14">
       <div className="w-full flex items-center justify-between">
@@ -43,6 +46,7 @@ function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onN
             <TemporaryChatButton onClick={onNewTemporaryChat} isTemporaryChat={isTemporaryChat} />
           )}
           <QuickBuyButton onClick={onQuickBuyClick} />
+          <FoodQuickBuyButton onClick={onFoodQuickBuyClick} />
         </div>
       </div>
     </header>
@@ -105,6 +109,7 @@ export function ChatWindow({
   activeMode,
 }: ChatWindowProps) {
   const [showQuickBuy, setShowQuickBuy] = React.useState(false);
+  const [showFoodQuickBuy, setShowFoodQuickBuy] = React.useState(false);
   const [inputText, setInputText] = React.useState("");
   
   const showWelcome = messages.length === 0 && !isTyping;
@@ -126,6 +131,7 @@ export function ChatWindow({
         isTemporaryChat={isTemporaryChat} 
         onNewTemporaryChat={onNewTemporaryChat} 
         onQuickBuyClick={() => setShowQuickBuy(true)}
+        onFoodQuickBuyClick={() => setShowFoodQuickBuy(true)}
       />
       <OfflineBanner />
       {showWelcome ? (
@@ -176,6 +182,9 @@ export function ChatWindow({
 
       {/* Quick Buy Overlay */}
       {showQuickBuy && <QuickBuyScreen onClose={() => setShowQuickBuy(false)} />}
+      
+      {/* Food Quick Buy Overlay */}
+      {showFoodQuickBuy && <FoodQuickBuyScreen onClose={() => setShowFoodQuickBuy(false)} />}
     </div>
   );
 }

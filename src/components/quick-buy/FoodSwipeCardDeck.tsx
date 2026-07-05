@@ -10,11 +10,19 @@ export function FoodSwipeCardDeck({ customizations }: { customizations: string[]
   const [items, setItems] = useState(quickBuyMockFoodData);
 
   const handleSwipeLeft = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    setItems((prev) => {
+      const item = prev.find(i => i.id === id);
+      const rest = prev.filter((i) => i.id !== id);
+      return item ? [...rest, item] : rest;
+    });
   };
 
   const handleSwipeRight = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    setItems((prev) => {
+      const item = prev.find(i => i.id === id);
+      const rest = prev.filter((i) => i.id !== id);
+      return item ? [...rest, item] : rest;
+    });
     // Could save to a 'cart' or 'ordered' list here
   };
 
