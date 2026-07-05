@@ -5,6 +5,7 @@ import TextareaAutosize from "react-textarea-autosize";
 import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye, Plus } from "lucide-react";
 import { QuickAccessMenu } from "./QuickAccessMenu";
 import { SoundMuteToggle } from "@/components/shared/SoundMuteToggle";
+import { UsageRing } from "@/components/ui/usage-ring";
 
 const placeholders = [
   "BuyWise anything...",
@@ -26,8 +27,8 @@ interface ChatInputProps {
   isGuest?: boolean;
   dailyLimitReached?: boolean;
   dailyLimitMessage?: string;
-  dailyMessagesRemaining?: number;
-  dailyLimit?: number;
+  tokensUsed?: number;
+  tokenLimit?: number;
 }
 
 export function ChatInput({ 
@@ -41,8 +42,8 @@ export function ChatInput({
   isGuest = false,
   dailyLimitReached = false,
   dailyLimitMessage,
-  dailyMessagesRemaining,
-  dailyLimit
+  tokensUsed,
+  tokenLimit
 }: ChatInputProps) {
   const [inputText, setInputText] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -50,6 +51,8 @@ export function ChatInput({
   const [isQuickMenuOpen, setIsQuickMenuOpen] = useState(false);
   const plusButtonRef = useRef<HTMLButtonElement>(null);
   const [plusButtonRect, setPlusButtonRect] = useState<DOMRect | null>(null);
+
+  const isDisabled = disabled || dailyLimitReached;
 
   // Rotate placeholder every 5 seconds
   useEffect(() => {
@@ -124,31 +127,24 @@ export function ChatInput({
     }, 0);
   };
 
-  if (guestLimitReached || dailyLimitReached) {
+  if (guestLimitReached) {
     return (
       <div className="shrink-0 bg-bg-main border-t border-border-light px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-4 z-20 transition-opacity duration-300">
         <div className="w-full max-w-3xl mx-auto">
-          {guestLimitReached ? (
-            <button
-              onClick={onLoginClick}
-              className="
-                w-full flex items-center justify-between gap-3 px-4 py-3.5 
-                rounded-2xl bg-white/[0.03] border border-marigold/30 
-                text-text-secondary text-[15px] cursor-pointer hover:bg-white/[0.05] 
-                transition-colors group
-              "
-            >
-              <span className="font-sans">Log in to continue chatting...</span>
-              <div className="size-8 rounded-full bg-brand-accent flex items-center justify-center shrink-0 text-ink-deeper shadow-md shadow-marigold/20 group-hover:scale-105 transition-transform">
-                <LogIn className="size-4" />
-              </div>
-            </button>
-          ) : (
-            <div className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl bg-marigold/10 border border-marigold/20 text-marigold text-[15px]">
-              <Clock className="size-4" />
-              <span className="font-sans font-medium">{dailyLimitMessage ?? "You've reached your daily limit of 25 messages. Please come back tomorrow!"}</span>
+          <button
+            onClick={onLoginClick}
+            className="
+              w-full flex items-center justify-between gap-3 px-4 py-3.5 
+              rounded-2xl bg-white/[0.03] border border-marigold/30 
+              text-text-secondary text-[15px] cursor-pointer hover:bg-white/[0.05] 
+              transition-colors group
+            "
+          >
+            <span className="font-sans">Log in to continue chatting...</span>
+            <div className="size-8 rounded-full bg-brand-accent flex items-center justify-center shrink-0 text-ink-deeper shadow-md shadow-marigold/20 group-hover:scale-105 transition-transform">
+              <LogIn className="size-4" />
             </div>
-          )}
+          </button>
         </div>
       </div>
     );
@@ -208,13 +204,14 @@ export function ChatInput({
             <SoundMuteToggle showTooltip={true} />
             <button
               ref={plusButtonRef}
+              disabled={isDisabled}
               onClick={() => {
                 if (plusButtonRef.current) {
                   setPlusButtonRect(plusButtonRef.current.getBoundingClientRect());
                 }
                 setIsQuickMenuOpen(!isQuickMenuOpen);
               }}
-              className="flex items-center justify-center size-10 shrink-0 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-text-secondary hover:text-text-primary-light self-end mb-[2px]"
+              className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-text-secondary hover:text-text-primary-light self-end mb-[2px] ${isDisabled ? "opacity-40 cursor-not-allowed" : ""}`}
               aria-label="Quick Actions"
             >
               <Plus className={`size-5 transition-transform duration-200 ${isQuickMenuOpen ? 'rotate-45' : 'rotate-0'}`} />
@@ -255,11 +252,11 @@ export function ChatInput({
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder=""
+              placeholder={dailyLimitReached ? "Daily limit reached..." : ""}
               minRows={1}
               maxRows={5}
-              disabled={guestLimitReached}
-              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center ${guestLimitReached ? "cursor-not-allowed placeholder:text-text-dim-ondark/80" : ""}`}
+              disabled={guestLimitReached || dailyLimitReached}
+              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center ${(guestLimitReached || dailyLimitReached) ? "cursor-not-allowed placeholder:text-text-dim-ondark/80" : ""}`}
             />
           </div>
 
@@ -267,14 +264,15 @@ export function ChatInput({
             type="button"
             onTouchStart={(e) => {
               e.preventDefault();
-              handleSend();
+              if (!isDisabled) handleSend();
             }}
             onClick={(e) => {
               e.preventDefault();
-              handleSend();
+              if (!isDisabled) handleSend();
             }}
+            disabled={isDisabled || guestLimitReached || timeLeft > 0}
             aria-label="Send message"
-            className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-brand-accent text-white transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || disabled || guestLimitReached || timeLeft > 0 ? "opacity-40 cursor-not-allowed" : "hover:scale-105 hover:brightness-110 active:scale-95 cursor-pointer"
+            className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-brand-accent text-white transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || isDisabled || guestLimitReached || timeLeft > 0 ? "opacity-40 cursor-not-allowed" : "hover:scale-105 hover:brightness-110 active:scale-95 cursor-pointer"
               }`}
           >
             {timeLeft > 0 ? (
@@ -289,11 +287,14 @@ export function ChatInput({
         </div>
 
         {/* Daily Usage Indicator */}
-        {!isGuest && dailyMessagesRemaining !== undefined && dailyLimit !== undefined && (
-          <div className="text-center mt-1">
-            <span className="text-[11px] font-mono text-text-dim-ondark opacity-60">
-              {dailyLimit - dailyMessagesRemaining}/{dailyLimit} messages today
-            </span>
+        {!isGuest && tokensUsed !== undefined && tokenLimit !== undefined && (
+          <div className="flex flex-col items-center gap-1.5 mt-1">
+            <UsageRing value={tokensUsed} max={tokenLimit} />
+            {dailyLimitReached && (
+              <span className="text-[11px] font-mono text-destructive animate-pulse">
+                {dailyLimitMessage ?? "Daily limit reached — resets at 12:00 AM"}
+              </span>
+            )}
           </div>
         )}
       </div>

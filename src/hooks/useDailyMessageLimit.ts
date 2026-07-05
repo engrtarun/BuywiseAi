@@ -4,16 +4,20 @@ import { useCallback, useEffect, useState } from "react";
 import { getDailyMessageLimitStatus } from "@/app/actions/chat";
 import type { MessageLimitResult } from "@/app/actions/chat";
 
-const DAILY_LIMIT = 25;
+const DEFAULT_TOKEN_LIMIT = 20000;
 
 export function useDailyMessageLimit() {
-  const [dailyMessageCount, setDailyMessageCount] = useState(0);
+  const [tokensUsed, setTokensUsed] = useState(0);
+  const [tokenLimit, setTokenLimit] = useState(DEFAULT_TOKEN_LIMIT);
   const [dailyLimitReached, setDailyLimitReached] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
 
   const applyLimitStatus = useCallback((status: MessageLimitResult) => {
-    setDailyMessageCount(status.messageCount);
-    setDailyLimitReached(status.messageCount >= status.dailyLimit);
+    const used = status.tokensUsed ?? status.messageCount ?? 0;
+    const limit = status.tokenLimit ?? status.dailyLimit ?? DEFAULT_TOKEN_LIMIT;
+    setTokensUsed(used);
+    setTokenLimit(limit);
+    setDailyLimitReached(used >= limit);
   }, []);
 
   const refreshDailyLimitStatus = useCallback(async () => {
@@ -32,7 +36,7 @@ export function useDailyMessageLimit() {
           applyLimitStatus(status);
         }
       } catch (error) {
-        console.error("Failed to load daily message limit:", error);
+        console.error("Failed to load daily limit:", error);
       } finally {
         if (mounted) {
           setIsInitializing(false);
@@ -47,15 +51,19 @@ export function useDailyMessageLimit() {
     };
   }, [applyLimitStatus]);
 
-  const dailyMessagesRemaining = Math.max(0, DAILY_LIMIT - dailyMessageCount);
+  const tokensRemaining = Math.max(0, tokenLimit - tokensUsed);
 
   return {
-    dailyMessageCount,
+    tokensUsed,
+    tokenLimit,
     dailyLimitReached,
-    dailyMessagesRemaining,
+    tokensRemaining,
     refreshDailyLimitStatus,
     applyLimitStatus,
     isInitializing,
-    DAILY_LIMIT,
+    // Legacy mapping to avoid typescript errors in files we haven't touched yet
+    dailyMessageCount: tokensUsed,
+    dailyMessagesRemaining: tokensRemaining,
+    DAILY_LIMIT: tokenLimit,
   };
 }

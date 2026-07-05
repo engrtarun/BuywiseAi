@@ -60,10 +60,10 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
   // Daily message limit hook
   const {
     dailyLimitReached,
-    dailyMessagesRemaining,
+    tokensUsed,
+    tokenLimit,
     applyLimitStatus,
     isInitializing: isDailyLimitInitializing,
-    DAILY_LIMIT,
   } = useDailyMessageLimit();
   const [dailyLimitMessage, setDailyLimitMessage] = useState<string | undefined>();
 
@@ -564,8 +564,8 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
           guestMessagesRemaining={messagesRemaining}
           guestLimitReached={guestLimitReached}
           dailyLimitReached={dailyLimitReached}
-          dailyMessagesRemaining={dailyMessagesRemaining}
-          dailyLimit={DAILY_LIMIT}
+          tokensUsed={tokensUsed}
+          tokenLimit={tokenLimit}
           dailyLimitMessage={dailyLimitMessage}
           onLoginClick={handleLoginClick}
           cooldownUntil={cooldownUntil}

@@ -4,8 +4,19 @@ import { env } from "@/lib/env"
 import { createClient } from "@/lib/supabase/server"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
-const DAILY_MESSAGE_LIMIT = 25
+const DAILY_TOKEN_LIMIT = 20000
+const TOKENS_PER_MESSAGE = 1000
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000
+
+function getISTDateString(date: Date | string | number): string {
+  const d = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date
+  const istTime = new Date(d.getTime() + IST_OFFSET_MS)
+  return istTime.toISOString().slice(0, 10)
+}
+
+function getCurrentISTDateString(now = new Date()): string {
+  return getISTDateString(now)
+}
 
 export interface ChatSession {
   id: string
@@ -27,10 +38,13 @@ export interface ChatMessage {
 export interface MessageLimitResult {
   allowed: boolean
   message?: string
-  messageCount: number
-  dailyLimit: number
+  tokensUsed?: number
+  tokenLimit?: number
   remaining: number
   date: string
+  // Legacy fields for backward compatibility
+  messageCount: number
+  dailyLimit: number
 }
 
 async function getAuthenticatedUser(
@@ -52,79 +66,6 @@ function getGuestSessionId(): string {
   return `guest-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-function getCurrentISTDateString(now = new Date()): string {
-  const istTime = new Date(now.getTime() + IST_OFFSET_MS)
-  return istTime.toISOString().slice(0, 10)
-}
-
-function formatLimitResult(
-  messageCount: number,
-  date: string,
-  allowed: boolean,
-  message?: string
-): MessageLimitResult {
-  return {
-    allowed,
-    message,
-    messageCount,
-    dailyLimit: DAILY_MESSAGE_LIMIT,
-    remaining: Math.max(0, DAILY_MESSAGE_LIMIT - messageCount),
-    date,
-  }
-}
-
-async function incrementExistingLimitRow(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  row: { user_id: string; usage_date: string; message_count: number },
-  todayIST: string
-): Promise<MessageLimitResult> {
-  let currentRow = row
-
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    if (currentRow.message_count >= DAILY_MESSAGE_LIMIT) {
-      return formatLimitResult(
-        currentRow.message_count,
-        todayIST,
-        false,
-        "You've reached your daily limit of 25 messages. Please come back tomorrow!"
-      )
-    }
-
-    const nextCount = currentRow.message_count + 1
-    const { data, error } = await supabase
-      .from("daily_message_limits")
-      .update({ message_count: nextCount })
-      .eq("user_id", currentRow.user_id)
-      .eq("usage_date", currentRow.usage_date)
-      .eq("message_count", currentRow.message_count)
-      .select("user_id, usage_date, message_count")
-      .maybeSingle()
-
-    if (error) {
-      throw new Error(`Failed to update daily message limit: ${error.message}`)
-    }
-
-    if (data) {
-      return formatLimitResult(data.message_count, todayIST, true)
-    }
-
-    const { data: refreshedRow, error: refreshError } = await supabase
-      .from("daily_message_limits")
-      .select("user_id, usage_date, message_count")
-      .eq("user_id", currentRow.user_id)
-      .eq("usage_date", currentRow.usage_date)
-      .single()
-
-    if (refreshError || !refreshedRow) {
-      throw new Error(`Failed to refresh daily message limit: ${refreshError?.message ?? "No row found"}`)
-    }
-
-    currentRow = refreshedRow
-  }
-
-  throw new Error("Failed to update daily message limit after concurrent changes.")
-}
-
 export async function getDailyMessageLimitStatus(): Promise<MessageLimitResult> {
   const supabase = await createClient()
   const user = await getAuthenticatedUser(supabase)
@@ -132,86 +73,150 @@ export async function getDailyMessageLimitStatus(): Promise<MessageLimitResult> 
   const todayIST = getCurrentISTDateString()
 
   if (!user) {
-    return formatLimitResult(0, todayIST, true)
+    return {
+      allowed: true,
+      tokensUsed: 0,
+      tokenLimit: DAILY_TOKEN_LIMIT,
+      remaining: DAILY_TOKEN_LIMIT,
+      date: todayIST,
+      messageCount: 0,
+      dailyLimit: DAILY_TOKEN_LIMIT
+    }
   }
 
-  const { data, error } = await supabase
-    .from("daily_message_limits")
-    .select("message_count")
-    .eq("user_id", user.id)
-    .eq("usage_date", todayIST)
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("tokens_used, last_reset_at")
+    .eq("id", user.id)
     .maybeSingle()
 
   if (error) {
-    throw new Error(`Failed to fetch daily message limit: ${error.message}`)
+    throw new Error(`Failed to fetch daily token limit: ${error.message}`)
   }
 
-  const messageCount = data?.message_count ?? 0
-  return formatLimitResult(
-    messageCount,
-    todayIST,
-    messageCount < DAILY_MESSAGE_LIMIT,
-    messageCount >= DAILY_MESSAGE_LIMIT
-      ? "You've reached your daily limit of 25 messages. Please come back tomorrow!"
+  let tokensUsed = profile?.tokens_used ?? 0
+  const lastResetAt = profile?.last_reset_at
+
+  // Check if it's a new calendar day
+  if (lastResetAt) {
+    const lastResetIST = getISTDateString(lastResetAt)
+    if (lastResetIST !== todayIST) {
+      tokensUsed = 0
+    }
+  }
+
+  return {
+    allowed: tokensUsed + TOKENS_PER_MESSAGE <= DAILY_TOKEN_LIMIT,
+    tokensUsed,
+    tokenLimit: DAILY_TOKEN_LIMIT,
+    remaining: Math.max(0, DAILY_TOKEN_LIMIT - tokensUsed),
+    date: todayIST,
+    messageCount: tokensUsed,
+    dailyLimit: DAILY_TOKEN_LIMIT,
+    message: tokensUsed >= DAILY_TOKEN_LIMIT
+      ? "Daily limit reached — resets at 12:00 AM"
       : undefined
-  )
+  }
 }
 
 export async function checkAndIncrementMessageLimit(): Promise<MessageLimitResult> {
   const supabase = await createClient()
   const user = await getAuthenticatedUser(supabase)
 
-  if (!user) {
-    return formatLimitResult(0, getCurrentISTDateString(), true)
-  }
-
   const todayIST = getCurrentISTDateString()
 
-  const { data: existingRow, error: selectError } = await supabase
-    .from("daily_message_limits")
-    .select("user_id, usage_date, message_count")
-    .eq("user_id", user.id)
-    .eq("usage_date", todayIST)
+  if (!user) {
+    return {
+      allowed: true,
+      tokensUsed: 0,
+      tokenLimit: DAILY_TOKEN_LIMIT,
+      remaining: DAILY_TOKEN_LIMIT,
+      date: todayIST,
+      messageCount: 0,
+      dailyLimit: DAILY_TOKEN_LIMIT
+    }
+  }
+
+  // Fetch the profile
+  const { data: profile, error: selectError } = await supabase
+    .from("profiles")
+    .select("tokens_used, last_reset_at")
+    .eq("id", user.id)
     .maybeSingle()
 
   if (selectError) {
     throw new Error(`Failed to check daily message limit: ${selectError.message}`)
   }
 
-  if (!existingRow) {
-    const { data: insertedRow, error: insertError } = await supabase
-      .from("daily_message_limits")
-      .insert({
-        user_id: user.id,
-        usage_date: todayIST,
-        message_count: 1,
-      })
-      .select("message_count")
-      .single()
+  let tokensUsed = profile?.tokens_used ?? 0
+  const lastResetAt = profile?.last_reset_at
+  let isNewDay = false
 
-    if (!insertError && insertedRow) {
-      return formatLimitResult(insertedRow.message_count, todayIST, true)
+  if (!lastResetAt) {
+    isNewDay = true
+  } else {
+    const lastResetIST = getISTDateString(lastResetAt)
+    if (lastResetIST !== todayIST) {
+      isNewDay = true
     }
-
-    if (!insertError) {
-      throw new Error("Failed to create daily message limit: no row returned")
-    }
-
-    const { data: racedRow, error: racedSelectError } = await supabase
-      .from("daily_message_limits")
-      .select("user_id, usage_date, message_count")
-      .eq("user_id", user.id)
-      .eq("usage_date", todayIST)
-      .maybeSingle()
-
-    if (racedSelectError || !racedRow) {
-      throw new Error(`Failed to create daily message limit: ${insertError.message}`)
-    }
-
-    return incrementExistingLimitRow(supabase, racedRow, todayIST)
   }
 
-  return incrementExistingLimitRow(supabase, existingRow, todayIST)
+  let nextTokensUsed = tokensUsed + TOKENS_PER_MESSAGE
+  let nextResetAt = lastResetAt || new Date().toISOString()
+
+  if (isNewDay) {
+    nextTokensUsed = TOKENS_PER_MESSAGE
+    nextResetAt = new Date().toISOString()
+  }
+
+  if (nextTokensUsed > DAILY_TOKEN_LIMIT) {
+    return {
+      allowed: false,
+      message: "Daily limit reached — resets at 12:00 AM",
+      tokensUsed,
+      tokenLimit: DAILY_TOKEN_LIMIT,
+      remaining: Math.max(0, DAILY_TOKEN_LIMIT - tokensUsed),
+      date: todayIST,
+      messageCount: tokensUsed,
+      dailyLimit: DAILY_TOKEN_LIMIT
+    }
+  }
+
+  // Update profile using insert/update depending on existence to avoid upsert RLS issues
+  let updateError;
+  if (!profile) {
+    const { error } = await supabase
+      .from("profiles")
+      .insert({
+        id: user.id,
+        tokens_used: nextTokensUsed,
+        last_reset_at: nextResetAt
+      });
+    updateError = error;
+  } else {
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        tokens_used: nextTokensUsed,
+        last_reset_at: nextResetAt
+      })
+      .eq("id", user.id);
+    updateError = error;
+  }
+
+  if (updateError) {
+    throw new Error(`Failed to update profile tokens: ${updateError.message}`)
+  }
+
+  return {
+    allowed: true,
+    tokensUsed: nextTokensUsed,
+    tokenLimit: DAILY_TOKEN_LIMIT,
+    remaining: Math.max(0, DAILY_TOKEN_LIMIT - nextTokensUsed),
+    date: todayIST,
+    messageCount: nextTokensUsed,
+    dailyLimit: DAILY_TOKEN_LIMIT
+  }
 }
 
 /**
