@@ -279,12 +279,17 @@ export default function Page(props: { params: Promise<any>; searchParams: Promis
       
       setChatSessions((prev) => prev.filter((s) => s.id !== id));
       if (activeChatId === id) {
-        setActiveChatId(null);
+        const remainingSessions = chatSessions.filter(s => s.id !== id && !s.isTemporary);
+        if (remainingSessions.length > 0) {
+          setActiveChatId(remainingSessions[0].id);
+        } else {
+          handleNewTemporaryChat();
+        }
       }
     } catch (err) {
       console.error("Failed to delete chat session:", err);
     }
-  }, [activeChatId]);
+  }, [activeChatId, chatSessions, handleNewTemporaryChat]);
 
   /** Navigate to login (used by guest limit prompt) */
   const handleLoginClick = useCallback(() => {

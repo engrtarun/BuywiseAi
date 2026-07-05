@@ -378,7 +378,7 @@ export async function deleteChatSession(sessionId: string): Promise<void> {
   const supabase = await createClient()
   const user = await getAuthenticatedUser(supabase)
 
-  if (!user) {
+  if (!user || sessionId.startsWith("guest-")) {
     return
   }
 
