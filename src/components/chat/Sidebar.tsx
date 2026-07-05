@@ -14,7 +14,6 @@ import { THEME_PRESETS } from "@/lib/themes";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SettingsModal } from "./SettingsModal";
 import { FoodModeToggle } from "@/components/shared/FoodModeToggle";
-import { motion, AnimatePresence } from "framer-motion";
 
 /* ── Inline SVG Icons (animatable via CSS) ───────────── */
 
@@ -361,10 +360,10 @@ function NewChatButton({ onClick, isCollapsed }: NewChatButtonProps) {
         className={`
           group flex items-center justify-center gap-2.5
           rounded-xl bg-marigold/10 border border-marigold/20
-          text-text-primary-dark font-heading font-bold text-fluid-sm
+          text-text-primary-dark font-heading font-bold text-sm
           hover:bg-marigold/20 hover:border-marigold/40
           active:scale-[0.98] transition-all duration-200 touch-manipulation cursor-pointer
-          ${isCollapsed ? "min-touch-target shrink-0" : "w-full px-4 py-3 min-touch-target"}
+          ${isCollapsed ? "size-10 shrink-0" : "w-full px-4 py-3"}
         `}
         aria-label="New Chat"
       >
@@ -411,7 +410,7 @@ function SearchField({ isCollapsed, onExpand, value, onChange }: SearchFieldProp
         placeholder="Search chats..."
         className="
           w-full bg-white/[0.04] border border-border-dark rounded-xl
-          py-2.5 pl-10 pr-4 text-fluid-sm font-sans text-text-primary-dark
+          py-2.5 pl-10 pr-4 text-[13px] font-sans text-text-primary-dark
           placeholder:text-text-secondary outline-none
           focus:border-marigold/40 focus:bg-white/[0.06] transition-all
         "
@@ -432,7 +431,6 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isEditing, setIsEditing] = React.useState(false);
   const [editTitle, setEditTitle] = React.useState(session.title);
-  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
 
   React.useEffect(() => {
     setEditTitle(session.title);
@@ -455,9 +453,6 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
 
     // Call Supabase update
     try {
-      if (session.id.startsWith("guest-")) {
-        return;
-      }
       const supabase = createClient();
       const { error } = await supabase
         .from("chat_sessions")
@@ -485,11 +480,15 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
         }
       }}
       className={`
+<<<<<<< HEAD
         group w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left
+=======
+        group w-full flex items-center px-3 py-2 rounded-xl text-left
+>>>>>>> 44181a012f77a6b27eb5f92790cffe6645132cd0
         transition-all duration-200 cursor-pointer select-none
         ${isActive
-          ? "bg-sidebar-accent text-text-primary-dark font-medium"
-          : "bg-transparent text-text-secondary hover:bg-sidebar-accent/50 hover:text-text-primary-dark"
+          ? "bg-[#2a2a2a] text-text-primary-dark"
+          : "bg-transparent text-text-secondary hover:bg-[#232323] hover:text-text-primary-dark"
         }
       `}
     >
@@ -499,31 +498,7 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
         }`}
       />
       
-      {showDeleteConfirm ? (
-        <div className="flex-1 flex items-center justify-between min-w-0 pr-2 animate-in fade-in slide-in-from-right-4 duration-200">
-          <span className="text-[12px] font-sans text-chili truncate select-none font-medium">Confirm delete?</span>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(session.id);
-              }}
-              className="p-1 rounded-md text-ink-deep bg-chili hover:bg-chili/80 transition-colors"
-            >
-              <Check className="size-3.5" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowDeleteConfirm(false);
-              }}
-              className="p-1 rounded-md text-text-secondary hover:text-text-primary-dark hover:bg-white/[0.06] transition-colors flex items-center justify-center"
-            >
-              <XIcon className="size-3.5" />
-            </button>
-          </div>
-        </div>
-      ) : isEditing ? (
+      {isEditing ? (
         <input
           type="text"
           value={editTitle}
@@ -538,7 +513,7 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
           }}
           onBlur={handleSave}
           autoFocus
-          className="flex-1 bg-[#1A1A18] text-text-primary-dark text-fluid-sm font-sans px-1.5 py-0.5 rounded outline-none border border-brand-accent/50 min-w-0"
+          className="flex-1 bg-[#1A1A18] text-text-primary-dark text-[13px] font-sans px-1.5 py-0.5 rounded outline-none border border-brand-accent/50 min-w-0"
         />
       ) : (
         <span className="flex-1 min-w-0 text-[13px] truncate font-sans leading-tight">
@@ -546,7 +521,11 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
         </span>
       )}
       
+<<<<<<< HEAD
       {!isEditing && !showDeleteConfirm && (
+=======
+      {!isEditing && (
+>>>>>>> 44181a012f77a6b27eb5f92790cffe6645132cd0
         <div className="shrink-0 flex items-center gap-0.5 ml-2">
           {isActive && (
             <button
@@ -556,7 +535,7 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
                 setIsEditing(true);
                 setEditTitle(session.title);
               }}
-              className="p-1 rounded-md text-text-secondary hover:text-text-primary-dark transition-colors relative z-10"
+              className="p-1 rounded-md text-text-secondary hover:text-text-primary-dark transition-colors"
               aria-label="Rename chat"
             >
               <Pencil className="size-3.5" />
@@ -572,7 +551,7 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
               }}
               className={`
                 p-1 rounded-md text-text-secondary hover:text-text-primary-dark hover:bg-white/[0.06]
-                transition-all duration-200 cursor-pointer relative z-10
+                transition-all duration-200 cursor-pointer
                 ${isMenuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}
               `}
               aria-label="Chat actions"
@@ -599,7 +578,7 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
                       setIsEditing(true);
                       setEditTitle(session.title);
                     }}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none relative z-[71]"
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none"
                   >
                     Rename
                   </button>
@@ -608,9 +587,9 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
                     onClick={(e) => {
                       e.stopPropagation();
                       setIsMenuOpen(false);
-                      setShowDeleteConfirm(true);
+                      onDelete(session.id);
                     }}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-sans text-chili hover:bg-chili/10 transition-all font-semibold select-none relative z-[71]"
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-sans text-chili hover:bg-chili/10 transition-all font-semibold select-none"
                   >
                     Delete
                   </button>
@@ -861,26 +840,16 @@ function SidebarContent({
                 {searchQuery ? "No matching chats." : "No chats yet. Start one!"}
               </p>
             ) : (
-              <AnimatePresence initial={false}>
-                {filteredHistory.map((session) => (
-                  <motion.div
-                    key={session.id}
-                    className="w-full min-w-0"
-                    initial={{ height: 0, opacity: 0, overflow: 'hidden' }}
-                    animate={{ height: 'auto', opacity: 1, overflow: 'visible' }}
-                    exit={{ height: 0, opacity: 0, overflow: 'hidden' }}
-                    transition={{ duration: 0.2, ease: "easeInOut" }}
-                  >
-                    <ChatHistoryItem
-                      session={session}
-                      isActive={session.id === activeChatId}
-                      onSelect={(id) => { onSelectChat(id); onClose(); }}
-                      onDelete={onDeleteChat}
-                      onRename={onRenameChat}
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+              filteredHistory.map((session) => (
+                <ChatHistoryItem
+                  key={session.id}
+                  session={session}
+                  isActive={session.id === activeChatId}
+                  onSelect={(id) => { onSelectChat(id); onClose(); }}
+                  onDelete={onDeleteChat}
+                  onRename={onRenameChat}
+                />
+              ))
             )}
           </div>
         </ScrollArea>

@@ -200,6 +200,22 @@ export default function Page() {
   // Derived state for guest limit
   const guestLimitReached = isGuest && !canSendMessage;
 
+  // Toggle data-ghost attribute on document root
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      if (isTemporaryChat) {
+        document.documentElement.setAttribute("data-ghost", "true");
+      } else {
+        document.documentElement.removeAttribute("data-ghost");
+      }
+    }
+    return () => {
+      if (typeof document !== "undefined") {
+        document.documentElement.removeAttribute("data-ghost");
+      }
+    };
+  }, [isTemporaryChat]);
+
   // Derive the active session's messages
   const activeSession = chatSessions.find((s) => s.id === activeChatId);
   const activeMessages = activeSession?.messages ?? [];

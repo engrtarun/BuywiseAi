@@ -11,7 +11,10 @@ import { HamburgerButton } from "./HamburgerButton";
 import { TemporaryChatButton } from "./TemporaryChatButton";
 import { QuickBuyButton } from "@/components/quick-buy/QuickBuyButton";
 import { QuickBuyScreen } from "@/components/quick-buy/QuickBuyScreen";
+<<<<<<< HEAD
 import { ModeToggle } from "./ModeToggle";
+=======
+>>>>>>> 44181a012f77a6b27eb5f92790cffe6645132cd0
 import { FoodQuickBuyButton } from "@/components/quick-buy/FoodQuickBuyButton";
 import { FoodQuickBuyScreen } from "@/components/quick-buy/FoodQuickBuyScreen";
 import { Ghost } from "lucide-react";
@@ -30,7 +33,7 @@ interface ChatHeaderProps {
 
 function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onNewTemporaryChat, onQuickBuyClick, onFoodQuickBuyClick }: ChatHeaderProps) {
   return (
-    <header className={`shrink-0 z-20 flex items-center px-4 py-3 border-b h-14 transition-colors duration-500 ${isTemporaryChat ? 'bg-[#1e1e1e] border-white/5' : 'bg-bg-main border-border-light'}`}>
+    <header className="shrink-0 z-20 flex items-center bg-bg-main border-b border-border-light h-14 transition-colors duration-500">
       <div className="w-full flex items-center justify-between">
         <div className="flex items-center gap-3">
           <HamburgerButton isOpen={isSidebarOpen} onClick={onMenuToggle} />
@@ -44,8 +47,12 @@ function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onN
 
         {/* Top-Right Action Area */}
         <div className="flex items-center gap-2">
+<<<<<<< HEAD
           <ModeToggle />
           {!isGuest && onNewTemporaryChat && (
+=======
+          {onNewTemporaryChat && (
+>>>>>>> 44181a012f77a6b27eb5f92790cffe6645132cd0
             <TemporaryChatButton onClick={onNewTemporaryChat} isTemporaryChat={isTemporaryChat} />
           )}
           <QuickBuyButton onClick={onQuickBuyClick} />
@@ -72,8 +79,8 @@ interface ChatWindowProps {
   guestMessagesRemaining?: number;
   guestLimitReached?: boolean;
   dailyLimitReached?: boolean;
-  tokensUsed?: number;
-  tokenLimit?: number;
+  dailyMessagesRemaining?: number;
+  dailyLimit?: number;
   dailyLimitMessage?: string;
   onLoginClick?: () => void;
   cooldownUntil?: number | null;
@@ -99,8 +106,8 @@ export function ChatWindow({
   guestMessagesRemaining = 0,
   guestLimitReached = false,
   dailyLimitReached = false,
-  tokensUsed,
-  tokenLimit,
+  dailyMessagesRemaining,
+  dailyLimit,
   dailyLimitMessage,
   onLoginClick,
   cooldownUntil = null,
@@ -126,7 +133,7 @@ export function ChatWindow({
   }, [messages]);
 
   return (
-    <div className={`flex flex-col h-dvh w-full text-text-primary-light overflow-hidden relative transition-colors duration-500 ${isTemporaryChat ? 'bg-[#121212]' : 'bg-bg-main'}`}>
+    <div className="flex flex-col h-dvh w-full bg-bg-main text-text-primary-light overflow-hidden relative transition-colors duration-500">
       
       {/* Ghost Watermark Background for Temporary Chat */}
       {isTemporaryChat && (
@@ -190,8 +197,8 @@ export function ChatWindow({
         guestLimitReached={guestLimitReached}
         dailyLimitReached={dailyLimitReached}
         dailyLimitMessage={dailyLimitMessage}
-        tokensUsed={tokensUsed}
-        tokenLimit={tokenLimit}
+        dailyMessagesRemaining={dailyMessagesRemaining}
+        dailyLimit={dailyLimit}
         isGuest={isGuest}
         cooldownUntil={cooldownUntil}
         onLoginClick={onLoginClick}
