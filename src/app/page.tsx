@@ -38,7 +38,7 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
 
   const parsedJson = parseJSONSafe(rawContent);
   if (parsedJson && typeof parsedJson === "object") {
-    if (parsedJson.ui_type === "questionnaire" || parsedJson.type === "clarifying_question") {
+    if (parsedJson.ui_type === "clarifying_question" || parsedJson.ui_type === "questionnaire" || parsedJson.type === "clarifying_question") {
       aiMsg.content = parsedJson.thought || parsedJson.acknowledgement || parsedJson.question || "";
       aiMsg.clarifyingQuestion = {
         question: parsedJson.question || "",

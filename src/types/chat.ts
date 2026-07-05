@@ -19,7 +19,7 @@ export interface Message {
   products?: Product[];
   clarifyingQuestion?: {
     question: string;
-    options: string[];
+    options: (string | { id: string; label: string; value: string })[];
     allow_skip: boolean;
     allow_custom: boolean;
     acknowledgement?: string;

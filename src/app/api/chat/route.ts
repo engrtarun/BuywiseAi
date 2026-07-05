@@ -58,10 +58,15 @@ Usually, ask 2 to 3 clarifying questions (one per turn) about key preferences li
 
 If more context is needed, you MUST return ONLY a JSON object in the following format (no other text, do not wrap in markdown code blocks):
 {
-  "ui_type": "questionnaire",
+  "ui_type": "clarifying_question",
   "thought": "A short reflection or thought process acknowledging their input and explaining why this question is being asked, e.g. 'Bhai laptop lena hai, nice! Chal jaldi se figure out karte hain...'",
   "question": "The clarifying question to ask, e.g. 'Budget kitna hai roughly?'",
-  "options": ["₹40-50k tak", "₹50-70k", "₹70k-1L", "1L+"],
+  "options": [
+    { "id": "1", "label": "₹40-50k tak", "value": "40000-50000" },
+    { "id": "2", "label": "₹50-70k", "value": "50000-70000" },
+    { "id": "3", "label": "₹70k-1L", "value": "70000-100000" },
+    { "id": "4", "label": "1L+", "value": "100000+" }
+  ],
   "allow_skip": true
 }
 

@@ -174,7 +174,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   let isQuestionnaire = false;
   let questionnaireThought = "";
   let questionnaireQuestion = "";
-  let questionnaireOptions: string[] = [];
+  let questionnaireOptions: (string | { id: string; label: string; value: string })[] = [];
   let questionnaireAllowSkip = true;
 
   let isExploreCarousel = false;
@@ -187,7 +187,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
     if (cleaned.startsWith("{") && cleaned.endsWith("}")) {
       const parsed = JSON.parse(cleaned);
       if (parsed && typeof parsed === "object") {
-        if (parsed.ui_type === "questionnaire") {
+        if (parsed.ui_type === "clarifying_question" || parsed.ui_type === "questionnaire") {
           isQuestionnaire = true;
           questionnaireThought = parsed.thought || "";
           questionnaireQuestion = parsed.question || "";
@@ -437,128 +437,42 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
             </div>
           )}
 
-          {/* Case Questionnaire Rendering (Claude-like design) */}
-          {isQuestionnaire && (
-            <div className="flex flex-col gap-3 w-full animate-in fade-in duration-300">
-              {/* Thought process block */}
-              {questionnaireThought && (
-                <div className="flex flex-col gap-1.5 text-text-dim-ondark mb-2 pl-1">
-                  <div className="flex items-center gap-1.5 text-xs font-mono select-none uppercase tracking-wider font-semibold text-text-secondary">
-                    <Brain className="size-3.5 text-marigold animate-pulse" /> Thought Process
-                  </div>
-                  <p className="text-[13px] sm:text-[14px] font-sans italic text-text-secondary pl-4 border-l border-white/10 leading-relaxed">
-                    {questionnaireThought}
-                  </p>
-                </div>
-              )}
-
-              {/* Questionnaire Card (Claude style) */}
-              <div className="w-full max-w-lg bg-[#222222]/90 border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col gap-4 shadow-xl backdrop-blur-md">
-                <div className="flex justify-between items-center border-b border-white/5 pb-2.5">
-                  <h4 className="text-[14px] sm:text-[15px] font-sans font-semibold text-text-primary-light leading-snug">
-                    {questionnaireQuestion}
-                  </h4>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  {questionnaireOptions.map((opt, idx) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      disabled={isInteractionDisabled}
-                      onClick={() => handleOptionClick(opt)}
-                      className={`
-                        flex items-center justify-between w-full p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]
-                        transition-all duration-200 text-left group
-                        ${isInteractionDisabled 
-                          ? "opacity-50 cursor-not-allowed" 
-                          : "cursor-pointer hover:bg-white/[0.08] hover:border-marigold/40 active:scale-[0.99]"}
-                      `}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className={`
-                          flex items-center justify-center size-6 rounded-lg bg-white/5 border border-white/10 text-xs font-mono font-bold text-text-secondary
-                          ${!isInteractionDisabled && "group-hover:text-marigold group-hover:border-marigold/30 transition-colors"}
-                        `}>
-                          {idx + 1}
-                        </span>
-                        <span className={`
-                          text-xs sm:text-sm font-sans font-medium text-text-primary-light
-                          ${!isInteractionDisabled && "group-hover:text-text-primary-dark transition-colors"}
-                        `}>
-                          {opt}
-                        </span>
-                      </div>
-                      <ChevronRight className={`
-                        size-4 text-text-secondary
-                        ${!isInteractionDisabled && "group-hover:text-marigold group-hover:translate-x-0.5 transition-all"}
-                      `} />
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex justify-between items-center mt-1 border-t border-white/5 pt-3">
-                  <button
-                    type="button"
-                    disabled={isInteractionDisabled}
-                    onClick={() => setShowCustomInput((prev) => !prev)}
-                    className={`
-                      flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-sans font-medium
-                      bg-white/[0.02] border border-white/[0.06] transition-all duration-200
-                      ${showCustomInput 
-                        ? "text-marigold border-marigold/40 bg-marigold/5" 
-                        : "text-text-secondary"}
-                      ${isInteractionDisabled 
-                        ? "opacity-50 cursor-not-allowed" 
-                        : "cursor-pointer hover:bg-white/[0.06] hover:border-marigold/30"}
-                    `}
-                  >
-                    <Pencil className="size-3 text-marigold" /> Something else
-                  </button>
-
-                  {questionnaireAllowSkip && (
-                    <button
-                      type="button"
-                      disabled={isInteractionDisabled}
-                      onClick={handleSkip}
-                      className={`
-                        px-3 py-1.5 rounded-xl text-xs sm:text-sm font-sans font-medium text-text-dim-ondark
-                        bg-transparent border border-transparent transition-all duration-200
-                        ${isInteractionDisabled 
-                          ? "opacity-40 cursor-not-allowed" 
-                          : "cursor-pointer hover:bg-white/[0.04] hover:text-text-primary-light"}
-                      `}
-                    >
-                      Skip
-                    </button>
-                  )}
-                </div>
-
-                {/* Inline custom input form */}
-                {showCustomInput && !isInteractionDisabled && (
-                  <form
-                    onSubmit={handleCustomSubmit}
-                    className="w-full flex gap-2 pt-2 border-t border-white/5 animate-in fade-in slide-in-from-top-2 duration-200"
-                  >
-                    <input
-                      type="text"
-                      value={customText}
-                      onChange={(e) => setCustomText(e.target.value)}
-                      placeholder="Type your response..."
-                      disabled={isInteractionDisabled}
-                      className="flex-1 bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2 text-xs sm:text-sm outline-none focus:border-marigold/50 transition-colors font-sans text-text-primary-light"
-                    />
-                    <button
-                      type="submit"
-                      disabled={isInteractionDisabled || !customText.trim()}
-                      className="p-2 rounded-xl bg-marigold text-ink-deeper hover:bg-marigold/90 disabled:opacity-40 transition-colors cursor-pointer flex items-center justify-center animate-in fade-in"
-                    >
-                      <ArrowRight className="size-4" />
-                    </button>
-                  </form>
-                )}
+          {/* Thought process block (as a normal chat bubble just above the card) */}
+          {isQuestionnaire && questionnaireThought && (
+            <div
+              dir="auto"
+              style={{
+                backgroundColor: "var(--ai-bubble-bg)",
+                color: "var(--ai-text)",
+                padding: "var(--ai-bubble-padding)",
+                borderRadius: "var(--ai-bubble-radius)",
+                borderBottomLeftRadius: "var(--ai-bubble-radius-bl, var(--ai-bubble-radius))",
+                boxShadow: "var(--ai-bubble-shadow)",
+              }}
+              className="text-[14px] sm:text-[15px] leading-relaxed break-words font-sans w-full min-w-0 inline-block mb-3 animate-in fade-in duration-300"
+            >
+              <div className="flex items-center gap-1.5 text-xs font-mono select-none uppercase tracking-wider font-semibold text-text-secondary mb-1">
+                <Brain className="size-3.5 text-marigold animate-pulse" /> Thought Process
               </div>
+              <p className="text-text-primary-light whitespace-pre-wrap leading-relaxed">
+                {questionnaireThought}
+              </p>
             </div>
+          )}
+
+          {/* Native Clarifying Question Card */}
+          {isQuestionnaire && onSend && (
+            <ClarifyingQuestionCard
+              question={questionnaireQuestion}
+              options={questionnaireOptions}
+              allowSkip={questionnaireAllowSkip}
+              allowCustom={true}
+              onSelect={(val) => {
+                setInputText?.(val);
+                onSend(val);
+              }}
+              disabled={!isLastAiMessage}
+            />
           )}
 
           {/* Case Explore Carousel Rendering */}
@@ -584,18 +498,6 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
                 </div>
               )}
             </div>
-          )}
-
-          {/* Clarifying Questions Fallback */}
-          {message.clarifyingQuestion && !isQuestionnaire && onSend && (
-            <ClarifyingQuestionCard
-              question={message.clarifyingQuestion.question}
-              options={message.clarifyingQuestion.options}
-              allowSkip={message.clarifyingQuestion.allow_skip}
-              allowCustom={message.clarifyingQuestion.allow_custom}
-              onSelect={onSend}
-              disabled={!isLastAiMessage}
-            />
           )}
 
           {/* Deep Research Results */}
