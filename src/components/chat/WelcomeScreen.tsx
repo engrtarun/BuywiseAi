@@ -73,10 +73,17 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
           <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-text-primary-light tracking-tight">
             Hi, I&apos;m <span className="text-marigold">BuyWise AI</span>
           </h1>
-          <p className="text-sm sm:text-base text-text-secondary font-sans max-w-md mx-auto leading-relaxed">
-            Your smart shopping assistant. Ask me to find, compare, or recommend
-            products across Amazon &amp; Flipkart.
-          </p>
+          <div className="text-sm sm:text-base text-text-secondary font-sans max-w-md mx-auto leading-relaxed space-y-2">
+            <p>
+              Your smart shopping assistant. Ask me to find, compare, or recommend
+              products across Amazon &amp; Flipkart.
+            </p>
+            <p className="text-[13px] sm:text-sm text-text-secondary/90">
+              BuyWise AI ek AI assistant hai aur kabhi-kabhi galat ho sakta hai.
+              Agar aapko selection sahi nahi lage, toh thoda aur detail dein ya
+              phir sawal ko dubara puchhein.
+            </p>
+          </div>
 
           {/* Guest mode indicator badge */}
           {isGuest && (
