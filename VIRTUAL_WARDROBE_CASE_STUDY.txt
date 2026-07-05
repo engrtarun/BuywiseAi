@@ -1,0 +1,67 @@
+VIRTUAL WARDROBE — CASE STUDY REPORT
+
+1. OVERVIEW / EXECUTIVE SUMMARY
+
+The Virtual Wardrobe is a core feature of the BuyWise AI platform designed to solve a significant user problem: while users could easily discover and save individual clothing items via the "Quick Buy" swipe interface, they lacked a way to visualize how these disparate items—tops, bottoms, accessories—would actually look together as a cohesive outfit before making a purchase decision.
+
+By providing an interactive, gamified environment to mix, match, and rate outfits, the Virtual Wardrobe transforms BuyWise AI from a simple shopping search assistant into a personalized styling companion. This differentiation is critical for investor appeal and user stickiness, moving the product from a transactional utility to an engaging, retention-driving experience.
+
+2. WHY IT WAS BUILT (Design Rationale)
+
+The original gap identified in the user journey was the fragmentation of saved items. Users were amassing collections of tops and bottoms in isolation. 
+
+To solve this, two distinct interaction models were built to cater to different user needs, unified within the Virtual Wardrobe:
+- Swipe Mode (Mix-and-Match): Designed for fast, casual, mobile-first interaction. It allows users to cycle through tops and bottoms independently with simple swipes or button taps, or instantly shuffle combinations. This targets users who want quick inspiration with minimal effort.
+- Canvas Mode: Designed for more deliberate, moodboard-style outfit building. It gives users a freeform or grid-based spatial canvas to drag and drop multiple items, offering more control. This targets users who want a richer, more visual interaction and detailed feedback on their specific styling choices.
+
+Offering both ensures the feature is accessible to casual browsers while remaining powerful enough for highly engaged users.
+
+3. DEVELOPMENT TIMELINE / CHRONOLOGY
+
+Based on the project's evolution, the Virtual Wardrobe was built in iterative phases:
+- Phase 1: The foundation was laid with the Quick Buy feature—implementing the swipeable product deck and the ability to save items to a basic list.
+- Phase 2 (Swipe Mode MVP): The `VirtualWardrobe` page was introduced, initially focusing on the "Mix Mode." This implemented the top/bottom independent cycling mechanism to quickly prove the mix-and-match concept, complete with audio/haptic feedback.
+- Phase 3 (Canvas Mode): `OutfitCanvas` was added later, introducing a richer drag-and-drop architecture (`@hello-pangea/dnd`). Sub-features like Grid vs. Free Canvas layout were built into this iteration.
+- Phase 4 (AI Integration): The "Match Meter" was built into Canvas Mode, utilizing the Gemini API to provide styling feedback and a fit score for the assembled outfit.
+- Phase 5 (Refinement & Onboarding): The unified toggle was introduced to seamlessly switch between Swipe and Canvas modes. Finally, an interactive 5-step onboarding walkthrough (`CanvasOnboardingTour`) was added for first-time users.
+
+4. TECHNICAL DEEP DIVE — SWIPE MODE
+
+- How it Works: The `VirtualWardrobe.tsx` component takes a list of saved `QuickBuyProduct` items and categorizes them into "tops" and "bottoms" using a simple heuristic based on product name keywords (e.g., "pant", "jean", "skirt" go to bottoms). 
+- Interaction & Animation: It maintains independent `topIndex` and `bottomIndex` states. Framer Motion is used heavily here. `AnimatePresence` and `motion.div` handle the entering/exiting of product cards. The `drag="x"` prop enables swiping. An `onDragEnd` handler calculates the swipe power (velocity * offset); if it exceeds a threshold, it triggers pagination (cycling to the next or previous item) and plays corresponding haptic/audio feedback (`useSwipeFeedback`).
+- Shuffle: A "Mix" button randomizes both indices to instantly generate a new outfit combination.
+
+5. TECHNICAL DEEP DIVE — CANVAS MODE
+
+- How it Works: `OutfitCanvas.tsx` is built on `@hello-pangea/dnd` for robust drag-and-drop functionality. It manages two main droppable areas: the `source` panel (a horizontal list of available items at the bottom) and the `canvas` area.
+- Layouts: The canvas area supports both "Grid" and "Free" layouts, toggled via `layoutMode` state, which dynamically changes the Tailwind classes (grid vs flex-wrap).
+- Match Meter & Gemini API: When a user clicks "Rate My Fit", a request is sent to `/api/outfit-rating/route.ts`. To save on costs and latency, this integration uses a lightweight text-only prompt approach, sending just the names and categories of the items rather than heavy image payloads. The AI returns a JSON payload with a `score` and `commentary`.
+- Animations & Onboarding: While rating is in progress, a `CanvasThinkingWave` animation plays. The Match Meter utilizes a score-settling gauge animation. For first-time users, `CanvasOnboardingTour` guides them through the UI, checking `localStorage` to ensure it only plays once.
+- Component Structure: 
+  - `OutfitCanvas.tsx` (Main wrapper and logic)
+  - `DraggableWardrobeItem.tsx` (Individual draggable product)
+  - `MatchMeter.tsx` & `MatchMeterBottomSheet.tsx` (Score UI)
+  - `CanvasThinkingWave.tsx` (Loading animation)
+  - `LiveOutfitSummary.tsx` (Real-time price calculation)
+  - `CanvasOnboardingTour.tsx` (Walkthrough)
+  - `/api/outfit-rating/route.ts` (Gemini API route)
+
+6. THE UNIFIED TOGGLE (Progressive Disclosure Decision)
+
+Instead of routing users to separate pages for Swiping vs. Canvas building, a single `ModeToggle.tsx` was implemented in `VirtualWardrobe.tsx`. Both modes are kept mounted in the DOM, but their visibility is toggled using CSS `opacity`, `scale`, and `pointer-events` transitions.
+
+This decision aligns with a broader "progressive disclosure" UX principle adopted across BuyWise AI. The app keeps top-level interactions simple and lightweight (like the chat UI or Swipe Mode), but allows users to dive into richer, more complex environments (like Canvas Mode or detailed Bottom Sheets) without losing context or interrupting their flow.
+
+7. KEY DESIGN DECISIONS & TRADE-OFFS
+
+- Gemini API Approach: A conscious decision was made to use a lightweight, text-based prompt (sending item names/categories) rather than Multimodal image analysis. This trade-off significantly reduces API costs and latency, keeping the app on the free tier, while still delivering the "AI-powered" styling feedback that appeals to users and investors.
+- State Preservation: By mounting both Swipe and Canvas modes and toggling them via CSS rather than React conditional rendering (`if (mode === 'mix')`), the application preserves the user's state. Users can switch back and forth seamlessly without losing their canvas arrangement or current swipe indices, preventing frustration.
+- Known Limitations: The current feature relies on mock product data (`quickBuyMockData`). Furthermore, the "Buy Entire Look" checkout flow leads to a mock `CheckoutFlow` UI. True backend integration with a payment gateway (e.g., Stripe) and live inventory APIs is required for production.
+
+8. METRICS TO TRACK (Recommendations)
+
+Since true analytics are not yet integrated, the following metrics are recommended for implementation post-launch to validate the feature's success:
+- Mode Preference: The percentage of user sessions that engage with Canvas Mode vs. Swipe Mode to determine which mental model resonates more.
+- AI Engagement: The average number of Match Meter score requests per session to gauge the perceived value of the AI styling feedback.
+- Conversion Tracking: The conversion rate from users clicking "Buy Entire Look" in Canvas Mode to completed checkouts, measuring the feature's direct impact on revenue.
+- Drop-off Rate: The completion rate of the `CanvasOnboardingTour` to ensure the drag-and-drop mechanics are easily understood.
