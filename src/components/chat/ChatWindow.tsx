@@ -30,7 +30,7 @@ interface ChatHeaderProps {
 
 function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onNewTemporaryChat, onQuickBuyClick, onFoodQuickBuyClick }: ChatHeaderProps) {
   return (
-    <header className={`shrink-0 z-20 flex items-center px-4 py-3 border-b h-14 transition-colors duration-500 ${isTemporaryChat ? 'bg-[#1e1e1e] border-white/5' : 'bg-bg-main border-border-light'}`}>
+    <header className="shrink-0 z-20 flex items-center bg-bg-main border-b border-border-light h-14 transition-colors duration-500">
       <div className="w-full flex items-center justify-between">
         <div className="flex items-center gap-3">
           <HamburgerButton isOpen={isSidebarOpen} onClick={onMenuToggle} />
@@ -126,7 +126,7 @@ export function ChatWindow({
   }, [messages]);
 
   return (
-    <div className={`flex flex-col h-dvh w-full text-text-primary-light overflow-hidden relative transition-colors duration-500 ${isTemporaryChat ? 'bg-[#121212]' : 'bg-bg-main'}`}>
+    <div className="flex flex-col h-dvh w-full bg-bg-main text-text-primary-light overflow-hidden relative transition-colors duration-500">
       
       {/* Ghost Watermark Background for Temporary Chat */}
       {isTemporaryChat && (
