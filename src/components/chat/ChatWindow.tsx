@@ -11,7 +11,6 @@ import { HamburgerButton } from "./HamburgerButton";
 import { TemporaryChatButton } from "./TemporaryChatButton";
 import { QuickBuyButton } from "@/components/quick-buy/QuickBuyButton";
 import { QuickBuyScreen } from "@/components/quick-buy/QuickBuyScreen";
-import { ModeToggle } from "./ModeToggle";
 import { FoodQuickBuyButton } from "@/components/quick-buy/FoodQuickBuyButton";
 import { FoodQuickBuyScreen } from "@/components/quick-buy/FoodQuickBuyScreen";
 import { Ghost } from "lucide-react";
@@ -44,8 +43,7 @@ function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onN
 
         {/* Top-Right Action Area */}
         <div className="flex items-center gap-2">
-          <ModeToggle />
-          {!isGuest && onNewTemporaryChat && (
+          {onNewTemporaryChat && (
             <TemporaryChatButton onClick={onNewTemporaryChat} isTemporaryChat={isTemporaryChat} />
           )}
           <QuickBuyButton onClick={onQuickBuyClick} />
@@ -72,8 +70,8 @@ interface ChatWindowProps {
   guestMessagesRemaining?: number;
   guestLimitReached?: boolean;
   dailyLimitReached?: boolean;
-  tokensUsed?: number;
-  tokenLimit?: number;
+  dailyMessagesRemaining?: number;
+  dailyLimit?: number;
   dailyLimitMessage?: string;
   onLoginClick?: () => void;
   cooldownUntil?: number | null;
@@ -99,8 +97,8 @@ export function ChatWindow({
   guestMessagesRemaining = 0,
   guestLimitReached = false,
   dailyLimitReached = false,
-  tokensUsed,
-  tokenLimit,
+  dailyMessagesRemaining,
+  dailyLimit,
   dailyLimitMessage,
   onLoginClick,
   cooldownUntil = null,
@@ -190,8 +188,8 @@ export function ChatWindow({
         guestLimitReached={guestLimitReached}
         dailyLimitReached={dailyLimitReached}
         dailyLimitMessage={dailyLimitMessage}
-        tokensUsed={tokensUsed}
-        tokenLimit={tokenLimit}
+        dailyMessagesRemaining={dailyMessagesRemaining}
+        dailyLimit={dailyLimit}
         isGuest={isGuest}
         cooldownUntil={cooldownUntil}
         onLoginClick={onLoginClick}
