@@ -480,17 +480,17 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
         }
       }}
       className={`
-        group w-full flex items-center px-3 py-2 rounded-xl text-left
-        transition-all duration-200 cursor-pointer select-none
-        ${isActive
-          ? "bg-[#2a2a2a] text-text-primary-dark"
-          : "bg-transparent text-text-secondary hover:bg-[#232323] hover:text-text-primary-dark"
-        }
-      `}
+         group w-full flex items-center px-3 py-2 rounded-xl text-left
+         transition-all duration-200 cursor-pointer select-none
+         ${isActive
+           ? "bg-sidebar-accent text-text-primary-dark"
+           : "bg-transparent text-text-primary-dark/70 hover:bg-sidebar-accent/50 hover:text-text-primary-dark"
+         }
+         `}
     >
       <ChatBubbleIcon
         className={`shrink-0 size-3.5 mr-2.5 transition-all duration-300 ${
-          isActive ? "text-text-primary-dark opacity-60" : "text-text-secondary opacity-40 group-hover:opacity-75"
+          isActive ? "text-text-primary-dark opacity-80" : "text-text-primary-dark opacity-60 group-hover:opacity-100"
         }`}
       />
       
@@ -527,7 +527,7 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
                 setIsEditing(true);
                 setEditTitle(session.title);
               }}
-              className="p-1 rounded-md text-text-secondary hover:text-text-primary-dark transition-colors"
+              className="p-1 rounded-md text-text-primary-dark/60 hover:text-text-primary-dark transition-colors"
               aria-label="Rename chat"
             >
               <Pencil className="size-3.5" />
@@ -542,7 +542,7 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
                 setIsMenuOpen(!isMenuOpen);
               }}
               className={`
-                p-1 rounded-md text-text-secondary hover:text-text-primary-dark hover:bg-white/[0.06]
+                p-1 rounded-md text-text-primary-dark/60 hover:text-text-primary-dark hover:bg-white/[0.06]
                 transition-all duration-200 cursor-pointer
                 ${isMenuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}
               `}
