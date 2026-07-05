@@ -65,16 +65,16 @@ export function ClarifyingQuestionCard({
   };
 
   return (
-    <div className="w-full max-w-lg bg-[#222222]/90 border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col gap-4 shadow-xl backdrop-blur-md my-2">
+    <div className="w-full h-auto max-h-none max-w-lg box-border bg-[#0C2823]/80 border border-white/10 rounded-3xl p-4 sm:p-5 flex flex-col gap-4 shadow-[0_8px_30px_rgba(245,158,11,0.15)] backdrop-blur-xl my-2 overflow-hidden scrollbar-none">
       {/* Question Header */}
-      <div className="flex justify-between items-center border-b border-white/5 pb-2.5">
+      <div className="flex justify-between items-center pb-1">
         <h4 className="text-[14px] sm:text-[15px] font-sans font-semibold text-text-primary-light leading-snug">
           {question}
         </h4>
       </div>
 
-      {/* Options List (Claude style) */}
-      <div className="flex flex-col gap-2">
+      {/* Options List (Cloud style pills) */}
+      <div className="flex flex-wrap gap-2.5 min-w-0">
         {normalizedOptions.map((opt, idx) => (
           <button
             key={opt.id + idx}
@@ -82,31 +82,16 @@ export function ClarifyingQuestionCard({
             disabled={isInteractionDisabled}
             onClick={() => handleOptionClick(opt.label)}
             className={`
-              flex items-center justify-between w-full p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]
-              transition-all duration-200 text-left group
+              inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.08]
+              transition-all duration-200 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-marigold focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C2823]
               ${isInteractionDisabled 
                 ? "opacity-50 cursor-not-allowed" 
-                : "cursor-pointer hover:bg-white/[0.08] hover:border-marigold/40 active:scale-[0.99]"}
+                : "cursor-pointer hover:bg-white/[0.08] hover:border-marigold/40 hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0"}
             `}
           >
-            <div className="flex items-center gap-3">
-              <span className={`
-                flex items-center justify-center size-6 rounded-lg bg-white/5 border border-white/10 text-xs font-mono font-bold text-text-secondary
-                ${!isInteractionDisabled && "group-hover:text-marigold group-hover:border-marigold/30 transition-colors"}
-              `}>
-                {idx + 1}
-              </span>
-              <span className={`
-                text-xs sm:text-sm font-sans font-medium text-text-primary-light
-                ${!isInteractionDisabled && "group-hover:text-text-primary-dark transition-colors"}
-              `}>
-                {opt.label}
-              </span>
-            </div>
-            <ChevronRight className={`
-              size-4 text-text-secondary
-              ${!isInteractionDisabled && "group-hover:text-marigold group-hover:translate-x-0.5 transition-all"}
-            `} />
+            <span className="text-xs sm:text-sm font-sans font-medium text-text-primary-light">
+              {opt.label}
+            </span>
           </button>
         ))}
       </div>
@@ -119,8 +104,8 @@ export function ClarifyingQuestionCard({
             disabled={isInteractionDisabled}
             onClick={() => setShowCustomInput((prev) => !prev)}
             className={`
-              flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-sans font-medium
-              bg-white/[0.02] border border-white/[0.06] transition-all duration-200
+              flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans font-medium
+              bg-white/[0.02] border border-white/[0.06] transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-marigold
               ${showCustomInput 
                 ? "text-marigold border-marigold/40 bg-marigold/5" 
                 : "text-text-secondary"}
@@ -139,8 +124,8 @@ export function ClarifyingQuestionCard({
             disabled={isInteractionDisabled}
             onClick={handleSkip}
             className={`
-              px-3 py-1.5 rounded-xl text-xs sm:text-sm font-sans font-medium text-text-dim-ondark
-              bg-transparent border border-transparent transition-all duration-200
+              px-3 py-1.5 rounded-full text-xs sm:text-sm font-sans font-medium text-text-dim-ondark
+              bg-transparent border border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-marigold
               ${isInteractionDisabled 
                 ? "opacity-40 cursor-not-allowed" 
                 : "cursor-pointer hover:bg-white/[0.04] hover:text-text-primary-light"}
@@ -160,7 +145,7 @@ export function ClarifyingQuestionCard({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
             onSubmit={handleCustomSubmit}
-            className="w-full flex gap-2 pt-2 border-t border-white/5 overflow-hidden"
+            className="w-full flex gap-2 pt-2 border-t border-white/5 overflow-hidden box-border"
           >
             <input
               type="text"
@@ -168,12 +153,12 @@ export function ClarifyingQuestionCard({
               onChange={(e) => setCustomText(e.target.value)}
               placeholder="Type your response..."
               disabled={isInteractionDisabled}
-              className="flex-1 bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2 text-xs sm:text-sm outline-none focus:border-marigold/50 transition-colors font-sans text-text-primary-light"
+              className="flex-1 min-w-0 bg-white/[0.04] border border-white/10 rounded-full px-4 py-2 text-xs sm:text-sm outline-none focus:border-marigold/50 focus-visible:ring-2 focus-visible:ring-marigold transition-all font-sans text-text-primary-light"
             />
             <button
               type="submit"
               disabled={isInteractionDisabled || !customText.trim()}
-              className="p-2 rounded-xl bg-marigold text-ink-deeper hover:bg-marigold/90 disabled:opacity-40 transition-colors cursor-pointer flex items-center justify-center animate-in fade-in"
+              className="size-9 sm:size-10 shrink-0 rounded-full bg-marigold text-ink-deeper hover:bg-marigold/90 disabled:opacity-40 transition-colors cursor-pointer flex items-center justify-center animate-in fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C2823]"
             >
               <ArrowRight className="size-4" />
             </button>
