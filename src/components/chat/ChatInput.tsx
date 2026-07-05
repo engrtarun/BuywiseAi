@@ -32,6 +32,7 @@ interface ChatInputProps {
   dailyMessagesRemaining?: number;
   dailyLimit?: number;
   mode?: ChatMode | null;
+  isClarifyingActive?: boolean;
 }
 
 export function ChatInput({ 
@@ -49,7 +50,8 @@ export function ChatInput({
   dailyLimitMessage,
   dailyMessagesRemaining,
   dailyLimit,
-  mode = null
+  mode = null,
+  isClarifyingActive = false
 }: ChatInputProps) {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -261,7 +263,11 @@ export function ChatInput({
             {/* Custom Animated Placeholder */}
             {!inputText && (
               <div className="absolute inset-0 pointer-events-none px-4 flex items-center overflow-hidden">
-                {placeholders.map((text, i) => (
+                {isClarifyingActive ? (
+                  <span className="absolute left-4 right-4 text-[15px] text-text-secondary font-sans truncate opacity-100">
+                    Or reply directly...
+                  </span>
+                ) : placeholders.map((text, i) => (
                   <span
                     key={i}
                     className={`

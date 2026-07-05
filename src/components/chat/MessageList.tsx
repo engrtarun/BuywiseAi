@@ -17,9 +17,10 @@ interface MessageListProps {
   onSend: (message: string) => void;
   onNewChat?: (mode?: ChatMode) => void;
   setInputText?: (text: string) => void;
+  mode?: ChatMode | null;
 }
 
-export function MessageList({ messages, isTyping, onRegenerate, onRetry, onFeedback, onSend, onNewChat, setInputText }: MessageListProps) {
+export function MessageList({ messages, isTyping, onRegenerate, onRetry, onFeedback, onSend, onNewChat, setInputText, mode }: MessageListProps) {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -84,6 +85,7 @@ export function MessageList({ messages, isTyping, onRegenerate, onRetry, onFeedb
                 onSend={onSend}
                 onNewChat={onNewChat}
                 setInputText={setInputText}
+                mode={mode}
               />
             )
           )}

@@ -109,6 +109,14 @@ export function ChatWindow({
   
   const showWelcome = messages.length === 0 && !isTyping;
 
+  const isClarifyingActive = React.useMemo(() => {
+    if (messages.length === 0) return false;
+    const last = messages[messages.length - 1];
+    if (last.role !== "assistant") return false;
+    // Fast check for clarifying_question or questionnaire in the raw JSON payload
+    return !!last.clarifyingQuestion || last.content.includes('"ui_type":"clarifying_question"') || last.content.includes('"ui_type": "clarifying_question"') || last.content.includes('"ui_type":"questionnaire"') || last.content.includes('"ui_type": "questionnaire"');
+  }, [messages]);
+
   return (
     <div className="flex flex-col h-dvh w-full bg-bg-main text-text-primary-light overflow-hidden relative">
       <ChatHeader 
@@ -142,6 +150,7 @@ export function ChatWindow({
           onSend={onSend}
           onNewChat={onNewChat}
           setInputText={setInputText}
+          mode={activeMode}
         />
       )}
       <ChatInput
@@ -160,6 +169,7 @@ export function ChatWindow({
         cooldownUntil={cooldownUntil}
         onLoginClick={onLoginClick}
         mode={activeMode}
+        isClarifyingActive={isClarifyingActive}
       />
 
       {/* Quick Buy Overlay */}

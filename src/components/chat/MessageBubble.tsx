@@ -12,6 +12,7 @@ import { ProductCard } from "./ProductCard";
 import { ProductCarousel } from "./ProductCarousel";
 import { SpoilerText } from "./SpoilerText";
 import { ClarifyingQuestionCard } from "./ClarifyingQuestionCard";
+import { DeepResearchClarifyingCard, ClarifyingQuestion } from "./DeepResearchClarifyingCard";
 import { ChatMode } from "@/types/chat";
 import { Brain, Pencil, ArrowRight, ChevronRight } from "lucide-react";
 import { getExploreLayoutParts } from "@/app/page";
@@ -163,9 +164,10 @@ interface MessageBubbleProps {
   onSend?: (message: string) => void;
   onNewChat?: (mode?: ChatMode) => void;
   setInputText?: (text: string) => void;
+  mode?: ChatMode | null;
 }
 
-export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, onFeedback, onSend, onNewChat, setInputText }: MessageBubbleProps) {
+export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, onFeedback, onSend, onNewChat, setInputText, mode }: MessageBubbleProps) {
   // Local states for custom Questionnaire Card
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customText, setCustomText] = useState("");
@@ -193,6 +195,8 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   let questionnaireQuestion = "";
   let questionnaireOptions: (string | { id: string; label: string; value: string })[] = [];
   let questionnaireAllowSkip = true;
+  let questionnaireAllowCustom = true;
+  let questionnaireQuestions: ClarifyingQuestion[] = [];
 
   let isExploreCarousel = false;
   let exploreHeadline = "";
@@ -208,9 +212,15 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
         if (parsed.ui_type === "clarifying_question" || parsed.ui_type === "questionnaire") {
           isQuestionnaire = true;
           questionnaireThought = parsed.thought || "";
-          questionnaireQuestion = parsed.question || "";
-          questionnaireOptions = parsed.options || [];
-          questionnaireAllowSkip = parsed.allow_skip !== false;
+          
+          if (Array.isArray(parsed.questions)) {
+            questionnaireQuestions = parsed.questions;
+          } else {
+            questionnaireQuestion = parsed.question || "";
+            questionnaireOptions = parsed.options || [];
+            questionnaireAllowSkip = parsed.allow_skip !== false;
+            questionnaireAllowCustom = parsed.allow_custom !== false;
+          }
         } else if (parsed.ui_type === "explore_carousel") {
           isExploreCarousel = true;
           exploreHeadline = parsed.headline || "";
@@ -240,7 +250,8 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
     questionnaireThought = message.clarifyingQuestion.acknowledgement || "";
     questionnaireQuestion = message.clarifyingQuestion.question || "";
     questionnaireOptions = message.clarifyingQuestion.options || [];
-    questionnaireAllowSkip = message.clarifyingQuestion.allow_skip;
+    questionnaireAllowSkip = message.clarifyingQuestion.allow_skip !== false;
+    questionnaireAllowCustom = message.clarifyingQuestion.allow_custom !== false;
   }
 
   if (!isExploreCarousel && message.products && message.products.length > 0 && !message.deepResearchResults && !message.searchTag) {
@@ -504,17 +515,33 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
 
           {/* Native Clarifying Question Card */}
           {isQuestionnaire && onSend && (
-            <ClarifyingQuestionCard
-              question={questionnaireQuestion}
-              options={questionnaireOptions}
-              allowSkip={questionnaireAllowSkip}
-              allowCustom={true}
-              onSelect={(val) => {
-                setInputText?.(val);
-                onSend(val);
-              }}
-              disabled={!isLastAiMessage}
-            />
+            mode === "deep_research" ? (
+              <DeepResearchClarifyingCard
+                questions={questionnaireQuestions.length > 0 ? questionnaireQuestions : [{
+                  question: questionnaireQuestion,
+                  options: questionnaireOptions,
+                  allowSkip: questionnaireAllowSkip,
+                  allowCustom: questionnaireAllowCustom
+                }]}
+                onSelect={(val) => {
+                  setInputText?.(val);
+                  onSend(val);
+                }}
+                disabled={!isLastAiMessage}
+              />
+            ) : (
+              <ClarifyingQuestionCard
+                question={questionnaireQuestion}
+                options={questionnaireOptions}
+                allowSkip={questionnaireAllowSkip}
+                allowCustom={questionnaireAllowCustom}
+                onSelect={(val) => {
+                  setInputText?.(val);
+                  onSend(val);
+                }}
+                disabled={!isLastAiMessage}
+              />
+            )
           )}
 
           {/* Case Explore Mode Split Layout Rendering */}
