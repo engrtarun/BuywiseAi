@@ -171,6 +171,22 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   const [customText, setCustomText] = useState("");
   const [hasAnswered, setHasAnswered] = useState(false);
 
+  // Lazy loading state for Deep Research recommendations:
+  const dr = message.deepResearchResults;
+  const hasDrQueries = !!(dr && (dr.primaryQuery || (dr.backupQueries && dr.backupQueries.length > 0)));
+  const isDrAlreadyLoaded = !!(message.deepResearchResults?.primaryProduct || (message.deepResearchResults?.backupProducts && message.deepResearchResults.backupProducts.length > 0));
+
+  const [primaryProduct, setPrimaryProduct] = useState<Product | undefined>(message.deepResearchResults?.primaryProduct);
+  const [backupProducts, setBackupProducts] = useState<Product[]>(message.deepResearchResults?.backupProducts || []);
+  const [loadingDeepResearch, setLoadingDeepResearch] = useState(hasDrQueries && !isDrAlreadyLoaded);
+
+  // Lazy loading state for Explore Mode:
+  const hasSearchTag = !!message.searchTag;
+  const isExploreAlreadyLoaded = !!(message.products && message.products.length > 0);
+
+  const [exploreProducts, setExploreProducts] = useState<Product[]>(message.products || []);
+  const [loadingExplore, setLoadingExplore] = useState(hasSearchTag && !isExploreAlreadyLoaded);
+
   // Parser Middleware inside component:
   let isQuestionnaire = false;
   let questionnaireThought = "";
@@ -298,21 +314,6 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
     onSend?.("Skip");
   };
 
-  // Lazy loading state for Deep Research recommendations:
-  const dr = message.deepResearchResults;
-  const hasDrQueries = !!(dr && (dr.primaryQuery || (dr.backupQueries && dr.backupQueries.length > 0)));
-  const isDrAlreadyLoaded = !!(message.deepResearchResults?.primaryProduct || (message.deepResearchResults?.backupProducts && message.deepResearchResults.backupProducts.length > 0));
-
-  const [primaryProduct, setPrimaryProduct] = useState<Product | undefined>(message.deepResearchResults?.primaryProduct);
-  const [backupProducts, setBackupProducts] = useState<Product[]>(message.deepResearchResults?.backupProducts || []);
-  const [loadingDeepResearch, setLoadingDeepResearch] = useState(hasDrQueries && !isDrAlreadyLoaded);
-
-  // Lazy loading state for Explore Mode:
-  const hasSearchTag = !!message.searchTag;
-  const isExploreAlreadyLoaded = !!(message.products && message.products.length > 0);
-
-  const [exploreProducts, setExploreProducts] = useState<Product[]>(message.products || []);
-  const [loadingExplore, setLoadingExplore] = useState(hasSearchTag && !isExploreAlreadyLoaded);
 
   // Fetch Deep Research products lazily
   useEffect(() => {
