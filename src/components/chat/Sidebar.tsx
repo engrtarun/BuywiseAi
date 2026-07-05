@@ -485,13 +485,8 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
         }
       }}
       className={`
-<<<<<<< HEAD
         group w-full min-w-0 flex items-center gap-2.5 px-3 py-2 rounded-xl text-left
         transition-all duration-200 relative cursor-pointer select-none
-=======
-        group w-full flex items-center px-3 py-2 rounded-xl text-left
-        transition-all duration-200 cursor-pointer select-none
->>>>>>> feature/Modle
         ${isActive
           ? "bg-sidebar-accent text-text-primary-dark font-medium"
           : "bg-transparent text-text-secondary hover:bg-sidebar-accent/50 hover:text-text-primary-dark"
@@ -546,22 +541,13 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
           className="flex-1 bg-[#1A1A18] text-text-primary-dark text-fluid-sm font-sans px-1.5 py-0.5 rounded outline-none border border-brand-accent/50 min-w-0"
         />
       ) : (
-<<<<<<< HEAD
         <span className="flex-1 min-w-0 text-fluid-sm truncate font-sans leading-tight pr-14">
-=======
-        <span className="flex-1 min-w-0 text-[13px] truncate font-sans leading-tight">
->>>>>>> feature/Modle
           {session.title}
         </span>
       )}
       
-<<<<<<< HEAD
       {!isEditing && !showDeleteConfirm && (
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
-=======
-      {!isEditing && (
-        <div className="shrink-0 flex items-center gap-0.5 ml-2">
->>>>>>> feature/Modle
           {isActive && (
             <button
               type="button"

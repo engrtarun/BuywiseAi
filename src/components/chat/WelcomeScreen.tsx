@@ -73,12 +73,6 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
           <h1 className="text-fluid-3xl font-heading font-extrabold text-text-primary-light tracking-tight">
             Hi, I&apos;m <span className="text-marigold">BuyWise AI</span>
           </h1>
-<<<<<<< HEAD
-          <p className="text-fluid-base text-text-secondary font-sans max-w-md mx-auto leading-relaxed">
-            Your smart shopping assistant. Ask me to find, compare, or recommend
-            products across Amazon &amp; Flipkart.
-          </p>
-=======
           <div className="text-sm sm:text-base text-text-secondary font-sans max-w-md mx-auto leading-relaxed space-y-2">
             <p>
               Your smart shopping assistant. Ask me to find, compare, or recommend
@@ -90,7 +84,6 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
               phir sawal ko dubara puchhein.
             </p>
           </div>
->>>>>>> feature/Modle
 
           {/* Guest mode indicator badge */}
           {isGuest && (

@@ -54,7 +54,6 @@ export function ChatInput({
   dailyLimitReached = false,
   dailyLimitMessage,
   tokensUsed,
-  tokensUsed,
   tokenLimit,
   dailyMessagesRemaining,
   dailyLimit,
