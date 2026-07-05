@@ -35,6 +35,10 @@ export function CheckoutFlow({ isOpen, onClose, onSuccess, items }: CheckoutFlow
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvv, setCardCvv] = useState("");
   
+  // tarun`s antigravity
+  const [orderId, setOrderId] = useState("");
+  const [estDelivery, setEstDelivery] = useState("");
+  
   // Mock checkout only — integrate real payment gateway (Razorpay/Stripe) here for production.
 
   const [mounted, setMounted] = useState(false);
@@ -58,6 +62,10 @@ export function CheckoutFlow({ isOpen, onClose, onSuccess, items }: CheckoutFlow
     setTimeout(() => {
       setIsProcessing(false);
       setStep("SUCCESS");
+      
+      // tarun`s antigravity
+      setOrderId(`#BW-${Math.floor(Math.random() * 1000000)}`);
+      setEstDelivery(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }));
       
       // Fire confetti
       const duration = 3000;
@@ -370,12 +378,14 @@ export function CheckoutFlow({ isOpen, onClose, onSuccess, items }: CheckoutFlow
             <div className="w-full bg-white/5 border border-white/10 rounded-xl p-4 mb-8 text-sm">
               <div className="flex justify-between mb-2">
                 <span className="text-text-secondary">Order ID</span>
-                <span className="font-mono font-bold">#BW-{Math.floor(Math.random() * 1000000)}</span>
+                {/* tarun`s antigravity */}
+                <span className="font-mono font-bold">{orderId}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-secondary">Est. Delivery</span>
+                {/* tarun`s antigravity */}
                 <span className="font-bold">
-                  {new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                  {estDelivery}
                 </span>
               </div>
             </div>

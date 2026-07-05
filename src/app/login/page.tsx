@@ -407,7 +407,8 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
                 Reset Password
               </h1>
               <p className="text-sm font-sans text-text-dim-ondark">
-                Enter your email address and we'll send you a link to reset your password.
+                {/* reason or tarun`s antigravity */}
+                Enter your email address and we&apos;ll send you a link to reset your password.
               </p>
             </div>
 
@@ -457,7 +458,8 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
                 Verify your email
               </h1>
               <p className="text-sm font-sans text-text-dim-ondark leading-relaxed">
-                Your email isn't confirmed yet. We've sent a verification email to <span className="text-text-ondark font-semibold">{email}</span>.
+                {/* reason or tarun`s antigravity */}
+                Your email isn&apos;t confirmed yet. We&apos;ve sent a verification email to <span className="text-text-ondark font-semibold">{email}</span>.
               </p>
               <div className="text-xs font-sans text-text-dim-ondark/80 bg-ink-deeper/40 p-3.5 rounded-2xl border border-line-ondark/60 space-y-1.5 mt-1">
                 <p>👉 <strong>Option 1:</strong> Click the <strong>Confirm email address</strong> link in the email to log in directly.</p>
@@ -568,7 +570,8 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
         {/* Bottom Navigation link */}
         {viewState === "login" && (
           <div className="text-center text-xs font-mono text-text-dim-ondark mt-2">
-            Don't have an account?{" "}
+            {/* reason or tarun`s antigravity */}
+            Don&apos;t have an account?{" "}
             <a href="/signup" className="text-marigold hover:underline transition-all">
               Sign up
             </a>
