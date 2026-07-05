@@ -81,12 +81,16 @@ export async function GET(request: Request) {
 
     const preferredCategories = categoriesParam ? categoriesParam.split(',').map((value) => value.trim()).filter(Boolean) : [];
 
-    const res = await fetch("https://fakestoreapi.com/products");
+    const res = await fetch("https://fakestoreapi.com/products", {
+      cache: 'force-cache',
+      next: { revalidate: 300 },
+    });
     const allClothes = await res.json();
 
     const formattedProducts = allClothes.map((product: any) => {
       const availableSizes = ['S', 'M', 'L', 'XL'];
-      const mockSizes = availableSizes.filter(() => Math.random() > 0.4);
+      const seed = Number(product.id) + (product.category?.length || 0);
+      const mockSizes = availableSizes.filter((_, index) => (seed + index) % 3 !== 0);
       if (mockSizes.length === 0) mockSizes.push('M');
 
       return {
