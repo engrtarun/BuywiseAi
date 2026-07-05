@@ -101,14 +101,17 @@ export async function POST(req: NextRequest) {
     // Default action (save to bookmarks/cart)
     const { data, error } = await supabase
       .from("user_saved_products")
-      .insert({
-        user_id: user.id,
-        product_id,
-        product_name,
-        price,
-        image_url,
-        is_cart,
-      })
+      .upsert(
+        {
+          user_id: user.id,
+          product_id,
+          product_name,
+          price,
+          image_url,
+          is_cart,
+        },
+        { onConflict: "user_id,product_id" }
+      )
       .select()
       .single();
 
