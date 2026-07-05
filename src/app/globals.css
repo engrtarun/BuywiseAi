@@ -662,8 +662,7 @@
 }
 
 /* 7. GHOST MODE (FORCE PURE BLACK OVERRIDE) */
-[data-ghost="true"],
-[data-ghost="true"] .dark {
+[data-theme][data-mode][data-ghost="true"] {
   --ink-deep: #000000;
   --ink-deeper: #000000;
   --sidebar-bg: #000000;
