@@ -1,0 +1,331 @@
+================================================================================
+BuyWise AI - Comprehensive Project Overview & Codebase Documentation
+================================================================================
+
+This document details the current state, architecture, database schemas, features, 
+potential improvement areas, and known issues of the BuyWise AI Next.js + Supabase application,
+based directly on a codebase analysis of src/app, src/components, src/lib, src/hooks, 
+and database access paths.
+
+────────────────────────────────────────────────────────────────────────────────
+1. FULL FEATURE LIST
+────────────────────────────────────────────────────────────────────────────────
+
+AUTHENTICATION & ONBOARDING
+* Email/Password Authentication: Complete email and password sign-up and login flow 
+  in `app/signup` and `app/login`, with strength checklist validation on signup 
+  (minimum 8 characters, at least 1 digit, and at least 1 uppercase letter).
+* Google OAuth: Native OAuth sign-in integration on both login and signup screens, 
+  which routes exchange callbacks securely through `app/auth/callback/route.ts`.
+* Email OTP Verification: 6-digit OTP email confirmation powered by Supabase Auth. 
+  It automatically intercepts logins for unverified accounts and prompts for code 
+  entry, featuring a client-side 30-second resend cooldown timer.
+* Password Reset: Reset link requests sent via `supabase.auth.resetPasswordForEmail` 
+  which routes users back to `/welcome` or profile editing on validation.
+* Route Protection Middleware: Secure route interceptor in `lib/supabase/middleware.ts` 
+  that checks active sessions and guest status. Unauthenticated users are redirected 
+  to `/login` when trying to access `/`, `/chat`, or `/welcome`.
+* Onboarding Wizard: First-time Google OAuth signups are redirected to `/welcome` 
+  to capture the user's full name, upserting it into the database `profiles` table.
+
+CHAT INTERFACE & EXPERIENCE (GEMINI AI)
+* AI Chat with Gemini: Real-time conversational interface inside the chat shell 
+  using the `@google/generative-ai` SDK and the fast, lightweight `gemini-2.5-flash` model.
+* Context-Aware History: Map frontend message structures (`role: assistant | user`) 
+  into the Gemini SDK roles (`role: model | user`) in `/api/chat/route.ts`.
+* Daily Message Limit with IST Reset: Daily throttle of 25 messages for authenticated users. 
+  Counters in `daily_message_limits` are stamped and refreshed relative to the 
+  Indian Standard Time (IST) offset (+5.5 hours, offset-calculated in server actions) 
+  so the message allowance resets exactly at midnight IST.
+* Local Fallback Responses: In-memory fallback library (`lib/fallbackResponses.ts`) 
+  that serves detailed mock recommendations if Gemini API calls fail, timeout, or 
+  hit 429 quota limits.
+* Persistent Chat History: Messages and sessions are loaded on mount from 
+  `chat_messages` and `chat_sessions` database tables.
+* Auto-Generated Chat Titles: Sending the first message triggers an asynchronous 
+  background call to Gemini to summarize the text into a concise 3-6 word chat title, 
+  syncing it back to the database. Falls back to character-truncation if the API fails.
+* Chat Management: Rename (inline pencil button) and delete operations in the 
+  sidebar directly sync with database session fields.
+* Resizable Sidebar Drawer: Resizable sidebar panel using a custom `useSidebarResize` 
+  drag hook, collapsible into a space-saving icon-only view for smaller viewports.
+
+THEMING
+* BuyWise Green / Dark Switcher: Sleek, responsive theme presets declared as custom 
+  Tailwind v4 tokens in `app/globals.css`. Supports "BuyWise Green" (emerald ink & paper) 
+  and "BuyWise Dark" (monochrome carbon & neutral light).
+* LocalStorage Persistence: User theme choice is stored locally as `buywise-theme` 
+  and synced on window loading via `ThemeInitializer.tsx` using `data-theme` 
+  on the document element.
+* Application Modes: Toggles between "retail" (e.g. fashion/tech) and "food" modes. 
+  In Food mode, the primary brand accent changes to Swiggy Orange (`#FC8019`) and 
+  swiping features switch to culinary menus.
+
+QUICK BUY (DECK SWIPING)
+* Live Product Fetching: Curated listings fetched dynamically from FakeStoreAPI and 
+  formatted into INR currency (multiplied by 85) with simulated available sizes.
+* Profile-Based Filters: Products are filtered dynamically by user size and budget 
+  pulled from profile preferences.
+* Stack Pagination & Prefetching: Products are shown in a Tinder-style stack. 
+  When the visible deck falls below 3 cards, the app pre-fetches the next page 
+  from the API route.
+* Swipe Actions: Swipe right to save to the cart/bookmarks (persisted to Supabase 
+  `user_saved_products`), and swipe left to reject. Uses haptic vibration and 
+  audio sound cues (`accept.wav` / `reject.wav`).
+* Saved Deck Cart: Display screen for saved cart items. Supports updating quantities, 
+  deleting, and displaying totals with mock tax (18%) and shipping.
+* Order Logging (One-Click Buy): Swipe checkout button log order data immediately 
+  into the database `orders` table.
+
+PROFILE MANAGEMENT
+* Completion Progress Ring: Circular SVG progress ring (circumference of 106.8) 
+  rendered in the sidebar around the user's avatar, tracking profile completeness 
+  based on full name, avatar, size, and budget.
+* Avatar Upload to Supabase Storage: File selection, client-side type validation (size 
+  and image type), and uploading via Supabase Storage SDK. Uploads to a public 
+  `avatars` bucket under `${userId}/${timestamp}.${ext}`, automatically attempting 
+  to initialize the bucket if missing.
+* Preference Customization: Edit profile screen supporting direct updates of full name, 
+  preferred sizing (S, M, L, XL), and max budget (INR).
+
+VIRTUAL WARDROBE & COLLAGE CANVAS
+* Virtual Wardrobe (`/virtual-wardrobe`): Dedicated studio page with a toggle control 
+  to switch between Mix & Match and Outfit Canvas views.
+* Mix & Match (Mix Mode): Splits saved wardrobe products into separate top and bottom 
+  motion panels. Supports dragging or paginating through tops/bottoms, with a 
+  randomized "Mix" shuffle button.
+* Outfit Canvas (Canvas Mode): Multi-item drag-and-drop workspace powered by 
+  `@hello-pangea/dnd`. Move items from the bottom source dock onto the canvas. 
+  Supports "free collage" or "grid" layout modes.
+* Draggable Wardrobe Item: Draggable card handles with responsive 3D tilt effects 
+  during active drag movement, driven by Framer Motion velocity tracking.
+* Outfit Rating (Match Meter): Interactive rating system. Sends canvas items list to 
+  `/api/outfit-rating` which hits Gemini to return a witty fashion review 
+  and a style score (0-100). The Match Meter animates the score with a circular 
+  SVG loader and slot-machine overshoot effect.
+* Canvas Thinking Wave: Glowing overlay with an animated five-bar neon wave indicating 
+  Gemini is reviewing the fit.
+* Quick Access Menu: Plus button on `ChatInput` opens a React Portal popover 
+  providing quick links to Quick Buy and Virtual Wardrobe.
+* Floating Chat Bubble: Fixed button on Quick Buy and Wardrobe pages that redirects 
+  back to `/chat`.
+
+DATABASE SCHEMA (SUPABASE TABLES)
+1. `profiles`
+   * `id`: uuid (Primary Key, references auth.users.id)
+   * `full_name`: text (Nullable)
+   * `email`: text (Nullable)
+   * `avatar_url`: text (Nullable)
+   * `size`: text (Default 'M')
+   * `budget`: numeric (Default 5000)
+   * `sizes`: text[] or comma-separated text (Nullable)
+   * `max_budget`: numeric (Nullable)
+   * `preferred_sizes`: text[] (Nullable)
+   * `preferred_categories`: text[] (Nullable)
+   * `preferences`: jsonb (Nullable)
+2. `chat_sessions`
+   * `id`: uuid (Primary Key, Default: gen_random_uuid())
+   * `user_id`: uuid (references auth.users.id / profiles.id)
+   * `status`: text (Default: 'active')
+   * `requirements`: jsonb (Default: '{}')
+   * `title`: text (Nullable)
+   * `created_at`: timestamptz (Default: now())
+3. `chat_messages`
+   * `id`: uuid (Primary Key, Default: gen_random_uuid())
+   * `session_id`: uuid (references chat_sessions.id ON DELETE CASCADE)
+   * `sender`: text (Value constraints: 'user' or 'ai')
+   * `message`: text (Content markdown)
+   * `created_at`: timestamptz (Default: now())
+4. `orders`
+   * `id`: uuid/bigint (Primary Key)
+   * `user_id`: uuid (references auth.users.id)
+   * `product`: jsonb (Stores object: { id, name, price, image_url })
+   * `payment_method`: text (Default: 'Quick Buy (Swipe)')
+   * `status`: text (Default: 'completed')
+   * `created_at`: timestamptz (Default: now())
+5. `user_saved_products`
+   * `id`: uuid/bigint (Primary Key)
+   * `user_id`: uuid (references auth.users.id)
+   * `product_id`: text
+   * `product_name`: text
+   * `price`: numeric
+   * `image_url`: text
+   * `is_cart`: boolean
+   * `created_at`: timestamptz (Default: now())
+6. `daily_message_limits`
+   * `user_id`: uuid (references auth.users.id)
+   * `usage_date`: date/text (Format: YYYY-MM-DD)
+   * `message_count`: integer (Default: 1)
+   * Note: Composite Primary Key on `(user_id, usage_date)`
+7. Storage Bucket
+   * `avatars` (Public bucket containing profile avatars path format: `${user_id}/${timestamp}.${ext}`)
+
+────────────────────────────────────────────────────────────────────────────────
+2. 50 IMPROVEMENT / REVIEW POINTS
+────────────────────────────────────────────────────────────────────────────────
+
+SECURITY
+1. Review RLS policies on `daily_message_limits` to ensure users cannot manipulate 
+   their own message counts or insert records for dates in the future.
+2. Remove client-side calls to `supabase.storage.listBuckets()` and `createBucket` 
+   in `profile/page.tsx`, which require high-privilege keys, and instead configure 
+   buckets using Supabase SQL migrations.
+3. Add input sanitization on incoming markdown in `MessageBubble.tsx` to prevent XSS 
+   vulnerabilities when utilizing `rehype-raw` with user or AI-generated inputs.
+4. Implement token-based authentication checks inside the `/api/outfit-rating` 
+   POST endpoint to prevent unauthenticated access and potential API abuse.
+5. Require active session verification inside `/api/quick-buy` to avoid public 
+   scraping of external api routes.
+6. Verify and validate the product price server-side in `/api/quick-buy/actions` 
+   before inserting records into `orders` or `user_saved_products` to block client-side 
+   payload modification (e.g. changing price to 0).
+7. Restrict image mimetype uploads to strict types (e.g., only `image/png`, 
+   `image/jpeg`) on the Supabase storage bucket policies, reinforcing the client 
+   file extension validation.
+8. Enforce rate limiting on OTP request endpoints (e.g. `resend`) to mitigate email 
+   spam abuse vectors.
+9. Implement a strict content security policy (CSP) header configuration in 
+   `next.config.ts` to restrict execution to trusted sources only.
+10. Ensure Postgres Row-Level Security (RLS) is enabled on all tables including 
+    `orders` and `user_saved_products`, double checking policies using `auth.uid()`.
+
+PERFORMANCE
+11. Replace the full `https://fakestoreapi.com/products` fetch inside `/api/quick-buy` 
+    with a paginated API query or implement server-side caching (e.g., Redis or Next.js 
+    revalidate tags) to avoid requesting all 20 products from the external site 
+    on every single request.
+12. Resolve the database query waterfall inside `page.tsx` where it loops over 
+    sessions and triggers `getChatHistory(s.id)` in a `Promise.all` loop. Load history 
+    lazily upon session selection.
+13. Refactor the theme transition style rule `* { transition-property: ... }` in 
+    `globals.css` since wild transitions degrade client scrolling and drag performance. 
+    Limit transitions to specific components.
+14. Replace standard `<img>` tags in `SwipeableProductCard.tsx` and `SavedItemsList.tsx` 
+    with Next.js `<Image>` components to gain size optimization and webp translation benefits.
+15. Dynamic import `@hello-pangea/dnd` and `framer-motion` inside `OutfitCanvas` 
+    so that massive drag-and-drop bundle weights are deferred until the wardrobe canvas 
+    is active.
+16. Debounce or throttle page pre-fetching hooks in `SwipeCardDeck.tsx` to stop duplicate 
+    next-page API triggers when a user swipes rapidly.
+17. Memoize categories mapping logic inside `VirtualWardrobe.tsx` to avoid re-evaluating 
+    tops and bottoms heuristics during render sweeps.
+18. Avoid using server actions like `incrementExistingLimitRow` inside loops where 
+    database concurrency can cause high-latency database reconnect bottlenecks.
+19. Split environment variable Zod schemas in `env.ts` into server-only and client-only 
+    components to reduce bundle weight.
+20. Check for layout shifts in `Sidebar.tsx` during transition resizing; throttle 
+    resize update callbacks to match window animation frames.
+
+CODE QUALITY
+21. Standardize types in `actions/chat.ts` and `src/types/chat.ts` to eliminate 
+    data mapping wrappers inside `page.tsx`.
+22. Replace manual payload validation checks inside `/api/quick-buy/actions/route.ts` 
+    with a consolidated Zod schema parser.
+23. Unify size preference database fields (e.g. `size` string vs `sizes` array) 
+    to prevent conditional fallback mapping logic.
+24. Centralize the `completionPercentage` math function to a shared utility helper 
+    to remove duplicate code blocks in `Sidebar.tsx` and `profile/page.tsx`.
+25. Remove any usage of `any` types in page props signatures within `page.tsx` 
+    and `welcome/page.tsx` by using typed Next.js router declarations.
+26. Migrate sidebar client-side history filtering `chatHistory.filter(...)` to a 
+    Supabase server query for better scaling with large user history stacks.
+27. Define standard custom Exception classes for database operations in `actions/chat.ts` 
+    to log precise DB codes rather than generic errors.
+28. Restructure keywords matching in `fallbackResponses.ts` to use regex word boundaries 
+    avoiding accidental substring matches.
+29. Replace client-side inline CSS variables (such as `style={{ rotate }}`) with 
+    standard Tailwind animations and custom utility configurations.
+30. Relocate mock logic inside `useVoiceCustomizationExtraction.ts` to a server action 
+    that safely calls Gemini when voice functionality is promoted.
+
+UX/UI POLISH
+31. Compute circular SVG progress values dynamically instead of hardcoding `106.8` 
+    dasharray properties in `Sidebar.tsx`.
+32. Display first and last name initials in avatar placeholders instead of returning 
+    only a single uppercase character.
+33. Add horizontal overflow scroll indicators to Comparison Tables in `MessageBubble.tsx` 
+    to let mobile users know tables are scrollable.
+34. Implement a nice fallback card UI inside `SwipeableProductCard.tsx` if unsplash 
+    image sources fail to load.
+35. Unbind mouse and touch movement listeners in `DraggableWardrobeItem.tsx` 
+    velocity trackers when the user is not dragging.
+36. Avoid hardcoding the ₹5000 delivery fee cap in checkout components; fetch 
+    promotional settings dynamically from a configuration file.
+37. Validate UPI ID formats and credit card card lengths inside `CheckoutFlow.tsx` 
+    before unlocking next-step actions.
+38. Display a countdown timer inside the "Daily Limit Reached" dialog showing the 
+    exact time remaining until the daily reset.
+39. Bind a window navigator online/offline event listener inside `OfflineBanner` 
+    to toggle network status instantly instead of checking only on mount.
+40. Add active focus ring classes to mobile hamburger selectors to make keyboard 
+    navigation accessible.
+41. Provide `aria-expanded` and `aria-haspopup` tags to the Quick Access plus button 
+    to make interactive states accessible.
+42. Style native drop-down picker elements on the profile editor page with a custom 
+    combobox or Radix Select UI to match the dashboard aesthetics.
+43. Sync overlay positions in `SpotlightOverlay.tsx` with dynamic resizing, preventing 
+    misalignments if window dimensions shift during active tours.
+44. Show an animated transition state during profile picture upload instead of 
+    abruptly displaying progress rings.
+
+PRODUCTION READINESS
+45. Implement token-based rate limiting on the `/api/chat` route (e.g. using Upstash 
+    or a token bucket) to protect the route from scraping or DDoS attacks.
+46. Replace the retry counter loops in server action counters with an atomic 
+    Supabase Postgres function to securely manage increment concurrency.
+47. Implement a secondary Gemini API key fallback rotation inside server routes 
+    to avoid service interruptions on key limits.
+48. Configure structured server-side logging using Winston or Axiom, replacing 
+    unstructured `console.log` statements in API endpoints.
+49. Connect Razorpay or Stripe hooks inside `CheckoutFlow.tsx` to handle payments 
+    in place of the mock timeout simulators.
+50. Integrate error monitoring software (e.g. Sentry) to trace client-side runtime 
+    failures and API rejects.
+
+────────────────────────────────────────────────────────────────────────────────
+3. SUMMARY OF KNOWN ISSUES AND LOGICAL BUGS
+────────────────────────────────────────────────────────────────────────────────
+
+UNRESOLVED TODOS & WORKAROUNDS IN CODE COMMENTS
+1. Permanent Guest Counter Limitation (`useGuestAccess.ts`):
+   Guest access is tracked using a permanent counter value in localStorage. The comment 
+   acknowledges: "TODO (product decision): To add a daily-reset, store a timestamp 
+   alongside the count (e.g. `buywise_guest_ts`) and reset if >24 h have elapsed 
+   since first message."
+2. Placeholder Audio Assets (`useSwipeFeedback.ts`):
+   "Replace these placeholder files with final designed sound assets at 
+   /public/sounds/accept.wav and /public/sounds/reject.wav". (Files currently exist 
+   but remain static placeholder assets).
+3. Mock Voice Extraction (`useVoiceCustomizationExtraction.ts`):
+   "MOCK IMPLEMENTATION: For production, route this text through the DeepSeek/Gemini API 
+   for robust NLP-based extraction of modifiers and requests."
+4. Simulation Payment Gateways (`CheckoutFlow.tsx`):
+   "Mock checkout only — integrate real payment gateway (Razorpay/Stripe) here for 
+   production."
+5. Local-Only Saved Product Removal (`useQuickBuy.ts`):
+   "removeSavedItem: remove action is local-only for now." The database sync for 
+   removal is not completed.
+
+GEMINI FREE TIER LIMITATIONS & RETRIES
+* High-frequency requests triggers 429 quota exceptions (rate limits). To mitigate 
+  this, the system implements fallback responses and a custom message cooldown delay, 
+  but does not guarantee AI responses if key limitations are exceeded.
+
+UNTESTED & UNVERIFIED EXPERIMENTAL FEATURES
+* Outfit Canvas, Match Meter, and `/api/outfit-rating` fashion commentary endpoint 
+  have been merged but lack automated testing coverage. The influencer commentary parsing 
+  relies on a fragile regex match for the format `SCORE: XX`, which is vulnerable to 
+  Gemini response format variations.
+
+DATABASE & NAMING INCONSISTENCIES
+* Sizing Columns: The database and code alternate between `size` (text field in `profiles`), 
+  `sizes` (comma-separated string array in API route fallbacks), and `preferred_sizes` 
+  or `preferences` properties.
+* Budget Columns: Sizing forms, profiles, and API routers alternate between checking 
+  `budget`, `max_budget`, and camel-cased `maxBudget`.
+* Image Columns: Card lists use `image` for URL properties, while orders and saved 
+  products records store the URL under `image_url`, necessitating runtime mapping code: 
+  `image_url: product.image_url || product.image`.
+* Storage Bucket Listing permission check: The frontend profile page attempts to run 
+  storage bucket list queries directly. This fails with permission violations in 
+  production environments where client keys lack admin policies.
