@@ -33,6 +33,25 @@ export interface MessageLimitResult {
   date: string
 }
 
+async function getAuthenticatedUser(
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
+
+  if (error || !user) {
+    return null
+  }
+
+  return user
+}
+
+function getGuestSessionId(): string {
+  return `guest-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+}
+
 function getCurrentISTDateString(now = new Date()): string {
   const istTime = new Date(now.getTime() + IST_OFFSET_MS)
   return istTime.toISOString().slice(0, 10)
@@ -108,14 +127,11 @@ async function incrementExistingLimitRow(
 
 export async function getDailyMessageLimitStatus(): Promise<MessageLimitResult> {
   const supabase = await createClient()
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
+  const user = await getAuthenticatedUser(supabase)
 
   const todayIST = getCurrentISTDateString()
 
-  if (authError || !user) {
+  if (!user) {
     return formatLimitResult(0, todayIST, true)
   }
 
@@ -143,13 +159,10 @@ export async function getDailyMessageLimitStatus(): Promise<MessageLimitResult> 
 
 export async function checkAndIncrementMessageLimit(): Promise<MessageLimitResult> {
   const supabase = await createClient()
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
+  const user = await getAuthenticatedUser(supabase)
 
-  if (authError || !user) {
-    throw new Error("Authentication failed: User is not logged in.")
+  if (!user) {
+    return formatLimitResult(0, getCurrentISTDateString(), true)
   }
 
   const todayIST = getCurrentISTDateString()
@@ -208,10 +221,9 @@ export async function checkAndIncrementMessageLimit(): Promise<MessageLimitResul
 export async function createChatSession(): Promise<string> {
   const supabase = await createClient()
 
-  // Retrieve current logged-in user
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) {
-    throw new Error("Authentication failed: User is not logged in.")
+  const user = await getAuthenticatedUser(supabase)
+  if (!user) {
+    return getGuestSessionId()
   }
 
   // Insert a new chat session row
@@ -245,6 +257,17 @@ export async function sendMessage(
   message: string
 ): Promise<ChatMessage> {
   const supabase = await createClient()
+  const user = await getAuthenticatedUser(supabase)
+
+  if (!user) {
+    return {
+      id: getGuestSessionId(),
+      session_id: sessionId,
+      sender,
+      message,
+      created_at: new Date().toISOString(),
+    }
+  }
 
   const { data, error } = await supabase
     .from("chat_messages")
@@ -272,6 +295,11 @@ export async function sendMessage(
  */
 export async function getChatHistory(sessionId: string): Promise<ChatMessage[]> {
   const supabase = await createClient()
+  const user = await getAuthenticatedUser(supabase)
+
+  if (!user) {
+    return []
+  }
 
   const { data, error } = await supabase
     .from("chat_messages")
@@ -293,9 +321,9 @@ export async function getChatHistory(sessionId: string): Promise<ChatMessage[]> 
 export async function getOrCreateActiveSession(): Promise<string> {
   const supabase = await createClient()
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) {
-    throw new Error("Authentication failed: User is not logged in.")
+  const user = await getAuthenticatedUser(supabase)
+  if (!user) {
+    return getGuestSessionId()
   }
 
   // Check for existing active session
@@ -325,9 +353,9 @@ export async function getOrCreateActiveSession(): Promise<string> {
 export async function listChatSessions(): Promise<ChatSession[]> {
   const supabase = await createClient()
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) {
-    throw new Error("Authentication failed: User is not logged in.")
+  const user = await getAuthenticatedUser(supabase)
+  if (!user) {
+    return []
   }
 
   const { data, error } = await supabase
@@ -348,6 +376,11 @@ export async function listChatSessions(): Promise<ChatSession[]> {
  */
 export async function deleteChatSession(sessionId: string): Promise<void> {
   const supabase = await createClient()
+  const user = await getAuthenticatedUser(supabase)
+
+  if (!user) {
+    return
+  }
 
   const { error } = await supabase
     .from("chat_sessions")
