@@ -202,6 +202,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   let exploreHeadline = "";
   let exploreProductsList: Product[] = [];
   let exploreDeepDiveText = "";
+  let textResponseContent = "";
 
   try {
     const rawContent = message.content || "";
@@ -237,6 +238,8 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
             image: p.image && !p.image.includes("placeholder.png") ? String(p.image) : getCuratedProductImage(p.name || ""),
             link: String(p.link || "https://amazon.in"),
           }));
+        } else if (parsed.ui_type === "text_response") {
+          textResponseContent = parsed.text || "";
         }
       }
     }
@@ -445,8 +448,11 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   const hasProducts = message.products && message.products.length > 0;
   const isSingleProduct = hasProducts && message.products?.length === 1;
   
+  // Use textResponseContent if it was successfully parsed, otherwise fallback to original message.content
+  const rawMarkdownContent = textResponseContent || message.content;
+  
   // Pre-process for spoiler syntax ||text||
-  const processedContent = message.content.replace(/\|\|(.*?)\|\|/g, '<span data-spoiler="true">$1</span>');
+  const processedContent = rawMarkdownContent.replace(/\|\|(.*?)\|\|/g, '<span data-spoiler="true">$1</span>');
 
   // AI Bubble
   return (

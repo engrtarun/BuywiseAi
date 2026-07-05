@@ -4,12 +4,9 @@ import React, { useRef, useState, useEffect } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye, Plus, Compass, Brain } from "lucide-react";
 import { QuickAccessMenu } from "./QuickAccessMenu";
-<<<<<<< HEAD
 import { SoundMuteToggle } from "@/components/shared/SoundMuteToggle";
 import { UsageRing } from "@/components/ui/usage-ring";
-=======
 import { ChatMode } from "@/types/chat";
->>>>>>> feature/Modle
 
 const placeholders = [
   "BuyWise anything...",
@@ -33,17 +30,14 @@ interface ChatInputProps {
   isGuest?: boolean;
   dailyLimitReached?: boolean;
   dailyLimitMessage?: string;
-<<<<<<< HEAD
   tokensUsed?: number;
   tokenLimit?: number;
-=======
   dailyMessagesRemaining?: number;
   dailyLimit?: number;
   mode?: ChatMode | null;
   isClarifyingActive?: boolean;
   onModeChange?: (mode: ChatMode) => void;
   isModeLocked?: boolean;
->>>>>>> feature/Modle
 }
 
 export function ChatInput({ 
@@ -59,17 +53,14 @@ export function ChatInput({
   isGuest = false,
   dailyLimitReached = false,
   dailyLimitMessage,
-<<<<<<< HEAD
   tokensUsed,
-  tokenLimit
-=======
+  tokenLimit,
   dailyMessagesRemaining,
   dailyLimit,
   mode = "explore",
   isClarifyingActive = false,
   onModeChange,
   isModeLocked = false
->>>>>>> feature/Modle
 }: ChatInputProps) {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -302,13 +293,8 @@ export function ChatInput({
               placeholder={dailyLimitReached ? (dailyLimitMessage ?? "Daily limit reached — resets at 12:00 AM") : ""}
               minRows={1}
               maxRows={5}
-<<<<<<< HEAD
               disabled={guestLimitReached || dailyLimitReached}
-              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center ${(guestLimitReached || dailyLimitReached) ? "cursor-not-allowed placeholder:text-text-destructive/80" : ""}`}
-=======
-              disabled={guestLimitReached}
-              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${guestLimitReached ? "cursor-not-allowed placeholder:text-text-dim-ondark/80" : ""}`}
->>>>>>> feature/Modle
+              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${(guestLimitReached || dailyLimitReached) ? "cursor-not-allowed placeholder:text-text-destructive/80" : ""}`}
             />
           </div>
 

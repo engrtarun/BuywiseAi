@@ -43,6 +43,8 @@ const guestRequestCounts = new Map<string, number>();
 
 const EXPLORE_SYSTEM_PROMPT = `You are BuyWise AI, a shopping assistant.
 The user is in Explore Mode. This is a lightweight, visual, browse-first experience.
+
+If the user's request is PRODUCT-RELATED (e.g., asking for recommendations, comparisons, or specific items):
 You MUST NOT return standard markdown lists. Instead, optimize for a layout where the response is split into:
 1. A brief, catchy hook/intro text (~20% of content) in "headline".
 2. A list of relevant products in "products".
@@ -60,7 +62,16 @@ You MUST return ONLY a raw valid JSON object in the following format (no other c
   "deep_dive": "### Deep Dive\\nHere is a detailed breakdown of these models. The first option features high-durability design, while the second option focuses on pure performance specs."
 }
 
-Ensure the products returned are highly relevant to the user request. Construct reasonable product objects dynamically with approximate real-world specifications, names, prices, and ratings. Use "/placeholder.png" for the image path. Return ONLY the raw JSON.`;
+Ensure the products returned are highly relevant to the user request. Construct reasonable product objects dynamically with approximate real-world specifications, names, prices, and ratings. Use "/placeholder.png" for the image path.
+
+If the user's request is a GENERAL/NON-PRODUCT question (e.g., "what's a good gift idea for a 25-year-old", "hello", "how are you"):
+You MUST return ONLY a raw valid JSON object in the following format:
+{
+  "ui_type": "text_response",
+  "text": "Your helpful response here using markdown."
+}
+
+Return ONLY the raw JSON in both cases.`;
 
 const DEEP_RESEARCH_SYSTEM_PROMPT = `You are BuyWise AI, a shopping assistant.
 The user is in Deep Research Mode (an interactive, guided flow).
@@ -128,7 +139,6 @@ export async function POST(req: NextRequest) {
     const { history = [], message, mode = "explore" } = body;
     userMessage = message;
 
-<<<<<<< HEAD
     const access = await enforceChatAccess(req);
     if (access.response) {
       return access.response;
@@ -137,8 +147,6 @@ export async function POST(req: NextRequest) {
 
     // Map frontend conversation history ({ role: "assistant"|"user", content })
     // to the structure expected by the Gemini SDK ({ role: "model"|"user", parts: [{ text }] })
-=======
->>>>>>> feature/Modle
     const formattedHistory = history.map((msg) => {
       const role = msg.role === "assistant" ? "model" : "user";
       return {

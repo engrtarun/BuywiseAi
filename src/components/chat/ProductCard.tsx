@@ -114,11 +114,6 @@ export function ProductCard({ product, onAddToCartToggle }: ProductCardProps) {
       onClick={handleCardClick}
       className={`
         group flex flex-col w-full h-full cursor-pointer
-<<<<<<< HEAD
-        bg-ink-deep border border-line-ondark rounded-2xl overflow-hidden
-        transition-colors duration-300 hover-lift hover:border-marigold/40
-      "
-=======
         bg-zinc-900/85 border rounded-2xl overflow-hidden backdrop-blur-md
         transition-all duration-200 hover:scale-[1.02]
         ${inCart 
@@ -126,7 +121,6 @@ export function ProductCard({ product, onAddToCartToggle }: ProductCardProps) {
           : "border-white/5 hover:border-zinc-800 shadow-xl"
         }
       `}
->>>>>>> feature/Modle
     >
       {/* Image container */}
       <div className="relative aspect-square w-full bg-white/5 overflow-hidden border-b border-white/5">
@@ -175,28 +169,6 @@ export function ProductCard({ product, onAddToCartToggle }: ProductCardProps) {
       </div>
 
       {/* Content */}
-<<<<<<< HEAD
-      <div className="flex flex-col flex-1 p-fluid-base">
-        <h3 className="font-heading font-semibold text-text-ondark text-fluid-base leading-tight line-clamp-2 mb-1.5 group-hover:text-marigold transition-colors">
-          {product.name}
-        </h3>
-
-        {/* Rating */}
-        <div className="flex items-center gap-1.5 mb-2.5">
-          <span className="text-marigold text-fluid-sm tracking-widest">{renderStars(product.rating)}</span>
-          <span className="text-text-dim-ondark text-fluid-sm font-mono mt-0.5">
-            ({product.reviewCount})
-          </span>
-        </div>
-
-        <div className="mt-auto pt-2 flex items-end justify-between">
-          <div className="flex flex-col">
-            <span className="font-heading font-bold text-marigold text-fluid-xl leading-none mb-1">
-              {product.price}
-            </span>
-            <div className="flex items-center text-brand-accent/80 text-fluid-sm font-bold tracking-wide uppercase group-hover:text-brand-accent transition-colors">
-              View Details <ChevronRight className="size-3 ml-0.5" />
-=======
       <div className="flex flex-col flex-1 p-3.5 sm:p-4 bg-gradient-to-b from-transparent to-black/20">
         <h3 className="font-heading font-medium text-zinc-100 text-[14px] sm:text-[15px] leading-tight line-clamp-2 mb-2 group-hover:text-marigold transition-colors">
           {product.name}
@@ -213,7 +185,6 @@ export function ProductCard({ product, onAddToCartToggle }: ProductCardProps) {
               <span className="text-zinc-500 text-[10px] font-mono leading-none">
                 ({product.rating.toFixed(1)})
               </span>
->>>>>>> feature/Modle
             </div>
           </div>
 
@@ -222,24 +193,10 @@ export function ProductCard({ product, onAddToCartToggle }: ProductCardProps) {
               href={product.link}
               target="_blank"
               rel="noopener noreferrer"
-<<<<<<< HEAD
-              className="flex items-center justify-center min-touch-target rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-text-ondark touch-manipulation"
-=======
               className="flex items-center justify-center size-8 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-colors text-zinc-300"
->>>>>>> feature/Modle
               aria-label="View Product"
               onClick={(e) => e.stopPropagation()}
             >
-<<<<<<< HEAD
-              <ExternalLink className="size-4" />
-            </a>
-            
-            <button
-              onClick={() => setIsCheckoutOpen(true)}
-              className="flex items-center justify-center min-touch-target px-4 rounded-full bg-brand-accent border border-brand-accent hover:bg-transparent hover:text-brand-accent transition-colors text-bg-main font-bold text-fluid-sm gap-1.5 touch-manipulation"
-            >
-              <ShoppingCart className="size-4" /> Buy
-=======
               <ExternalLink className="size-3.5" />
             </a>
             
@@ -251,7 +208,6 @@ export function ProductCard({ product, onAddToCartToggle }: ProductCardProps) {
               className="flex items-center justify-center h-8 px-3 rounded-lg bg-marigold hover:bg-marigold/95 transition-colors text-zinc-950 font-bold text-xs gap-1"
             >
               Buy
->>>>>>> feature/Modle
             </button>
           </div>
         </div>
