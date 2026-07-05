@@ -5,6 +5,7 @@ import TextareaAutosize from "react-textarea-autosize";
 import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye, Plus, Compass, Brain } from "lucide-react";
 import { QuickAccessMenu } from "./QuickAccessMenu";
 import { ChatMode } from "@/types/chat";
+import { UsageRing } from "@/components/ui/usage-ring";
 
 const placeholders = [
   "BuyWise anything...",
@@ -28,8 +29,8 @@ interface ChatInputProps {
   isGuest?: boolean;
   dailyLimitReached?: boolean;
   dailyLimitMessage?: string;
-  dailyMessagesRemaining?: number;
-  dailyLimit?: number;
+  tokensUsed?: number;
+  tokenLimit?: number;
   mode?: ChatMode | null;
   isClarifyingActive?: boolean;
   onModeChange?: (mode: ChatMode) => void;
@@ -49,8 +50,8 @@ export function ChatInput({
   isGuest = false,
   dailyLimitReached = false,
   dailyLimitMessage,
-  dailyMessagesRemaining,
-  dailyLimit,
+  tokensUsed,
+  tokenLimit,
   mode = "explore",
   isClarifyingActive = false,
   onModeChange,
@@ -61,6 +62,8 @@ export function ChatInput({
   const [isQuickMenuOpen, setIsQuickMenuOpen] = useState(false);
   const plusButtonRef = useRef<HTMLButtonElement>(null);
   const [plusButtonRect, setPlusButtonRect] = useState<DOMRect | null>(null);
+
+  const isDisabled = disabled || dailyLimitReached;
 
   // Rotate placeholder every 5 seconds
   useEffect(() => {
@@ -234,13 +237,14 @@ export function ChatInput({
             {/* Quick Actions + Button */}
             <button
               ref={plusButtonRef}
+              disabled={isDisabled}
               onClick={() => {
                 if (plusButtonRef.current) {
                   setPlusButtonRect(plusButtonRef.current.getBoundingClientRect());
                 }
                 setIsQuickMenuOpen(!isQuickMenuOpen);
               }}
-              className="flex items-center justify-center size-10 shrink-0 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-text-secondary hover:text-text-primary-light self-end mb-[2px]"
+              className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-text-secondary hover:text-text-primary-light self-end mb-[2px] ${isDisabled ? "opacity-40 cursor-not-allowed" : ""}`}
               aria-label="Quick Actions"
             >
               <Plus className={`size-5 transition-transform duration-200 ${isQuickMenuOpen ? 'rotate-45' : 'rotate-0'}`} />
@@ -288,26 +292,33 @@ export function ChatInput({
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder=""
+              placeholder={dailyLimitReached ? (dailyLimitMessage ?? "Daily limit reached — resets at 12:00 AM") : ""}
               minRows={1}
               maxRows={5}
-              disabled={guestLimitReached}
-              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${guestLimitReached ? "cursor-not-allowed placeholder:text-text-dim-ondark/80" : ""}`}
+              disabled={guestLimitReached || dailyLimitReached}
+              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${(guestLimitReached || dailyLimitReached) ? "cursor-not-allowed placeholder:text-text-destructive/80" : ""}`}
             />
           </div>
+
+          {!isGuest && tokensUsed !== undefined && tokenLimit !== undefined && (
+            <div className="flex items-center self-end mb-[8px] mr-1 shrink-0">
+              <UsageRing value={tokensUsed} max={tokenLimit} size={26} />
+            </div>
+          )}
 
           <button
             type="button"
             onTouchStart={(e) => {
               e.preventDefault();
-              handleSend();
+              if (!isDisabled) handleSend();
             }}
             onClick={(e) => {
               e.preventDefault();
-              handleSend();
+              if (!isDisabled) handleSend();
             }}
             aria-label="Send message"
-            className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-brand-accent text-white transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || disabled || guestLimitReached || timeLeft > 0 ? "opacity-40 cursor-not-allowed" : "hover:scale-105 hover:brightness-110 active:scale-95 cursor-pointer"
+            disabled={isDisabled || guestLimitReached || timeLeft > 0}
+            className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-brand-accent text-white transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || isDisabled || guestLimitReached || timeLeft > 0 ? "opacity-40 cursor-not-allowed" : "hover:scale-105 hover:brightness-110 active:scale-95 cursor-pointer"
               }`}
           >
             {timeLeft > 0 ? (
@@ -320,15 +331,6 @@ export function ChatInput({
           </button>
           </div>
         </div>
-
-        {/* Daily Usage Indicator */}
-        {!isGuest && dailyMessagesRemaining !== undefined && dailyLimit !== undefined && (
-          <div className="text-center mt-1">
-            <span className="text-[11px] font-mono text-text-dim-ondark opacity-60">
-              {dailyLimit - dailyMessagesRemaining}/{dailyLimit} messages today
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );

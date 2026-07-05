@@ -13,6 +13,7 @@ import { QuickBuyButton } from "@/components/quick-buy/QuickBuyButton";
 import { QuickBuyScreen } from "@/components/quick-buy/QuickBuyScreen";
 import { FoodQuickBuyButton } from "@/components/quick-buy/FoodQuickBuyButton";
 import { FoodQuickBuyScreen } from "@/components/quick-buy/FoodQuickBuyScreen";
+import { ModeToggle } from "./ModeToggle";
 import { Ghost } from "lucide-react";
 
 /* ── Header ──────────────────────────────────────────── */
@@ -43,6 +44,7 @@ function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onN
 
         {/* Top-Right Action Area */}
         <div className="flex items-center gap-2">
+          <ModeToggle />
           {onNewTemporaryChat && (
             <TemporaryChatButton onClick={onNewTemporaryChat} isTemporaryChat={isTemporaryChat} />
           )}
@@ -70,8 +72,8 @@ interface ChatWindowProps {
   guestMessagesRemaining?: number;
   guestLimitReached?: boolean;
   dailyLimitReached?: boolean;
-  dailyMessagesRemaining?: number;
-  dailyLimit?: number;
+  tokensUsed?: number;
+  tokenLimit?: number;
   dailyLimitMessage?: string;
   onLoginClick?: () => void;
   cooldownUntil?: number | null;
@@ -97,8 +99,8 @@ export function ChatWindow({
   guestMessagesRemaining = 0,
   guestLimitReached = false,
   dailyLimitReached = false,
-  dailyMessagesRemaining,
-  dailyLimit,
+  tokensUsed,
+  tokenLimit,
   dailyLimitMessage,
   onLoginClick,
   cooldownUntil = null,
@@ -188,8 +190,8 @@ export function ChatWindow({
         guestLimitReached={guestLimitReached}
         dailyLimitReached={dailyLimitReached}
         dailyLimitMessage={dailyLimitMessage}
-        dailyMessagesRemaining={dailyMessagesRemaining}
-        dailyLimit={dailyLimit}
+        tokensUsed={tokensUsed}
+        tokenLimit={tokenLimit}
         isGuest={isGuest}
         cooldownUntil={cooldownUntil}
         onLoginClick={onLoginClick}
