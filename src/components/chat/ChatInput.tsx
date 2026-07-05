@@ -32,6 +32,8 @@ interface ChatInputProps {
   dailyMessagesRemaining?: number;
   dailyLimit?: number;
   mode?: ChatMode | null;
+  onModeChange?: (mode: ChatMode) => void;
+  isModeLocked?: boolean;
 }
 
 export function ChatInput({ 
@@ -49,7 +51,9 @@ export function ChatInput({
   dailyLimitMessage,
   dailyMessagesRemaining,
   dailyLimit,
-  mode = null
+  mode = "explore",
+  onModeChange,
+  isModeLocked = false
 }: ChatInputProps) {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -186,31 +190,30 @@ export function ChatInput({
         )}
 
         <div className="flex flex-col bg-bg-input rounded-3xl border border-border-light focus-within:border-brand-accent/50 transition-colors shadow-sm overflow-hidden">
-          
-          {/* Toolbar or Mode Badge */}
-          {mode ? (
-            <div className="flex items-center px-3 py-1.5 border-b border-border-light bg-black/10 select-none">
-              {/* TODO(chat-modes): formatting toolbar preserved / hidden here */}
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs font-semibold text-text-primary-light animate-in fade-in duration-200">
-                {mode === "deep_research" ? (
-                  <>
-                    <Brain className="size-3 text-marigold" />
-                    <span className="text-text-secondary">🔬 Deep Research</span>
-                  </>
-                ) : (
-                  <>
-                    <Compass className="size-3 text-marigold" />
-                    <span className="text-text-secondary">🧭 Explore Mode</span>
-                  </>
-                )}
-              </div>
+          {/* Toolbar with Mode Badge and Formatting Options */}
+          <div className="flex items-center justify-between px-3 py-1.5 border-b border-border-light bg-black/15 select-none">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs font-semibold text-text-primary-light animate-in fade-in duration-200">
+              {mode === "deep_research" ? (
+                <>
+                  <Brain className="size-3 text-marigold" />
+                  <span className="text-text-secondary">🔬 Deep Research</span>
+                </>
+              ) : (
+                <>
+                  <Compass className="size-3 text-marigold" />
+                  <span className="text-text-secondary">🧭 Explore Mode</span>
+                </>
+              )}
+              {isModeLocked && (
+                <span className="text-[9px] text-text-dim-ondark/60 font-mono ml-1 px-1 bg-white/5 rounded border border-white/5">Locked</span>
+              )}
             </div>
-          ) : (
-            <div className="flex items-center gap-1 px-3 py-1.5 border-b border-border-light bg-black/10">
+
+            <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => applyFormatting("**")}
-                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95"
+                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95 cursor-pointer"
                 title="Bold (Ctrl+B)"
               >
                 <Bold className="size-4" />
@@ -218,7 +221,7 @@ export function ChatInput({
               <button
                 type="button"
                 onClick={() => applyFormatting("*")}
-                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95"
+                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95 cursor-pointer"
                 title="Italic (Ctrl+I)"
               >
                 <Italic className="size-4" />
@@ -227,13 +230,13 @@ export function ChatInput({
               <button
                 type="button"
                 onClick={() => applyFormatting("||")}
-                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95"
+                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95 cursor-pointer"
                 title="Spoiler"
               >
                 <Eye className="size-4" />
               </button>
             </div>
-          )}
+          </div>
 
           <div className="flex items-end gap-2 p-1 pl-2 pr-1.5 pb-1.5">
             {/* Quick Actions + Button */}
@@ -255,6 +258,9 @@ export function ChatInput({
               isOpen={isQuickMenuOpen} 
               onClose={() => setIsQuickMenuOpen(false)} 
               anchorRect={plusButtonRect} 
+              selectedMode={mode || "explore"}
+              onModeChange={onModeChange || (() => {})}
+              isModeLocked={!!isModeLocked}
             />
 
             <div className="relative flex-1 flex min-h-[44px] sm:min-h-[48px]">

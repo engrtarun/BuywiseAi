@@ -159,7 +159,9 @@ export function ChatWindow({
         isGuest={isGuest}
         cooldownUntil={cooldownUntil}
         onLoginClick={onLoginClick}
-        mode={activeMode}
+        mode={activeMode || selectedMode}
+        onModeChange={onModeChange}
+        isModeLocked={!!activeMode}
       />
 
       {/* Quick Buy Overlay */}
