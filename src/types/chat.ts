@@ -33,6 +33,8 @@ export interface Message {
   };
   suggestedMode?: ChatMode;
   searchTag?: string;
+  exploreIntro?: string;
+  exploreDeepDive?: string;
 }
 
 export interface ChatSession {

@@ -37,7 +37,11 @@ const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
 const EXPLORE_SYSTEM_PROMPT = `You are BuyWise AI, a shopping assistant.
 The user is in Explore Mode. This is a lightweight, visual, browse-first experience.
-You MUST NOT return standard markdown lists. Instead, optimize for a layout where text commentary is limited to ~20% of screen value and deliver product objects to populate cards in the remaining 80% screen area.
+You MUST NOT return standard markdown lists. Instead, optimize for a layout where the response is split into:
+1. A brief, catchy hook/intro text (~20% of content) in "headline".
+2. A list of relevant products in "products".
+3. A detailed deep dive explanation with technical details, educational descriptions, or comparison text (~80% of content) in "deep_dive".
+
 You MUST return ONLY a raw valid JSON object in the following format (no other conversational prose outside the JSON, do not wrap in markdown code blocks):
 
 {
@@ -46,7 +50,8 @@ You MUST return ONLY a raw valid JSON object in the following format (no other c
   "products": [
     { "id": "1", "name": "Product Name 1", "price": "₹14,999", "rating": 4.2, "image": "/placeholder.png" },
     { "id": "2", "name": "Product Name 2", "price": "₹15,499", "rating": 4.5, "image": "/placeholder.png" }
-  ]
+  ],
+  "deep_dive": "### Deep Dive\\nHere is a detailed breakdown of these models. The first option features high-durability design, while the second option focuses on pure performance specs."
 }
 
 Ensure the products returned are highly relevant to the user request. Construct reasonable product objects dynamically with approximate real-world specifications, names, prices, and ratings. Use "/placeholder.png" for the image path. Return ONLY the raw JSON.`;

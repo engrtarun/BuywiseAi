@@ -14,6 +14,7 @@ import { SpoilerText } from "./SpoilerText";
 import { ClarifyingQuestionCard } from "./ClarifyingQuestionCard";
 import { ChatMode } from "@/types/chat";
 import { Brain, Pencil, ArrowRight, ChevronRight } from "lucide-react";
+import { getExploreLayoutParts } from "@/app/page";
 
 function getCuratedProductImage(productName: string): string {
   const name = productName.toLowerCase();
@@ -180,6 +181,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   let isExploreCarousel = false;
   let exploreHeadline = "";
   let exploreProductsList: Product[] = [];
+  let exploreDeepDiveText = "";
 
   try {
     const rawContent = message.content || "";
@@ -196,6 +198,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
         } else if (parsed.ui_type === "explore_carousel") {
           isExploreCarousel = true;
           exploreHeadline = parsed.headline || "";
+          exploreDeepDiveText = parsed.deep_dive || "";
           const items = Array.isArray(parsed.products) ? parsed.products : [];
           exploreProductsList = items.map((p: any) => ({
             id: String(p.id || Math.random()),
@@ -226,12 +229,50 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
 
   if (!isExploreCarousel && message.products && message.products.length > 0 && !message.deepResearchResults && !message.searchTag) {
     isExploreCarousel = true;
-    exploreHeadline = message.content;
+    exploreHeadline = message.exploreIntro || message.content;
+    exploreDeepDiveText = message.exploreDeepDive || "";
     exploreProductsList = message.products.map(p => ({
       ...p,
       image: p.image && !p.image.includes("placeholder.png") ? p.image : getCuratedProductImage(p.name || "")
     }));
   }
+
+  // Determine Explore layout variables
+  const isExploreModeLayout = isExploreCarousel || !!message.searchTag;
+  
+  const exploreProductsToShow = isExploreCarousel 
+    ? exploreProductsList 
+    : (message.searchTag ? exploreProducts : []);
+
+  const hasExploreProducts = exploreProductsToShow && exploreProductsToShow.length > 0;
+  const shouldRenderSplitLayout = isExploreModeLayout && hasExploreProducts;
+
+  let exploreIntroText = "";
+  let exploreDeepDiveTextToRender = "";
+
+  if (shouldRenderSplitLayout) {
+    if (isExploreCarousel) {
+      exploreIntroText = exploreHeadline;
+      exploreDeepDiveTextToRender = exploreDeepDiveText;
+      if (!exploreDeepDiveTextToRender && exploreIntroText) {
+        const parts = getExploreLayoutParts(exploreIntroText);
+        exploreIntroText = parts.intro;
+        exploreDeepDiveTextToRender = parts.deepDive;
+      }
+    } else {
+      exploreIntroText = message.exploreIntro || "";
+      exploreDeepDiveTextToRender = message.exploreDeepDive || "";
+      if (!exploreIntroText) {
+        const parts = getExploreLayoutParts(message.content);
+        exploreIntroText = parts.intro;
+        exploreDeepDiveTextToRender = parts.deepDive;
+      }
+    }
+  }
+
+  const fullTextFallback = isExploreCarousel
+    ? `${exploreHeadline}${exploreDeepDiveText ? `\n\n${exploreDeepDiveText}` : ""}`
+    : message.content;
 
   const isInteractionDisabled = !isLastAiMessage || hasAnswered;
 
@@ -413,8 +454,8 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
         </Avatar>
  
         <div className="flex flex-col gap-2 w-full min-w-0">
-          {/* Default AI Bubble (Standard markdown prose) */}
-          {!isQuestionnaire && !isExploreCarousel && message.content && (
+          {/* Default AI Bubble (Standard markdown prose / Fallback) */}
+          {!isQuestionnaire && (!isExploreModeLayout || !shouldRenderSplitLayout) && message.content && (
             <div
               dir="auto"
               style={{
@@ -432,7 +473,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
                 rehypePlugins={[rehypeRaw]}
                 components={markdownComponents}
               >
-                {processedContent}
+                {isExploreModeLayout ? fullTextFallback : processedContent}
               </ReactMarkdown>
             </div>
           )}
@@ -475,75 +516,44 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
             />
           )}
 
-          {/* Case Explore Carousel Rendering */}
-          {isExploreCarousel && (
+          {/* Case Explore Mode Split Layout Rendering */}
+          {shouldRenderSplitLayout && (
             <div className="flex flex-col gap-4 w-full animate-in fade-in duration-300">
-              {/* Upper Portion (~20%) */}
-              {exploreHeadline && (
-                <div className="text-[14px] sm:text-[15px] leading-relaxed break-words font-sans text-text-primary-light pr-2">
+              {/* 1. Context 20% (The Hook/Intro) */}
+              {exploreIntroText && (
+                <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-4 text-[14px] sm:text-[15px] leading-relaxed break-words font-sans text-zinc-200 shadow-xl backdrop-blur-md">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeRaw]}
                     components={markdownComponents}
                   >
-                    {exploreHeadline}
+                    {exploreIntroText}
                   </ReactMarkdown>
                 </div>
               )}
 
-              {/* Lower Portion (~80%) */}
-              {exploreProductsList.length > 0 && (
-                <div className="ml-[-8px] sm:ml-[-12px] animate-in fade-in duration-500">
-                  <ProductCarousel products={exploreProductsList} />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Deep Research Results */}
-          {message.deepResearchResults && (
-            <div className="flex flex-col gap-4 mt-2">
-              {loadingDeepResearch && (
-                <div className="flex items-center gap-2 text-xs text-text-secondary select-none py-2 px-3 bg-white/[0.02] border border-white/[0.05] rounded-xl w-fit">
-                  <div className="size-3.5 border-2 border-marigold/20 border-t-marigold rounded-full animate-spin shrink-0" />
-                  <span className="font-sans">Finding best matches...</span>
-                </div>
-              )}
-              {!loadingDeepResearch && primaryProduct && (
-                <div className="flex flex-col gap-2">
-                  <span className="text-[12px] font-mono text-marigold uppercase tracking-wider font-semibold">
-                    🏆 Best Match
-                  </span>
-                  <div className="w-full sm:max-w-[90%] border border-marigold/30 rounded-2xl overflow-hidden shadow-md shadow-marigold/5 bg-white/[0.02]">
-                    <ProductCard product={primaryProduct} />
-                  </div>
-                </div>
-              )}
-              {!loadingDeepResearch && backupProducts && backupProducts.length > 0 && (
-                <div className="flex flex-col gap-2 mt-2">
-                  <span className="text-[11px] font-mono text-text-secondary uppercase tracking-wider">
-                    Other options to consider
-                  </span>
-                  <div className="w-full">
-                    <ProductCarousel products={backupProducts} />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Explore Mode products carousel */}
-          {message.searchTag && (
-            <div className="mt-2 min-h-[50px]">
-              {loadingExplore && (
-                <div className="flex items-center gap-2 text-xs text-text-secondary select-none py-2 px-3 bg-white/[0.02] border border-white/[0.05] rounded-xl w-fit animate-pulse">
+              {/* 2. Dynamic Product Shelf */}
+              {loadingExplore && exploreProductsToShow.length === 0 ? (
+                <div className="flex items-center gap-2 text-xs text-zinc-400 select-none py-3 px-4 bg-zinc-950/80 border border-white/5 rounded-2xl w-fit animate-pulse">
                   <div className="size-3.5 border-2 border-marigold/20 border-t-marigold rounded-full animate-spin shrink-0" />
                   <span className="font-sans">Finding products...</span>
                 </div>
+              ) : (
+                <div className="ml-[-8px] sm:ml-[-12px] p-1 bg-zinc-950/40 rounded-2xl border border-white/5 shadow-inner">
+                  <ProductCarousel products={exploreProductsToShow} />
+                </div>
               )}
-              {!loadingExplore && exploreProducts.length > 0 && (
-                <div className="ml-[-8px] sm:ml-[-12px]">
-                  <ProductCarousel products={exploreProducts} />
+
+              {/* 3. Context 80% (The Deep Dive) */}
+              {exploreDeepDiveTextToRender && (
+                <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-5 text-[14px] sm:text-[15px] leading-relaxed break-words font-sans text-zinc-300 shadow-xl backdrop-blur-md mt-1">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    components={markdownComponents}
+                  >
+                    {exploreDeepDiveTextToRender}
+                  </ReactMarkdown>
                 </div>
               )}
             </div>

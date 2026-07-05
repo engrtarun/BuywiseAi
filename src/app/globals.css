@@ -265,6 +265,14 @@
   display: none;
 }
 
+@utility scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* ── Food Mode Theme ──────────────────────────── */
 [data-app-mode="food"] {
   --brand-accent: #FC8019; /* Swiggy Orange */

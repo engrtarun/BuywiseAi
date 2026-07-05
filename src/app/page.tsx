@@ -29,6 +29,29 @@ function parseJSONSafe(text: string) {
   }
 }
 
+export function getExploreLayoutParts(content: string): { intro: string; deepDive: string } {
+  const text = content.trim();
+  
+  // Try splitting by double newline (paragraph boundary)
+  const paragraphs = text.split(/\n\n+/);
+  if (paragraphs.length > 1) {
+    const intro = paragraphs[0].trim();
+    const deepDive = paragraphs.slice(1).join("\n\n").trim();
+    return { intro, deepDive };
+  }
+
+  // Try splitting by single newline if no double newline exists
+  const lines = text.split(/\n+/);
+  if (lines.length > 1) {
+    const intro = lines[0].trim();
+    const deepDive = lines.slice(1).join("\n").trim();
+    return { intro, deepDive };
+  }
+
+  // Fallback: everything is intro
+  return { intro: text, deepDive: "" };
+}
+
 function parseAiMessageContent(dbMessageId: string, rawContent: string): Message {
   const aiMsg: Message = {
     id: dbMessageId,
@@ -49,6 +72,16 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
       };
     } else if (parsedJson.ui_type === "explore_carousel") {
       aiMsg.content = parsedJson.headline || "Here are some recommendations:";
+      aiMsg.exploreIntro = parsedJson.headline || "Here are some recommendations:";
+      aiMsg.exploreDeepDive = parsedJson.deep_dive || "";
+
+      // If deep_dive is empty in JSON but headline itself has splits, parse it:
+      if (!aiMsg.exploreDeepDive && aiMsg.exploreIntro) {
+        const parts = getExploreLayoutParts(aiMsg.exploreIntro);
+        aiMsg.exploreIntro = parts.intro;
+        aiMsg.exploreDeepDive = parts.deepDive;
+      }
+
       const items = Array.isArray(parsedJson.products) ? parsedJson.products : [];
       aiMsg.products = items.map((p: any) => ({
         id: String(p.id || Math.random()),
@@ -106,6 +139,9 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
     }
     if (searchTag) {
       aiMsg.searchTag = searchTag;
+      const parts = getExploreLayoutParts(content);
+      aiMsg.exploreIntro = parts.intro;
+      aiMsg.exploreDeepDive = parts.deepDive;
     }
   }
 
