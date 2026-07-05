@@ -488,8 +488,8 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
         group w-full min-w-0 flex items-center gap-2.5 px-3 py-2 rounded-xl text-left
         transition-all duration-200 relative cursor-pointer select-none
         ${isActive
-          ? "bg-[#2a2a2a] text-text-primary-dark"
-          : "bg-transparent text-text-secondary hover:bg-[#232323] hover:text-text-primary-dark"
+          ? "bg-sidebar-accent text-text-primary-dark font-medium"
+          : "bg-transparent text-text-secondary hover:bg-sidebar-accent/50 hover:text-text-primary-dark"
         }
       `}
     >

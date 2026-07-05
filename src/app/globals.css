@@ -213,41 +213,66 @@
 
   --primary-foreground: #ffffff;
   --sidebar-primary-foreground: #ffffff;
+
+  /* Derived shadcn & container variables */
+  --background: var(--bg-main);
+  --foreground: var(--text-primary-light);
+  --card: var(--bg-input);
+  --card-foreground: var(--text-primary-light);
+  --popover: var(--dropdown-bg);
+  --popover-foreground: var(--text-primary-light);
+  --primary: var(--brand-accent);
+  --secondary: var(--border-light);
+  --secondary-foreground: var(--text-primary-light);
+  --muted: var(--border-light);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--border-light);
+  --accent-foreground: var(--text-primary-light);
+  --border: var(--border-light);
+  --input: var(--border-light);
+  --ring: var(--brand-accent);
+  --sidebar: var(--sidebar-bg);
+  --sidebar-foreground: var(--text-ondark);
+  --sidebar-primary: var(--marigold);
+  --sidebar-accent: var(--line-ondark);
+  --sidebar-border: var(--line-ondark);
+  --sidebar-ring: var(--marigold);
 }
 
 /* 2. DEFAULT DARK */
-[data-theme="default"][data-mode="dark"] {
-  --ink-deep: #18181b;
-  --ink-deeper: #09090b;
-  --sidebar-bg: #09090b;
-  --dropdown-bg: #18181b;
-  --paper: #18181b;
-  --paper-dim: #09090b;
+[data-theme="default"][data-mode="dark"],
+[data-theme="default"].dark {
+  --ink-deep: #000000;
+  --ink-deeper: #000000;
+  --sidebar-bg: #000000;
+  --dropdown-bg: #0a0a0a;
+  --paper: #0a0a0a;
+  --paper-dim: #000000;
   --marigold: #FC8019;
   --marigold-dark: #d97706;
   --chili: #dc2626;
-  --text-onlight: #f4f4f5;
+  --text-onlight: #ffffff;
   --text-dim-onlight: #a1a1aa;
-  --text-ondark: #f4f4f5;
+  --text-ondark: #ffffff;
   --text-dim-ondark: #a1a1aa;
-  --line-ondark: #27272a;
-  --line-onlight: #27272a;
+  --line-ondark: #2a2a2a;
+  --line-onlight: #2a2a2a;
 
-  --bg-main: #09090b;
-  --bg-sidebar: #18181b;
-  --bg-input: #18181b;
-  --text-primary-light: #f4f4f5;
-  --text-primary-dark: #f4f4f5;
+  --bg-main: #000000;
+  --bg-sidebar: #000000;
+  --bg-input: #0a0a0a;
+  --text-primary-light: #ffffff;
+  --text-primary-dark: #ffffff;
   --text-secondary: #a1a1aa;
   --brand-accent: #FC8019;
-  --border-light: #27272a;
-  --border-dark: #27272a;
+  --border-light: #2a2a2a;
+  --border-dark: #2a2a2a;
 
-  --user-bubble-bg: #27272a;
-  --user-bubble-text: #f4f4f5;
+  --user-bubble-bg: #18181b;
+  --user-bubble-text: #ffffff;
 
   --ai-bubble-bg: transparent;
-  --ai-text: #f4f4f5;
+  --ai-text: #ffffff;
   --ai-bubble-padding: 0;
   --ai-bubble-radius: 0;
   --ai-bubble-radius-bl: 0;
@@ -255,6 +280,30 @@
 
   --primary-foreground: #ffffff;
   --sidebar-primary-foreground: #ffffff;
+
+  /* Derived shadcn & container variables */
+  --background: var(--bg-main);
+  --foreground: var(--text-primary-light);
+  --card: var(--bg-input);
+  --card-foreground: var(--text-primary-light);
+  --popover: var(--dropdown-bg);
+  --popover-foreground: var(--text-primary-light);
+  --primary: var(--brand-accent);
+  --secondary: var(--border-light);
+  --secondary-foreground: var(--text-primary-light);
+  --muted: var(--border-light);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--border-light);
+  --accent-foreground: var(--text-primary-light);
+  --border: var(--border-light);
+  --input: var(--border-light);
+  --ring: var(--brand-accent);
+  --sidebar: var(--sidebar-bg);
+  --sidebar-foreground: var(--text-ondark);
+  --sidebar-primary: var(--marigold);
+  --sidebar-accent: var(--line-ondark);
+  --sidebar-border: var(--line-ondark);
+  --sidebar-ring: var(--marigold);
 }
 
 /* 3. GREEN LIGHT */
@@ -297,10 +346,35 @@
 
   --primary-foreground: #123832;
   --sidebar-primary-foreground: #123832;
+
+  /* Derived shadcn & container variables */
+  --background: var(--bg-main);
+  --foreground: var(--text-primary-light);
+  --card: var(--bg-input);
+  --card-foreground: var(--text-primary-light);
+  --popover: var(--dropdown-bg);
+  --popover-foreground: var(--text-primary-light);
+  --primary: var(--brand-accent);
+  --secondary: var(--border-light);
+  --secondary-foreground: var(--text-primary-light);
+  --muted: var(--border-light);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--border-light);
+  --accent-foreground: var(--text-primary-light);
+  --border: var(--border-light);
+  --input: var(--border-light);
+  --ring: var(--brand-accent);
+  --sidebar: var(--sidebar-bg);
+  --sidebar-foreground: var(--text-ondark);
+  --sidebar-primary: var(--marigold);
+  --sidebar-accent: var(--line-ondark);
+  --sidebar-border: var(--line-ondark);
+  --sidebar-ring: var(--marigold);
 }
 
 /* 4. GREEN DARK */
-[data-theme="buywise-green"][data-mode="dark"] {
+[data-theme="buywise-green"][data-mode="dark"],
+[data-theme="buywise-green"].dark {
   --ink-deep: #123832;
   --ink-deeper: #0C2823;
   --sidebar-bg: #0C2823;
@@ -339,6 +413,30 @@
 
   --primary-foreground: #0C2823;
   --sidebar-primary-foreground: #0C2823;
+
+  /* Derived shadcn & container variables */
+  --background: var(--bg-main);
+  --foreground: var(--text-primary-light);
+  --card: var(--bg-input);
+  --card-foreground: var(--text-primary-light);
+  --popover: var(--dropdown-bg);
+  --popover-foreground: var(--text-primary-light);
+  --primary: var(--brand-accent);
+  --secondary: var(--border-light);
+  --secondary-foreground: var(--text-primary-light);
+  --muted: var(--border-light);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--border-light);
+  --accent-foreground: var(--text-primary-light);
+  --border: var(--border-light);
+  --input: var(--border-light);
+  --ring: var(--brand-accent);
+  --sidebar: var(--sidebar-bg);
+  --sidebar-foreground: var(--text-ondark);
+  --sidebar-primary: var(--marigold);
+  --sidebar-accent: var(--line-ondark);
+  --sidebar-border: var(--line-ondark);
+  --sidebar-ring: var(--marigold);
 }
 
 /* 5. GRAY LIGHT */
@@ -381,10 +479,35 @@
 
   --primary-foreground: #171717;
   --sidebar-primary-foreground: #171717;
+
+  /* Derived shadcn & container variables */
+  --background: var(--bg-main);
+  --foreground: var(--text-primary-light);
+  --card: var(--bg-input);
+  --card-foreground: var(--text-primary-light);
+  --popover: var(--dropdown-bg);
+  --popover-foreground: var(--text-primary-light);
+  --primary: var(--brand-accent);
+  --secondary: var(--border-light);
+  --secondary-foreground: var(--text-primary-light);
+  --muted: var(--border-light);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--border-light);
+  --accent-foreground: var(--text-primary-light);
+  --border: var(--border-light);
+  --input: var(--border-light);
+  --ring: var(--brand-accent);
+  --sidebar: var(--sidebar-bg);
+  --sidebar-foreground: var(--text-ondark);
+  --sidebar-primary: var(--marigold);
+  --sidebar-accent: var(--line-ondark);
+  --sidebar-border: var(--line-ondark);
+  --sidebar-ring: var(--marigold);
 }
 
 /* 6. GRAY DARK */
-[data-theme="buywise-dark"][data-mode="dark"] {
+[data-theme="buywise-dark"][data-mode="dark"],
+[data-theme="buywise-dark"].dark {
   --ink-deep: #2F2F2F;
   --ink-deeper: #171717;
   --sidebar-bg: #171717;
@@ -423,6 +546,30 @@
 
   --primary-foreground: #171717;
   --sidebar-primary-foreground: #171717;
+
+  /* Derived shadcn & container variables */
+  --background: var(--bg-main);
+  --foreground: var(--text-primary-light);
+  --card: var(--bg-input);
+  --card-foreground: var(--text-primary-light);
+  --popover: var(--dropdown-bg);
+  --popover-foreground: var(--text-primary-light);
+  --primary: var(--brand-accent);
+  --secondary: var(--border-light);
+  --secondary-foreground: var(--text-primary-light);
+  --muted: var(--border-light);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--border-light);
+  --accent-foreground: var(--text-primary-light);
+  --border: var(--border-light);
+  --input: var(--border-light);
+  --ring: var(--brand-accent);
+  --sidebar: var(--sidebar-bg);
+  --sidebar-foreground: var(--text-ondark);
+  --sidebar-primary: var(--marigold);
+  --sidebar-accent: var(--line-ondark);
+  --sidebar-border: var(--line-ondark);
+  --sidebar-ring: var(--marigold);
 }
 
 
