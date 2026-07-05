@@ -441,44 +441,44 @@
 
 /* 5. GRAY LIGHT */
 [data-theme="buywise-dark"][data-mode="light"] {
-  --ink-deep: #2F2F2F;
-  --ink-deeper: #f4f4f5;
-  --sidebar-bg: #e5e5e5;
+  --ink-deep: #2d2722;
+  --ink-deeper: #F7F5F0;
+  --sidebar-bg: #ECEBE5;
   --dropdown-bg: #ffffff;
   --paper: #ffffff;
-  --paper-dim: #e5e5e5;
+  --paper-dim: #ECEBE5;
   --marigold: #C96442;
   --marigold-dark: #9E4A2E;
   --chili: #C1502E;
-  --text-onlight: #1c1c1c;
+  --text-onlight: #2d2722;
   --text-dim-onlight: #8A8A85;
-  --text-ondark: #1c1c1c;
+  --text-ondark: #2d2722;
   --text-dim-ondark: #8A8A85;
-  --line-ondark: #cccccc;
-  --line-onlight: #cccccc;
+  --line-ondark: #E2DFD7;
+  --line-onlight: #E2DFD7;
 
-  --bg-main: #f4f4f5;
-  --bg-sidebar: #e5e5e5;
+  --bg-main: #F7F5F0;
+  --bg-sidebar: #ECEBE5;
   --bg-input: #ffffff;
-  --text-primary-light: #1c1c1c;
-  --text-primary-dark: #1c1c1c;
+  --text-primary-light: #2d2722;
+  --text-primary-dark: #2d2722;
   --text-secondary: #8A8A85;
   --brand-accent: #C96442;
-  --border-light: #cccccc;
-  --border-dark: #cccccc;
+  --border-light: #E2DFD7;
+  --border-dark: #E2DFD7;
 
-  --user-bubble-bg: #e5e5e5;
-  --user-bubble-text: #1c1c1c;
+  --user-bubble-bg: #ECEBE5;
+  --user-bubble-text: #2d2722;
 
   --ai-bubble-bg: transparent;
-  --ai-text: #1c1c1c;
+  --ai-text: #2d2722;
   --ai-bubble-padding: 0;
   --ai-bubble-radius: 0;
   --ai-bubble-radius-bl: 0;
   --ai-bubble-shadow: none;
 
-  --primary-foreground: #171717;
-  --sidebar-primary-foreground: #171717;
+  --primary-foreground: #ffffff;
+  --sidebar-primary-foreground: #ffffff;
 
   /* Derived shadcn & container variables */
   --background: var(--bg-main);

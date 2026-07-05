@@ -22,7 +22,7 @@ export const THEME_PRESETS: ThemePreset[] = [
   },
   {
     id: "buywise-green",
-    name: "Green",
+    name: "Forest",
     colors: {
       primary: "#E8A33D",
       background: "#123832",
