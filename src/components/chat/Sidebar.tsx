@@ -480,7 +480,7 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
         }
       }}
       className={`
-         group w-full flex items-center px-3 py-2 rounded-xl text-left
+         group w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left
          transition-all duration-200 cursor-pointer select-none
          ${isActive
            ? "bg-sidebar-accent text-text-primary-dark"

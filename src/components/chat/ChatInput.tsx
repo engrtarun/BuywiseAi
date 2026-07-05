@@ -4,8 +4,9 @@ import React, { useRef, useState, useEffect } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye, Plus, Compass, Brain } from "lucide-react";
 import { QuickAccessMenu } from "./QuickAccessMenu";
-import { ChatMode } from "@/types/chat";
+import { SoundMuteToggle } from "@/components/shared/SoundMuteToggle";
 import { UsageRing } from "@/components/ui/usage-ring";
+import { ChatMode } from "@/types/chat";
 
 const placeholders = [
   "BuyWise anything...",
@@ -31,6 +32,8 @@ interface ChatInputProps {
   dailyLimitMessage?: string;
   tokensUsed?: number;
   tokenLimit?: number;
+  dailyMessagesRemaining?: number;
+  dailyLimit?: number;
   mode?: ChatMode | null;
   isClarifyingActive?: boolean;
   onModeChange?: (mode: ChatMode) => void;
@@ -52,6 +55,8 @@ export function ChatInput({
   dailyLimitMessage,
   tokensUsed,
   tokenLimit,
+  dailyMessagesRemaining,
+  dailyLimit,
   mode = "explore",
   isClarifyingActive = false,
   onModeChange,
@@ -207,9 +212,6 @@ export function ChatInput({
                   <Compass className="size-3 text-marigold" />
                   <span className="text-text-secondary">Explore Mode</span>
                 </>
-              )}
-              {isModeLocked && (
-                <span className="text-[9px] text-text-dim-ondark/60 font-mono ml-1 px-1 bg-white/5 rounded border border-white/5">Locked</span>
               )}
             </div>
 
