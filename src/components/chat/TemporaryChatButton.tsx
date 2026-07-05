@@ -1,5 +1,5 @@
 import React from "react";
-import { PlusCircle } from "lucide-react";
+import { Ghost } from "lucide-react";
 
 interface TemporaryChatButtonProps {
   onClick: () => void;
@@ -19,7 +19,7 @@ export function TemporaryChatButton({ onClick, isTemporaryChat }: TemporaryChatB
       title="New temporary chat"
       aria-label="New temporary chat"
     >
-      <PlusCircle className="size-5 transition-transform duration-300 group-hover:scale-110" strokeWidth={1.5} />
+      <Ghost className="size-5 transition-transform duration-300 group-hover:scale-110" strokeWidth={1.5} />
     </button>
   );
 }
