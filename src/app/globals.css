@@ -4,6 +4,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Hide global scrollbar to fix the white scrollbar issue */
+*::-webkit-scrollbar {
+  display: none;
+}
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 /* ─────────────────────────────────────────────
    BuyWise AI – Design Tokens
    ───────────────────────────────────────────── */
