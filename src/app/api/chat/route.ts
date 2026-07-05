@@ -128,7 +128,6 @@ export async function POST(req: NextRequest) {
     const { history = [], message, mode = "explore" } = body;
     userMessage = message;
 
-<<<<<<< HEAD
     const access = await enforceChatAccess(req);
     if (access.response) {
       return access.response;
@@ -137,8 +136,6 @@ export async function POST(req: NextRequest) {
 
     // Map frontend conversation history ({ role: "assistant"|"user", content })
     // to the structure expected by the Gemini SDK ({ role: "model"|"user", parts: [{ text }] })
-=======
->>>>>>> feature/Modle
     const formattedHistory = history.map((msg) => {
       const role = msg.role === "assistant" ? "model" : "user";
       return {
