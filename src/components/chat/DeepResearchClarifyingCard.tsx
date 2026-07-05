@@ -30,7 +30,7 @@ interface ClarifyingQuestionCardProps {
   disabled?: boolean;
 }
 
-export function ClarifyingQuestionCard({
+export function DeepResearchClarifyingCard({
   questions,
   question: singleQuestion,
   options: singleOptions,
