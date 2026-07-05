@@ -211,9 +211,6 @@ export function ChatInput({
                   <span className="text-text-secondary">Explore Mode</span>
                 </>
               )}
-              {isModeLocked && (
-                <span className="text-[9px] text-text-dim-ondark/60 font-mono ml-1 px-1 bg-white/5 rounded border border-white/5">Locked</span>
-              )}
             </div>
 
             <div className="flex items-center gap-1">

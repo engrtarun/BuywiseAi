@@ -160,6 +160,7 @@ export async function POST(req: NextRequest) {
       history: formattedHistory,
       generationConfig: {
         maxOutputTokens: 1000,
+        responseMimeType: "application/json",
       },
     });
 
