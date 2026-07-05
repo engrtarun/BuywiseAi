@@ -380,31 +380,14 @@ export default function Page() {
 
   /* ── Handlers ─────────────────────────────────────── */
 
-  const handleNewChat = useCallback(async (mode?: ChatMode) => {
+  const handleNewChat = useCallback((mode?: ChatMode) => {
     setIsTyping(false);
     setIsTemporaryChat(false);
-    setIsLoading(true);
-    try {
-      const initialMode = mode || "explore";
-      setSelectedMode(initialMode);
-      // Create new session in Supabase
-      const newSid = await createChatSession(initialMode);
-      
-      const newSession: ChatSession = {
-        id: newSid,
-        title: "New Chat",
-        messages: [],
-        createdAt: Date.now(),
-        mode: initialMode,
-      };
-      
-      setChatSessions((prev) => [newSession, ...prev].filter((s) => !s.isTemporary));
-      setActiveChatId(newSid);
-    } catch (err) {
-      console.error("Failed to create new chat session:", err);
-    } finally {
-      setIsLoading(false);
-    }
+    const initialMode = mode || "explore";
+    setSelectedMode(initialMode);
+    setActiveChatId(null);
+    // Clear any temporary chats from the list
+    setChatSessions((prev) => prev.filter((s) => !s.isTemporary));
   }, []);
 
   const handleNewTemporaryChat = useCallback(() => {
