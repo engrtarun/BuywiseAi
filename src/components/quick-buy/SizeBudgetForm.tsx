@@ -7,7 +7,10 @@ import { CategorySearchInput } from "./CategorySearchInput";
 
 interface SizeBudgetFormProps {
   initialPreferences: QuickBuyPreferences | null;
-  onSave: (prefs: QuickBuyPreferences) => void;
+  onSave: (prefs: QuickBuyPreferences, name?: string) => void;
+  onSkip?: () => void;          // only passed when this IS the first/default profile form
+  requireName?: boolean;        // true when creating profile #2, #3, or #4
+  initialName?: string;         // for editing an existing profile
 }
 
 const AVAILABLE_SIZES = ["S", "M", "L", "XL"];
@@ -17,7 +20,14 @@ const AVAILABLE_CATEGORIES = [
   "Smartphones", "Laptops", "Headphones", "Watches", "Backpacks", "Sunglasses", "Gaming Consoles"
 ];
 
-export function SizeBudgetForm({ initialPreferences, onSave }: SizeBudgetFormProps) {
+export function SizeBudgetForm({ 
+  initialPreferences, 
+  onSave,
+  onSkip,
+  requireName = false,
+  initialName = ""
+}: SizeBudgetFormProps) {
+  const [name, setName] = useState<string>(initialName);
   const [selectedSizes, setSelectedSizes] = useState<string[]>(initialPreferences?.sizes || []);
   const [preferredCategories, setPreferredCategories] = useState<string[]>(initialPreferences?.preferredCategories || []);
   const [maxBudget, setMaxBudget] = useState<string>(initialPreferences?.maxBudget ? String(initialPreferences.maxBudget) : "");
@@ -34,10 +44,11 @@ export function SizeBudgetForm({ initialPreferences, onSave }: SizeBudgetFormPro
       sizes: selectedSizes,
       preferredCategories,
       maxBudget: isNaN(budgetNum) ? null : budgetNum,
-    });
+    }, requireName ? name.trim() : undefined);
   };
 
-  const isValid = selectedSizes.length > 0 && maxBudget.trim() !== "";
+  const isNameValid = !requireName || name.trim() !== "";
+  const isValid = selectedSizes.length > 0 && maxBudget.trim() !== "" && isNameValid;
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 bg-bg-main relative z-50">
@@ -48,12 +59,33 @@ export function SizeBudgetForm({ initialPreferences, onSave }: SizeBudgetFormPro
             <Settings2 className="size-5 text-brand-accent" />
           </div>
           <div>
-            <h2 className="text-xl font-heading font-bold text-text-primary-light">Shopping Preferences</h2>
-            <p className="text-sm text-text-secondary">Set this once, swipe faster.</p>
+            <h2 className="text-xl font-heading font-bold text-text-primary-light">
+              {requireName ? "Create Shopper Profile" : "Shopping Preferences"}
+            </h2>
+            <p className="text-sm text-text-secondary">
+              {requireName ? "Enter name and preferences." : "Set this once, swipe faster."}
+            </p>
           </div>
         </div>
 
         <div className="space-y-6">
+          {/* Profile Name (if required) */}
+          {requireName && (
+            <div>
+              <label className="block text-sm font-medium text-text-primary-light mb-3">
+                Shopper Name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value.slice(0, 20))}
+                placeholder="e.g. Mom, Rohan, Gym Fits"
+                className="w-full bg-bg-input/50 border border-border-light rounded-xl px-4 py-3 text-text-primary-light font-sans text-[15px] focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent/50 transition-all"
+                required
+              />
+            </div>
+          )}
+
           {/* Sizes */}
           <div>
             <label className="block text-sm font-medium text-text-primary-light mb-3">
@@ -127,20 +159,31 @@ export function SizeBudgetForm({ initialPreferences, onSave }: SizeBudgetFormPro
           </div>
 
           {/* CTA */}
-          <button
-            onClick={handleSave}
-            disabled={!isValid}
-            className={`
-              w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-[16px] transition-all duration-300 mt-4
-              ${isValid 
-                ? "bg-brand-accent text-bg-main hover:brightness-110 shadow-lg shadow-brand-accent/20 cursor-pointer active:scale-95" 
-                : "bg-white/5 text-text-secondary border border-white/10 cursor-not-allowed opacity-50"
-              }
-            `}
-          >
-            Save & Start Swiping
-            <ArrowRight className="size-5" />
-          </button>
+          <div>
+            <button
+              onClick={handleSave}
+              disabled={!isValid}
+              className={`
+                w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-[16px] transition-all duration-300 mt-2
+                ${isValid 
+                  ? "bg-brand-accent text-bg-main hover:brightness-110 shadow-lg shadow-brand-accent/20 cursor-pointer active:scale-95" 
+                  : "bg-white/5 text-text-secondary border border-white/10 cursor-not-allowed opacity-50"
+                }
+              `}
+            >
+              Save & Start Swiping
+              <ArrowRight className="size-5" />
+            </button>
+            {onSkip && (
+              <button
+                type="button"
+                onClick={onSkip}
+                className="w-full text-center text-sm text-text-secondary hover:text-text-primary-light hover:underline transition-colors mt-4 cursor-pointer py-1"
+              >
+                Skip for now
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

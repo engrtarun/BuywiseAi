@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuickBuy } from "@/hooks/useQuickBuy";
 import { SizeBudgetForm } from "./SizeBudgetForm";
 import { SwipeCardDeck } from "./SwipeCardDeck";
@@ -9,6 +9,8 @@ import { FoodSwipeCardDeck } from "./FoodSwipeCardDeck";
 import { X, Settings2, Heart, Mic } from "lucide-react";
 import { useAppMode } from "@/contexts/AppModeContext";
 import { useVoiceCustomizationExtraction } from "@/hooks/useVoiceCustomizationExtraction";
+import { ProfileSwitcher } from "./ProfileSwitcher";
+import { QuickBuyLockedState } from "./QuickBuyLockedState";
 
 interface QuickBuyScreenProps {
   onClose: () => void;
@@ -30,19 +32,35 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
     hasMore,
     fetchNextPage,
     totalSpent,
-    addExpense
+    addExpense,
+    profiles,
+    activeProfile,
+    createProfile,
+    switchProfile,
+    updateProfile,
+    deleteProfile
   } = useQuickBuy();
 
   const { mode } = useAppMode();
   const { extractCustomizations } = useVoiceCustomizationExtraction();
   
   const [showSettings, setShowSettings] = useState(false);
+  const [showAddProfileForm, setShowAddProfileForm] = useState(false);
+  const [showOnboardingForm, setShowOnboardingForm] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
   const [voiceInput, setVoiceInput] = useState("");
 
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setHasSeenOnboarding(localStorage.getItem("buywise_quickbuy_has_seen_onboarding") === "true");
+    }
+  }, []);
+
   const customizations = extractCustomizations(voiceInput);
 
-  // Still loading localStorage
+  // Still loading profiles or local storage
   if (isInitializing) {
     return (
       <div className="absolute inset-0 z-[100] bg-bg-main flex items-center justify-center">
@@ -51,34 +69,120 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
     );
   }
 
-  // If preferences aren't set, force them to set them first (unless they explicitly opened settings)
-  if (!preferences || showSettings) {
+  const isFirstTime = profiles.length === 0 && !hasSeenOnboarding;
+  const isEditingOrAdding = showSettings || showAddProfileForm || showOnboardingForm;
+
+  // Onboarding, Add or Edit Profile Form State
+  if (isFirstTime || isEditingOrAdding) {
+    const isAdding = showAddProfileForm;
+    const isEditing = showSettings;
+    const isCreatingFromLocked = showOnboardingForm;
+
+    let initialPrefs = null;
+    let initialName = "";
+    let requireName = false;
+    let onSkipProp = undefined;
+
+    if (isEditing && activeProfile) {
+      initialPrefs = preferences;
+      initialName = activeProfile.name;
+      requireName = !activeProfile.isDefault;
+    } else if (isAdding) {
+      requireName = true;
+    } else if (isFirstTime) {
+      onSkipProp = () => {
+        localStorage.setItem("buywise_quickbuy_has_seen_onboarding", "true");
+        setHasSeenOnboarding(true);
+      };
+    }
+
+    const handleFormSave = async (prefs: any, profileName?: string) => {
+      if (isEditing && activeProfile) {
+        await updateProfile(activeProfile.id, {
+          sizes: prefs.sizes,
+          preferredCategories: prefs.preferredCategories,
+          maxBudget: prefs.maxBudget,
+          name: profileName
+        });
+        setShowSettings(false);
+      } else if (isAdding) {
+        await createProfile({
+          name: profileName || "Shopper",
+          sizes: prefs.sizes,
+          preferredCategories: prefs.preferredCategories,
+          maxBudget: prefs.maxBudget
+        });
+        setShowAddProfileForm(false);
+      } else if (isCreatingFromLocked) {
+        await createProfile({
+          name: "You",
+          sizes: prefs.sizes,
+          preferredCategories: prefs.preferredCategories,
+          maxBudget: prefs.maxBudget
+        });
+        setShowOnboardingForm(false);
+      } else if (isFirstTime) {
+        localStorage.setItem("buywise_quickbuy_has_seen_onboarding", "true");
+        setHasSeenOnboarding(true);
+        await createProfile({
+          name: "You",
+          sizes: prefs.sizes,
+          preferredCategories: prefs.preferredCategories,
+          maxBudget: prefs.maxBudget
+        });
+      }
+    };
+
     return (
       <div className="absolute inset-0 z-[100] bg-bg-main flex flex-col">
-        {/* Simple header for settings */}
-        {preferences && (
-          <div className="flex items-center justify-between px-4 py-4 border-b border-border-light bg-bg-main/80 backdrop-blur-md">
-            <button onClick={() => setShowSettings(false)} className="p-2 -ml-2 rounded-full hover:bg-white/5 text-text-primary-light">
+        {/* Simple header for settings/add profile */}
+        {(profiles.length > 0 || hasSeenOnboarding) && (
+          <div className="flex items-center justify-between px-4 py-4 border-b border-border-light bg-bg-main/80 backdrop-blur-md shrink-0">
+            <button 
+              onClick={() => {
+                setShowSettings(false);
+                setShowAddProfileForm(false);
+                setShowOnboardingForm(false);
+              }} 
+              className="p-2 -ml-2 rounded-full hover:bg-white/5 text-text-primary-light transition-colors cursor-pointer"
+            >
               <X className="size-6" />
             </button>
-            <div className="font-bold text-text-primary-light">Quick Buy Settings</div>
+            <div className="font-bold text-text-primary-light">
+              {isEditing ? "Quick Buy Settings" : "Create Shopper Profile"}
+            </div>
             <div className="w-10" />
           </div>
         )}
+        
         <SizeBudgetForm 
-          initialPreferences={preferences} 
-          onSave={(prefs) => {
-            savePreferences(prefs);
-            setShowSettings(false);
-          }} 
+          initialPreferences={initialPrefs} 
+          requireName={requireName}
+          initialName={initialName}
+          onSkip={onSkipProp}
+          onSave={handleFormSave} 
         />
-        {/* Allow closing the entire screen if they don't want to set preferences */}
-        {!preferences && (
-          <button onClick={onClose} className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white z-50">
+        
+        {/* Allow closing the entire screen if they don't want to set preferences or back out */}
+        {profiles.length === 0 && !hasSeenOnboarding && (
+          <button 
+            onClick={onClose} 
+            className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white z-50 transition-all active:scale-95 cursor-pointer"
+          >
             <X className="size-6" />
           </button>
         )}
       </div>
+    );
+  }
+
+  // Locked state if user skipped onboarding and has zero profiles
+  if (profiles.length === 0 && hasSeenOnboarding) {
+    return (
+      <QuickBuyLockedState
+        onCreateProfile={() => setShowOnboardingForm(true)}
+        onClose={onClose}
+      />
     );
   }
 
@@ -112,6 +216,16 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
         </button>
         
         <div className="flex items-center gap-2 sm:gap-3">
+          {profiles.length >= 1 && activeProfile && (
+            <ProfileSwitcher
+              profiles={profiles}
+              activeProfile={activeProfile}
+              switchProfile={switchProfile}
+              deleteProfile={deleteProfile}
+              onAddProfile={() => setShowAddProfileForm(true)}
+            />
+          )}
+
           <div className="flex flex-col gap-1 relative group" title="Change Budget & Sizes">
             <button
               onClick={() => setShowSettings(true)}

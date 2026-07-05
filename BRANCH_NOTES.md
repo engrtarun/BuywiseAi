@@ -34,6 +34,7 @@ Here is where the relevant parts of the application live:
 * **Smart Auto-Titling:** Sends the first user message of any new session to Gemini in the background to automatically write a 3–6 word chat title.
 * **Chat Management:** Rename (pencil icon) or delete chats from the sidebar; updates sync instantly to the database.
 * **Security (RLS):** Row Level Security enabled on Supabase so users can only access their own private chats.
+* **QuickBuy Multi-Profile System:** Netflix-style multi-profile management allowing one login to support up to 4 distinct shopper profiles. Each profile manages individual sizes, preferred categories, and budget constraints. Features profile switcher popover, onboarding flow with a skip option leading to a locked empty-state, and automatic syncing to local storage and Supabase database.
 
 ---
 

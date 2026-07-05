@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { QuickBuyProduct } from "@/lib/quickBuyMockData";
+import { useQuickBuyProfiles } from "@/hooks/useQuickBuyProfiles";
 
 export interface QuickBuyPreferences {
   sizes: string[];
@@ -50,11 +51,31 @@ function normalizeProfilePreferences(raw: Record<string, any> | null | undefined
 }
 
 export function useQuickBuy() {
-  const [preferences, setPreferences] = useState<QuickBuyPreferences | null>(null);
+  const {
+    profiles,
+    activeProfile,
+    isInitializing: isProfilesInitializing,
+    createProfile,
+    switchProfile,
+    updateProfile,
+    deleteProfile
+  } = useQuickBuyProfiles();
+
+  const preferences = useMemo<QuickBuyPreferences | null>(() => {
+    if (!activeProfile) return null;
+    return {
+      sizes: activeProfile.sizes,
+      preferredCategories: activeProfile.preferredCategories,
+      maxBudget: activeProfile.maxBudget
+    };
+  }, [activeProfile]);
+
   const [savedItemIds, setSavedItemIds] = useState<string[]>([]);
   const [itemQuantities, setItemQuantities] = useState<Record<string, number>>({});
   const [totalSpent, setTotalSpent] = useState<number>(0);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [isLocalInitializing, setIsLocalInitializing] = useState(true);
+
+  const isInitializing = isProfilesInitializing || isLocalInitializing;
 
   const [allProducts, setAllProducts] = useState<QuickBuyProduct[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
@@ -69,14 +90,6 @@ export function useQuickBuy() {
 
     async function initialize() {
       try {
-        const storedPrefs = localStorage.getItem(PREFS_KEY);
-        if (storedPrefs) {
-          const parsedPrefs = JSON.parse(storedPrefs) as QuickBuyPreferences;
-          if (isMounted) {
-            setPreferences(parsedPrefs);
-          }
-        }
-
         const storedSaved = localStorage.getItem(SAVED_ITEMS_KEY);
         if (storedSaved) {
           if (isMounted) {
@@ -97,39 +110,11 @@ export function useQuickBuy() {
             setTotalSpent(JSON.parse(storedSpent));
           }
         }
-
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!user || !isMounted) {
-          return;
-        }
-
-        const { data: profile, error } = await supabase
-          .from("profiles")
-          .select("size, budget, sizes, max_budget, preferred_sizes, preferred_categories, preferences")
-          .maybeSingle();
-
-        if (!isMounted) {
-          return;
-        }
-
-        if (error) {
-          console.warn("Quick Buy profile preferences are unavailable:", error.message);
-          return;
-        }
-
-        const profilePreferences = normalizeProfilePreferences(profile as Record<string, any> | null);
-        if (profilePreferences && !storedPrefs && isMounted) {
-          setPreferences(profilePreferences);
-        }
       } catch (err) {
-        console.error("Failed to load QuickBuy state from localStorage or Supabase", err);
+        console.error("Failed to load QuickBuy state from localStorage", err);
       } finally {
         if (isMounted) {
-          setIsInitializing(false);
+          setIsLocalInitializing(false);
         }
       }
     }
@@ -203,25 +188,40 @@ export function useQuickBuy() {
     fetchProducts(nextPage, preferences, true);
   }, [hasMore, isFetchingNextPage, isLoadingProducts, page, preferences, fetchProducts]);
 
-  const savePreferences = useCallback((newPrefs: QuickBuyPreferences) => {
-    setPreferences(newPrefs);
+  const savePreferences = useCallback(async (newPrefs: QuickBuyPreferences) => {
     setPage(1);
     setHasMore(true);
     setAllProducts([]); // Clear UI immediately while new ones load
     setTotalSpent(0);
-    localStorage.setItem(PREFS_KEY, JSON.stringify(newPrefs));
     sessionStorage.removeItem(TOTAL_SPENT_KEY);
-  }, []);
 
-  const clearPreferences = useCallback(() => {
-    setPreferences(null);
+    if (activeProfile) {
+      await updateProfile(activeProfile.id, newPrefs);
+    } else {
+      await createProfile({
+        name: "You",
+        sizes: newPrefs.sizes,
+        preferredCategories: newPrefs.preferredCategories,
+        maxBudget: newPrefs.maxBudget
+      });
+    }
+  }, [activeProfile, updateProfile, createProfile]);
+
+  const clearPreferences = useCallback(async () => {
     setPage(1);
     setHasMore(true);
     setAllProducts([]);
     setTotalSpent(0);
-    localStorage.removeItem(PREFS_KEY);
     sessionStorage.removeItem(TOTAL_SPENT_KEY);
-  }, []);
+
+    if (activeProfile) {
+      await updateProfile(activeProfile.id, {
+        sizes: [],
+        preferredCategories: [],
+        maxBudget: null
+      });
+    }
+  }, [activeProfile, updateProfile]);
 
   const saveItem = useCallback((productId: string) => {
     setSavedItemIds((prev) => {
@@ -325,6 +325,12 @@ export function useQuickBuy() {
     getFilteredProducts,
     fetchNextPage,
     totalSpent,
-    addExpense
+    addExpense,
+    profiles,
+    activeProfile,
+    createProfile,
+    switchProfile,
+    updateProfile,
+    deleteProfile
   };
 }
