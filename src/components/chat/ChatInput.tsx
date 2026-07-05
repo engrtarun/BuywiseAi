@@ -4,7 +4,6 @@ import React, { useRef, useState, useEffect } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye, Plus, Compass, Brain } from "lucide-react";
 import { QuickAccessMenu } from "./QuickAccessMenu";
-import { SoundMuteToggle } from "@/components/shared/SoundMuteToggle";
 import { ChatMode } from "@/types/chat";
 
 const placeholders = [
@@ -198,12 +197,12 @@ export function ChatInput({
               {mode === "deep_research" ? (
                 <>
                   <Brain className="size-3 text-marigold" />
-                  <span className="text-text-secondary">🔬 Deep Research</span>
+                  <span className="text-text-secondary">Deep Research</span>
                 </>
               ) : (
                 <>
                   <Compass className="size-3 text-marigold" />
-                  <span className="text-text-secondary">🧭 Explore Mode</span>
+                  <span className="text-text-secondary">Explore Mode</span>
                 </>
               )}
               {isModeLocked && (
@@ -242,7 +241,6 @@ export function ChatInput({
 
           <div className="flex items-end gap-2 p-1 pl-2 pr-1.5 pb-1.5">
             {/* Quick Actions + Button */}
-            <SoundMuteToggle showTooltip={true} />
             <button
               ref={plusButtonRef}
               onClick={() => {
@@ -303,7 +301,7 @@ export function ChatInput({
               minRows={1}
               maxRows={5}
               disabled={guestLimitReached}
-              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center ${guestLimitReached ? "cursor-not-allowed placeholder:text-text-dim-ondark/80" : ""}`}
+              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${guestLimitReached ? "cursor-not-allowed placeholder:text-text-dim-ondark/80" : ""}`}
             />
           </div>
 
