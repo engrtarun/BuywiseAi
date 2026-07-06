@@ -14,7 +14,7 @@ interface ThemeContextType {
   mode: string;
   setMode: (mode: string) => Promise<void>;
   customSeedColor: string;
-  setCustomSeedColor: (color: string) => void;
+  setCustomSeedColor: (color: string) => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -39,7 +39,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
     if (newTheme === "custom") {
       const activeSeed = newSeed || customSeedColor;
       const themeVars = generateCustomTheme(activeSeed);
-      
+
       const bgHsl = hexToShadcnHsl(themeVars.background);
       const sidebarHsl = hexToShadcnHsl(themeVars.sidebar);
       const primaryHsl = hexToShadcnHsl(themeVars.primary);
@@ -51,7 +51,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
         customStyle.id = "custom-theme-vars";
         document.head.appendChild(customStyle);
       }
-      
+
       customStyle.innerHTML = `
         :root[data-theme="custom"] {
           --ink-deep: ${bgHsl};
@@ -113,7 +113,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("theme_preference, mode_preference, custom_primary_hsl")
+          .select("theme_preference, mode_preference")
           .eq("id", user.id)
           .maybeSingle();
 
@@ -129,10 +129,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
           }
           if (profile.mode_preference && profile.mode_preference !== savedMode) {
             updatedMode = profile.mode_preference;
-            needsUpdateLocal = true;
-          }
-          if (profile.custom_primary_hsl && profile.custom_primary_hsl !== savedSeed) {
-            updatedSeed = profile.custom_primary_hsl;
             needsUpdateLocal = true;
           }
 
@@ -154,28 +150,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
     syncWithProfile();
   }, []);
 
-  const setCustomSeedColor = (newColor: string) => {
+  const setCustomSeedColor = async (newColor: string) => {
     setCustomSeedColorState(newColor);
     localStorage.setItem("buywise_custom_seed_color", newColor);
     if (theme === "custom") {
       applyThemeAndMode("custom", mode, newColor);
     }
-
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    debounceTimer.current = setTimeout(async () => {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await supabase.from("profiles").update({ custom_primary_hsl: newColor }).eq("id", user.id);
-        }
-      } catch (err) {
-        console.error("Failed to save custom color preference:", err);
-      }
-    }, 500);
   };
 
   const setTheme = async (newTheme: string) => {
@@ -222,11 +202,11 @@ export function useTheme() {
   if (context === undefined) {
     return {
       theme: "default",
-      setTheme: async () => {},
+      setTheme: async () => { },
       mode: "light",
-      setMode: async () => {},
+      setMode: async () => { },
       customSeedColor: "#FC8019",
-      setCustomSeedColor: () => {},
+      setCustomSeedColor: async () => { },
     };
   }
   return context;

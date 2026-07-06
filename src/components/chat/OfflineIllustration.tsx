@@ -87,9 +87,9 @@ export function OfflineIllustration({ className }: { className?: string }) {
                 height: 56,
                 borderRadius: "50%",
 
-                /* Layer 1 — hemisphere shading (light top-left → dark bottom-right) */
+                /* Layer 1 — hemisphere shading using primary theme color */
                 background:
-                  "radial-gradient(ellipse 65% 55% at 35% 30%, hsl(var(--primary) / 0.8) 0%, hsl(var(--primary)) 40%, hsl(var(--primary) / 0.6) 85%, hsl(var(--primary) / 0.4) 100%)",
+                  "radial-gradient(ellipse 65% 55% at 35% 30%, hsl(var(--primary) / 0.9) 0%, hsl(var(--primary)) 40%, hsl(var(--primary) / 0.7) 85%, hsl(var(--primary) / 0.5) 100%)",
 
                 /* Layer 2 — glossy specular highlight overlay */
                 backgroundClip: "padding-box",
@@ -98,7 +98,7 @@ export function OfflineIllustration({ className }: { className?: string }) {
 
                 /* Rim glow / ambient light bleed */
                 boxShadow:
-                  "0 0 18px 4px hsl(var(--primary) / 0.25), inset 0 -6px 14px rgba(0,0,0,0.25)",
+                  "0 0 18px 4px hsl(var(--primary) / 0.35), inset 0 -6px 14px rgba(0,0,0,0.25)",
 
                 display: "flex",
                 alignItems: "center",
@@ -126,10 +126,11 @@ export function OfflineIllustration({ className }: { className?: string }) {
                 height="26"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="hsl(var(--primary-foreground))"
+                stroke="currentColor"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                className="text-primary-foreground"
                 style={{
                   position: "relative",
                   zIndex: 1,
@@ -147,7 +148,7 @@ export function OfflineIllustration({ className }: { className?: string }) {
                 <path d="M8.53 16.11a6 6 0 0 1 6.95 0" opacity="0.8" />
 
                 {/* Center dot */}
-                <circle cx="12" cy="20" r="1" fill="hsl(var(--primary-foreground))" stroke="none" />
+                <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
 
                 {/* Diagonal "disconnect" slash — micro-animated */}
                 <line
@@ -156,7 +157,7 @@ export function OfflineIllustration({ className }: { className?: string }) {
                   x2="23"
                   y2="23"
                   strokeWidth="2.2"
-                  stroke="hsl(var(--primary-foreground))"
+                  stroke="currentColor"
                   style={{
                     animation: "offlineIconPulse 2.4s ease-in-out infinite",
                   }}
@@ -174,7 +175,7 @@ export function OfflineIllustration({ className }: { className?: string }) {
             marginTop: 6,
             borderRadius: "50%",
             background:
-              "radial-gradient(ellipse at center, hsl(var(--primary) / 0.3) 0%, transparent 70%)",
+              "radial-gradient(ellipse at center, hsl(var(--primary) / 0.30) 0%, transparent 70%)",
             animation: "offlineOrbShadow 3.2s ease-in-out infinite",
             willChange: "transform, opacity",
           }}
