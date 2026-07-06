@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Message, Feedback } from "@/types/chat";
 import { Product } from "@/types/product";
 import { MessageActions } from "./MessageActions";
@@ -18,6 +18,7 @@ import { IntakeQuestionnaireCard } from "./IntakeQuestionnaireCard";
 import { ChatMode } from "@/types/chat";
 import { Brain, Pencil, ArrowRight, ChevronRight, CheckCircle } from "lucide-react";
 import { getExploreLayoutParts } from "@/app/page";
+import { useUser } from "@/contexts/UserContext";
 
 function getCuratedProductImage(productName: string): string {
   const name = productName.toLowerCase();
@@ -175,6 +176,8 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customText, setCustomText] = useState("");
   const [hasAnswered, setHasAnswered] = useState(false);
+  
+  const { profile } = useUser();
 
   // Lazy loading state for Explore Mode:
   const hasSearchTag = !!message.searchTag;
@@ -401,8 +404,11 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
           className="self-end mb-[2px]"
         >
           <Avatar className="size-7 sm:size-8 shrink-0">
+            {profile?.avatar_url && (
+              <AvatarImage src={profile.avatar_url} alt={profile.full_name || "User"} />
+            )}
             <AvatarFallback className="bg-brand-accent/20 text-brand-accent border border-brand-accent/30 font-heading font-bold text-[10px] sm:text-xs">
-              U
+              {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : "U"}
             </AvatarFallback>
           </Avatar>
         </motion.div>
