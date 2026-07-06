@@ -26,7 +26,8 @@ body, .transition-theme-all * {
   --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-ibm-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
   --font-heading: var(--font-sora), "Sora", ui-sans-serif, system-ui, sans-serif;
-  --font-user: var(--font-quicksand), "Quicksand", "Nunito", "Segoe UI Rounded", ui-sans-serif, system-ui, sans-serif;
+  --font-user: var(--font-user);
+  --font-ai: var(--font-ai);
 
   /* ── BuyWise brand colors ─────────────────── */
   --color-ink-deep: var(--ink-deep);
@@ -145,6 +146,10 @@ body, .transition-theme-all * {
   --border-light: #e4e4e7;
   --border-dark: #e4e4e7;
 
+  /* Fonts */
+  --font-ai: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-user: var(--font-quicksand), 'Nunito', 'SF Pro Rounded', ui-rounded, sans-serif;
+
   /* User Bubble Colors */
   --user-bubble-bg: #f4f4f5;
   --user-bubble-text: #09090b;
@@ -215,6 +220,10 @@ body, .transition-theme-all * {
   --border-light: #e4e4e7;
   --border-dark: #e4e4e7;
 
+  /* Fonts */
+  --font-ai: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-user: var(--font-quicksand), 'Nunito', 'SF Pro Rounded', ui-rounded, sans-serif;
+
   --user-bubble-bg: #f4f4f5;
   --user-bubble-text: #09090b;
 
@@ -282,6 +291,10 @@ body, .transition-theme-all * {
   --border-light: #2a2a2a;
   --border-dark: #2a2a2a;
 
+  /* Fonts */
+  --font-ai: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-user: var(--font-quicksand), 'Nunito', 'SF Pro Rounded', ui-rounded, sans-serif;
+
   --user-bubble-bg: #18181b;
   --user-bubble-text: #ffffff;
 
@@ -347,6 +360,10 @@ body, .transition-theme-all * {
   --brand-accent: #E8A33D;
   --border-light: #b2c6bc;
   --border-dark: #b2c6bc;
+
+  /* Fonts */
+  --font-ai: 'Merriweather', 'Playfair Display', Georgia, serif;
+  --font-user: system-ui, -apple-system, sans-serif;
 
   --user-bubble-bg: #cbdad2;
   --user-bubble-text: #123832;
@@ -415,6 +432,10 @@ body, .transition-theme-all * {
   --border-light: #2A4A44;
   --border-dark: #2A4A44;
 
+  /* Fonts */
+  --font-ai: 'Merriweather', 'Playfair Display', Georgia, serif;
+  --font-user: system-ui, -apple-system, sans-serif;
+
   --user-bubble-bg: #1b5c4f;
   --user-bubble-text: #F6EFDD;
 
@@ -480,6 +501,10 @@ body, .transition-theme-all * {
   --brand-accent: #C96442;
   --border-light: #E2DFD7;
   --border-dark: #E2DFD7;
+
+  /* Fonts */
+  --font-ai: 'Montserrat', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-user: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
   --user-bubble-bg: #ECEBE5;
   --user-bubble-text: #2d2722;
@@ -547,6 +572,10 @@ body, .transition-theme-all * {
   --brand-accent: #C96442;
   --border-light: #333333;
   --border-dark: #333333;
+
+  /* Fonts */
+  --font-ai: 'Montserrat', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-user: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
   --user-bubble-bg: #2F2F2F;
   --user-bubble-text: #F5F4EE;
@@ -694,6 +723,10 @@ body, .transition-theme-all * {
   --brand-accent: #FC8019;
   --border-light: #2a2a2a;
   --border-dark: #2a2a2a;
+
+  /* Fonts */
+  --font-ai: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-user: var(--font-quicksand), 'Nunito', 'SF Pro Rounded', ui-rounded, sans-serif;
 
   --user-bubble-bg: #18181b;
   --user-bubble-text: #ffffff;

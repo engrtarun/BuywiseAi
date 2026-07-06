@@ -362,12 +362,12 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
     return (
       <div className="flex justify-end w-full gap-2 overflow-visible">
         <motion.div
-          initial={{ opacity: 0, scale: 0.85, y: 20, rotateX: -15 }}
+          initial={{ opacity: 0, scale: 0.8, y: 15, rotateX: -25, transformPerspective: 800 }}
           animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20, duration: 0.4 }}
+          transition={{ type: "spring", stiffness: 450, damping: 25, mass: 0.8, duration: 0.4 }}
           style={{ willChange: "transform, opacity", transformOrigin: "bottom right" }}
           dir="auto"
-          className="bg-user-bubble-bg text-user-bubble-text rounded-2xl rounded-br-sm px-4 py-3 text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap break-words shadow-sm max-w-[85%] sm:max-w-[75%] md:max-w-[65%] font-[family:var(--font-user)] font-medium"
+          className="bg-user-bubble-bg text-user-bubble-text rounded-2xl rounded-br-sm px-4 py-3 text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap break-words shadow-sm max-w-[85%] sm:max-w-[75%] md:max-w-[65%] font-user font-medium"
         >
           {message.content}
         </motion.div>
@@ -429,7 +429,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
                 borderBottomLeftRadius: "var(--ai-bubble-radius-bl, var(--ai-bubble-radius))",
                 boxShadow: "var(--ai-bubble-shadow)",
               }}
-              className="text-[14px] sm:text-[15px] leading-relaxed break-words font-sans w-full min-w-0 inline-block"
+              className="text-[14px] sm:text-[15px] leading-relaxed break-words font-ai w-full min-w-0 inline-block"
             >
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -446,7 +446,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
             <div className="flex flex-col gap-4 w-full animate-in fade-in duration-300">
               {/* 1. Research Summary */}
               {message.deepResearchResults.summary && (
-                <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-4 text-[14px] sm:text-[15px] leading-relaxed break-words font-sans text-zinc-200 shadow-xl backdrop-blur-md">
+                <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-4 text-[14px] sm:text-[15px] leading-relaxed break-words font-ai text-zinc-200 shadow-xl backdrop-blur-md">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeRaw]}
@@ -459,7 +459,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
 
               {/* 2. Comparison Table (Optional) */}
               {message.deepResearchResults.comparison && message.deepResearchResults.comparison.length > 0 && (
-                <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-4 text-[14px] sm:text-[15px] font-sans text-zinc-200 shadow-xl backdrop-blur-md overflow-hidden">
+                <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-4 text-[14px] sm:text-[15px] font-ai text-zinc-200 shadow-xl backdrop-blur-md overflow-hidden">
                   <h3 className="font-bold text-marigold mb-3 text-sm uppercase tracking-wider">Feature Comparison</h3>
                   <div className="overflow-x-auto rounded-xl border border-white/10">
                     <table className="w-full text-left text-[13px] border-collapse min-w-[400px]">
@@ -486,7 +486,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
 
               {/* 3. Final Verdict */}
               {message.deepResearchResults.finalVerdict && (
-                <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-4 text-[14px] sm:text-[15px] leading-relaxed break-words font-sans text-zinc-200 shadow-xl backdrop-blur-md">
+                <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-4 text-[14px] sm:text-[15px] leading-relaxed break-words font-ai text-zinc-200 shadow-xl backdrop-blur-md">
                   <div className="flex items-center gap-2 mb-2 text-brand-accent font-bold uppercase tracking-wider text-sm">
                     <CheckCircle className="size-4" /> Final Verdict
                   </div>
