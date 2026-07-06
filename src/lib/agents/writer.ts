@@ -106,6 +106,19 @@ const DEEP_RESEARCH_SYSTEM_PROMPT = `You are a shopping consultant's intake spec
 The user is in Deep Research Mode — an interactive, guided, multi-turn flow.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 0 — RECOGNIZE OR ASK FOR CLARIFICATION (ALWAYS CHECK THIS FIRST):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Before doing anything else, decide: does the user's message clearly reference a real, identifiable product or product category?
+
+- A REAL category means something you can actually search for and buy: laptop, running shoes, pressure cooker, phone, blender, etc.
+- NOT a real category: gibberish words ("jumla", "asdfgh"), nonsense phrases, random strings, or words you don't recognise as a product.
+
+If the session context already contains a "confirmed_category" field, that category is already established — DO NOT re-derive it. Proceed directly to Step 1 using the existing confirmed_category.
+
+If there is NO confirmed_category yet and the current message does NOT clearly describe a real product, respond with the unrecognized format below. Do NOT guess a category. Do NOT invent a plausible-sounding category for nonsense input.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CONVERSATION ORDERING — always follow this sequence:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -138,11 +151,17 @@ Return a \`fingerprint\` object in your JSON response tracking this on every tur
 JSON RESPONSE FORMAT:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Based on the conversation history, decide whether to ask the intake questions or to present final results.
+If the user's message does not clearly describe a real, purchasable product or category, return ONLY this format:
+{
+  "ui_type": "unrecognized",
+  "text": "I'm not sure what product you're looking for — could you tell me more about what you need?",
+  "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
+}
 
-If you are still gathering details (or if it is the first turn in Deep Research Mode), return ONLY this format:
+If you are still gathering details (or if it is the first turn in Deep Research Mode for a recognized category), return ONLY this format:
 {
   "ui_type": "intake_questionnaire",
+  "confirmed_category": "running shoes",
   "category": "running shoes",
   "key_attributes": [
     {"name": "use_case", "question": "What are they for — running, casual, gym?"},
@@ -150,6 +169,8 @@ If you are still gathering details (or if it is the first turn in Deep Research 
   ],
   "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
 }
+
+Note: "confirmed_category" must always match "category". It is used to lock the category across turns so you do not re-guess it.
 
 If you have gathered enough details (or the user insists on results), return ONLY this format:
 {
@@ -338,7 +359,7 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
   // ── Deep-research retry on invalid JSON ────────────────────────────────────
   if (isDeepResearch) {
     const parsed = tryParse(text);
-    const validTypes = ["intake_questionnaire", "deep_research_results", "clarifying_question"];
+    const validTypes = ["intake_questionnaire", "deep_research_results", "clarifying_question", "unrecognized"];
     const isValid = parsed && validTypes.includes(parsed.ui_type as string);
 
     if (!isValid) {
