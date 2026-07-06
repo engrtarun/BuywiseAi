@@ -129,6 +129,9 @@ export function generateCustomTheme(seedHex: string) {
     primary: seedHex,
     background: backgroundHex,
     sidebar: cardHex,
-    primaryForeground: primaryForeground
+    primaryForeground: primaryForeground,
+    textPrimary: "#ffffff",
+    textSecondary: "#a1a1aa",
+    border: HSLToHex(h, bgS, Math.min(cardL + 10, 100))
   };
 }

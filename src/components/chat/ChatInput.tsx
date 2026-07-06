@@ -43,15 +43,15 @@ interface ChatInputProps {
   onNewChat?: (mode?: ChatMode) => void;
 }
 
-export function ChatInput({ 
+export function ChatInput({
   inputText,
   setInputText,
-  onSend, 
-  onStop, 
-  disabled, 
-  isGenerating, 
-  guestLimitReached = false, 
-  cooldownUntil = null, 
+  onSend,
+  onStop,
+  disabled,
+  isGenerating,
+  guestLimitReached = false,
+  cooldownUntil = null,
   onLoginClick,
   isGuest = false,
   dailyLimitReached = false,
@@ -308,86 +308,86 @@ export function ChatInput({
             >
               <Plus className={`size-5 transition-transform duration-200 ${isQuickMenuOpen ? 'rotate-45' : 'rotate-0'}`} />
             </button>
-            <QuickAccessMenu 
-              isOpen={isQuickMenuOpen} 
-              onClose={() => setIsQuickMenuOpen(false)} 
-              anchorRect={plusButtonRect} 
+            <QuickAccessMenu
+              isOpen={isQuickMenuOpen}
+              onClose={() => setIsQuickMenuOpen(false)}
+              anchorRect={plusButtonRect}
               selectedMode={mode || "explore"}
-              onModeChange={onModeChange || (() => {})}
+              onModeChange={onModeChange || (() => { })}
               isModeLocked={!!isModeLocked}
             />
 
-            <div className="relative flex-1 flex min-h-[44px] sm:min-h-[48px]" data-tour-id="chat-input">
-            {/* Custom Animated Placeholder */}
-            {!inputText && (
-              <div className="absolute inset-0 pointer-events-none px-4 flex items-center overflow-hidden">
-                {isClarifyingActive ? (
-                  <span className="absolute left-4 right-4 text-[15px] text-text-secondary font-sans truncate opacity-100">
-                    Or reply directly...
-                  </span>
-                ) : placeholders.map((text, i) => (
-                  <span
-                    key={i}
-                    className={`
+            <div className="relative flex-1 flex min-h-[44px] sm:min-h-[48px]" data-tour-id="tour-chat-input">
+              {/* Custom Animated Placeholder */}
+              {!inputText && (
+                <div className="absolute inset-0 pointer-events-none px-4 flex items-center overflow-hidden">
+                  {isClarifyingActive ? (
+                    <span className="absolute left-4 right-4 text-[15px] text-text-secondary font-sans truncate opacity-100">
+                      Or reply directly...
+                    </span>
+                  ) : placeholders.map((text, i) => (
+                    <span
+                      key={i}
+                      className={`
                       absolute left-4 right-4 text-[15px] text-text-secondary font-sans truncate
                       transition-all duration-500 ease-in-out
                       ${i === placeholderIndex
-                        ? "opacity-100 translate-y-0"
-                        : i === (placeholderIndex - 1 + placeholders.length) % placeholders.length
-                          ? "opacity-0 -translate-y-3"
-                          : "opacity-0 translate-y-3"
-                      }
+                          ? "opacity-100 translate-y-0"
+                          : i === (placeholderIndex - 1 + placeholders.length) % placeholders.length
+                            ? "opacity-0 -translate-y-3"
+                            : "opacity-0 translate-y-3"
+                        }
                     `}
-                  >
-                    {text}
-                  </span>
-                ))}
+                    >
+                      {text}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <TextareaAutosize
+                ref={inputRef}
+                dir="auto"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={dailyLimitReached ? (dailyLimitMessage ?? "Daily limit reached — resets at 12:00 AM") : ""}
+                minRows={1}
+                maxRows={5}
+                disabled={guestLimitReached || dailyLimitReached}
+                className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${(guestLimitReached || dailyLimitReached) ? "cursor-not-allowed placeholder:text-text-destructive/80" : ""}`}
+              />
+            </div>
+
+            {!isGuest && tokensUsed !== undefined && tokenLimit !== undefined && (
+              <div className="flex items-center self-end mb-[8px] mr-1 shrink-0">
+                <UsageRing value={tokensUsed} max={tokenLimit} size={26} />
               </div>
             )}
 
-            <TextareaAutosize
-              ref={inputRef}
-              dir="auto"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={dailyLimitReached ? (dailyLimitMessage ?? "Daily limit reached — resets at 12:00 AM") : ""}
-              minRows={1}
-              maxRows={5}
-              disabled={guestLimitReached || dailyLimitReached}
-              className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${(guestLimitReached || dailyLimitReached) ? "cursor-not-allowed placeholder:text-text-destructive/80" : ""}`}
-            />
-          </div>
-
-          {!isGuest && tokensUsed !== undefined && tokenLimit !== undefined && (
-            <div className="flex items-center self-end mb-[8px] mr-1 shrink-0">
-              <UsageRing value={tokensUsed} max={tokenLimit} size={26} />
-            </div>
-          )}
-
-          <button
-            type="button"
-            onTouchStart={(e) => {
-              e.preventDefault();
-              if (!isDisabled) handleSend();
-            }}
-            onClick={(e) => {
-              e.preventDefault();
-              if (!isDisabled) handleSend();
-            }}
-            aria-label="Send message"
-            disabled={isDisabled || guestLimitReached || timeLeft > 0}
-            className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-brand-accent text-white transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || isDisabled || guestLimitReached || timeLeft > 0 ? "opacity-40 cursor-not-allowed" : "hover:scale-105 hover:brightness-110 active:scale-95 cursor-pointer"
-              }`}
-          >
-            {timeLeft > 0 ? (
-              <span className="text-sm font-bold font-mono tracking-tighter">
-                {timeLeft}s
-              </span>
-            ) : (
-              <ArrowUp className="size-5 stroke-[2.5]" />
-            )}
-          </button>
+            <button
+              type="button"
+              onTouchStart={(e) => {
+                e.preventDefault();
+                if (!isDisabled) handleSend();
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!isDisabled) handleSend();
+              }}
+              aria-label="Send message"
+              disabled={isDisabled || guestLimitReached || timeLeft > 0}
+              className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-brand-accent text-white transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || isDisabled || guestLimitReached || timeLeft > 0 ? "opacity-40 cursor-not-allowed" : "hover:scale-105 hover:brightness-110 active:scale-95 cursor-pointer"
+                }`}
+            >
+              {timeLeft > 0 ? (
+                <span className="text-sm font-bold font-mono tracking-tighter">
+                  {timeLeft}s
+                </span>
+              ) : (
+                <ArrowUp className="size-5 stroke-[2.5]" />
+              )}
+            </button>
           </div>
         </div>
 

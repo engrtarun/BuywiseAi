@@ -208,16 +208,16 @@ export function validateModeJSONPayload(rawText: string, expectedMode: 'explore'
   try {
     const cleanedText = rawText.replace(/```(?:json)?|```/gi, "").trim();
     const parsedData = JSON.parse(cleanedText);
-    
+
     // Partial success for deep research: if it has a summary or verdict, we can recover it
     if (expectedMode === 'deep_research') {
       if (parsedData.ui_type === 'clarifying_question') return true;
       if (parsedData.ui_type === 'deep_research_results' || parsedData.ui_type === 'results' || parsedData.summary || parsedData.final_verdict) {
-        return true; 
+        return true;
       }
       return false;
     }
-    
+
     if (expectedMode === 'explore') {
       if (parsedData.ui_type === 'explore_carousel') {
         return typeof parsedData.headline === 'string' && Array.isArray(parsedData.products) && typeof parsedData.deep_dive === 'string';
@@ -273,10 +273,10 @@ export async function POST(req: NextRequest) {
     }
     const contextFilePath = path.join(chatDataDir, `${chatId}.json`);
 
-    let backendContext = { 
-      messageCount: history.length, 
-      lastActive: new Date().toISOString(), 
-      context: requirements 
+    let backendContext = {
+      messageCount: history.length,
+      lastActive: new Date().toISOString(),
+      context: requirements
     };
 
     if (fs.existsSync(contextFilePath)) {
@@ -286,7 +286,7 @@ export async function POST(req: NextRequest) {
         console.warn("Failed to parse backend JSON file:", e);
       }
     }
-    
+
     // Update and write back
     backendContext.messageCount = history.length;
     backendContext.lastActive = new Date().toISOString();
@@ -319,7 +319,7 @@ export async function POST(req: NextRequest) {
       try {
         let product = JSON.parse(userMessage);
         const explanationPrompt = `The user selected the product "${product.name}" priced at ${product.price}. Their stated need was their previous conversation context. Write a short, genuine 2-3 sentence explanation of why this specific product is a good fit for their stated need, referencing whatever real specs/features are available from the product title/description. Be honest — if the product isn't a perfect fit, say so briefly rather than oversell it. Output your response as a valid JSON object in this format: { "ui_type": "text_response", "text": "Your explanation here" }`;
-        
+
         const model = genAI.getGenerativeModel({
           model: "gemini-2.5-flash",
         });
@@ -330,21 +330,21 @@ export async function POST(req: NextRequest) {
             responseMimeType: "application/json",
           },
         });
-        
+
         const result = await chat.sendMessage(explanationPrompt);
         const text = (await result.response).text();
-        
+
         // Simple check
         const parsedData = JSON.parse(text.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
         if (parsedData && parsedData.ui_type === "text_response") {
-           return NextResponse.json({ text: [text], products: null });
+          return NextResponse.json({ text: [text], products: null });
         } else {
-           throw new Error("Invalid format from Gemini");
+          throw new Error("Invalid format from Gemini");
         }
       } catch (e) {
         console.error("Failed to generate buy explanation:", e);
         let product: any = { name: "this product" };
-        try { product = JSON.parse(userMessage); } catch {}
+        try { product = JSON.parse(userMessage); } catch { }
         const fallback = JSON.stringify({
           ui_type: "text_response",
           text: `Great choice! ${product.name} is a solid pick within your budget.`
@@ -355,7 +355,7 @@ export async function POST(req: NextRequest) {
 
     const isDeepResearch = mode === "deep_research" || mode === "deep-research";
     let systemInstruction = isDeepResearch ? DEEP_RESEARCH_SYSTEM_PROMPT : EXPLORE_SYSTEM_PROMPT;
-    
+
     // Inject Backend JSON file data to improve message quality
     if (backendContext && backendContext.context) {
       systemInstruction += `\n\n[SYSTEM NOTE - BACKEND CONTEXT FILE]\nI have read your user profile from the backend JSON context file. Please use this data to greatly improve the quality and personalization of your response:\n${JSON.stringify(backendContext.context, null, 2)}`;
@@ -378,11 +378,41 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    let result = await chat.sendMessage(userMessage);
-    let text = (await result.response).text();
+    let text = "";
+    try {
+      let result = await chat.sendMessage(userMessage);
+      text = (await result.response).text();
+    } catch (geminiErr) {
+      console.warn("Gemini API failed, triggering Groq Fallback...", geminiErr);
+      if (!process.env.GROQ_API_KEY) throw geminiErr;
+
+      const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama3-8b-8192",
+          messages: [
+            { role: "system", content: systemInstruction },
+            ...history.map((m: any) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content || "" })),
+            { role: "user", content: userMessage }
+          ],
+          response_format: { type: "json_object" }
+        })
+      });
+
+      if (!groqRes.ok) {
+        throw new Error(`Groq API failed: ${groqRes.statusText}`);
+      }
+
+      const groqData = await groqRes.json();
+      text = groqData.choices[0].message.content;
+    }
 
     let isValid = validateModeJSONPayload(text, isDeepResearch ? 'deep_research' : 'explore');
-    
+
     // We will accumulate texts to return to the frontend.
     let responseTexts: string[] = [text];
     let serperProducts: any[] = [];
@@ -390,46 +420,46 @@ export async function POST(req: NextRequest) {
     // Parse the initial response safely
     let parsedData = null;
     try {
-       parsedData = JSON.parse(text.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
-    } catch (e) {}
+      parsedData = JSON.parse(text.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
+    } catch (e) { }
 
     // If Gemini wants to search
     if (parsedData && parsedData.ui_type === "search_intent" && !isDeepResearch) {
-       try {
-         serperProducts = await searchProducts(parsedData.query, 5);
-         const searchContextMessage = serperProducts.length > 0 
-           ? `Here are real current product listings for your search: ${JSON.stringify(serperProducts)}. Please output the explore_carousel JSON now with the best options.`
-           : `No products found for: ${parsedData.query}. Please output a text_response explaining that no products were found.`;
-         
-         const secondResult = await chat.sendMessage(searchContextMessage);
-         const carouselText = (await secondResult.response).text();
-         responseTexts = [carouselText]; // Replace the search_intent message with the actual carousel
-         isValid = validateModeJSONPayload(carouselText, 'explore');
+      try {
+        serperProducts = await searchProducts(parsedData.query, 5);
+        const searchContextMessage = serperProducts.length > 0
+          ? `Here are real current product listings for your search: ${JSON.stringify(serperProducts)}. Please output the explore_carousel JSON now with the best options.`
+          : `No products found for: ${parsedData.query}. Please output a text_response explaining that no products were found.`;
+
+        const secondResult = await chat.sendMessage(searchContextMessage);
+        const carouselText = (await secondResult.response).text();
+        responseTexts = [carouselText]; // Replace the search_intent message with the actual carousel
+        isValid = validateModeJSONPayload(carouselText, 'explore');
 
 
-       } catch (err) {
-         console.error("[chat route] Failed to search products:", err);
-         responseTexts = [JSON.stringify({ ui_type: "text_response", text: getFallbackChatResponse(userMessage, userHistory) })];
-       }
+      } catch (err) {
+        console.error("[chat route] Failed to search products:", err);
+        responseTexts = [JSON.stringify({ ui_type: "text_response", text: getFallbackChatResponse(userMessage, userHistory) })];
+      }
     }
 
     if (!isValid) {
       console.warn("AI generated invalid JSON payload. Retrying or falling back...");
-      
+
       // Try to aggressively extract JSON before falling back completely
       try {
-         const match = text.match(/\{[\s\S]*\}/);
-         if (match) {
-           const potentialJson = match[0];
-           const parsed = JSON.parse(potentialJson);
-           if (parsed.ui_type === 'deep_research_results' || parsed.summary || parsed.final_verdict) {
-             text = potentialJson;
-             isValid = true;
-             responseTexts = [text];
-             console.log("Successfully extracted partial JSON via regex");
-           }
-         }
-      } catch (e) {}
+        const match = text.match(/\{[\s\S]*\}/);
+        if (match) {
+          const potentialJson = match[0];
+          const parsed = JSON.parse(potentialJson);
+          if (parsed.ui_type === 'deep_research_results' || parsed.summary || parsed.final_verdict) {
+            text = potentialJson;
+            isValid = true;
+            responseTexts = [text];
+            console.log("Successfully extracted partial JSON via regex");
+          }
+        }
+      } catch (e) { }
 
       if (!isValid && isDeepResearch) {
         try {
@@ -456,7 +486,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       text: responseTexts,
       products: serperProducts.length > 0 ? serperProducts : null
     });
