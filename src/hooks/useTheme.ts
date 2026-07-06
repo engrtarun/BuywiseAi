@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const isBrowser = typeof window !== "undefined";
@@ -23,6 +23,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
   const [theme, setThemeState] = useState<string>("default");
   const [mode, setModeState] = useState<string>("light");
   const [customSeedColor, setCustomSeedColorState] = useState<string>("#FC8019");
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   const applyThemeAndMode = (newTheme: string, newMode: string, newSeed?: string) => {
     const root = document.documentElement;
@@ -38,7 +39,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
     if (newTheme === "custom") {
       const activeSeed = newSeed || customSeedColor;
       const themeVars = generateCustomTheme(activeSeed);
-      
+
       const bgHsl = hexToShadcnHsl(themeVars.background);
       const sidebarHsl = hexToShadcnHsl(themeVars.sidebar);
       const primaryHsl = hexToShadcnHsl(themeVars.primary);
@@ -50,7 +51,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
         customStyle.id = "custom-theme-vars";
         document.head.appendChild(customStyle);
       }
-      
+
       customStyle.innerHTML = `
         :root[data-theme="custom"] {
           --ink-deep: ${bgHsl};
@@ -112,7 +113,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("theme_preference, mode_preference, custom_seed_color")
+          .select("theme_preference, mode_preference")
           .eq("id", user.id)
           .maybeSingle();
 
@@ -128,10 +129,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
           }
           if (profile.mode_preference && profile.mode_preference !== savedMode) {
             updatedMode = profile.mode_preference;
-            needsUpdateLocal = true;
-          }
-          if (profile.custom_seed_color && profile.custom_seed_color !== savedSeed) {
-            updatedSeed = profile.custom_seed_color;
             needsUpdateLocal = true;
           }
 
@@ -158,16 +155,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
     localStorage.setItem("buywise_custom_seed_color", newColor);
     if (theme === "custom") {
       applyThemeAndMode("custom", mode, newColor);
-    }
-
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from("profiles").update({ custom_seed_color: newColor }).eq("id", user.id);
-      }
-    } catch (err) {
-      console.error("Failed to save custom color preference:", err);
     }
   };
 
@@ -215,11 +202,11 @@ export function useTheme() {
   if (context === undefined) {
     return {
       theme: "default",
-      setTheme: async () => {},
+      setTheme: async () => { },
       mode: "light",
-      setMode: async () => {},
+      setMode: async () => { },
       customSeedColor: "#FC8019",
-      setCustomSeedColor: async () => {},
+      setCustomSeedColor: async () => { },
     };
   }
   return context;
