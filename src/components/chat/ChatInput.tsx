@@ -7,6 +7,7 @@ import { QuickAccessMenu } from "./QuickAccessMenu";
 import { SoundMuteToggle } from "@/components/shared/SoundMuteToggle";
 import { UsageRing } from "@/components/ui/usage-ring";
 import { ChatMode } from "@/types/chat";
+import { usePremium } from "@/contexts/PremiumContext";
 
 const placeholders = [
   "BuyWise anything...",
@@ -67,6 +68,8 @@ export function ChatInput({
   const [isQuickMenuOpen, setIsQuickMenuOpen] = useState(false);
   const plusButtonRef = useRef<HTMLButtonElement>(null);
   const [plusButtonRect, setPlusButtonRect] = useState<DOMRect | null>(null);
+  const { openPremium } = usePremium();
+  const [showUpgradeToast, setShowUpgradeToast] = useState(false);
 
   const isDisabled = disabled || dailyLimitReached;
 
@@ -107,12 +110,18 @@ export function ChatInput({
   }, [cooldownUntil]);
 
   const handleSend = () => {
-    if (guestLimitReached || dailyLimitReached || timeLeft > 0) return;
+    if (guestLimitReached || dailyLimitReached) return;
+    if (timeLeft > 0) {
+      setShowUpgradeToast(true);
+      setTimeout(() => setShowUpgradeToast(false), 5000);
+      return;
+    }
     const content = inputText.trim();
     if (!content || disabled) return;
 
     onSend(content);
     setInputText("");
+    setShowUpgradeToast(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -179,7 +188,27 @@ export function ChatInput({
 
   return (
     <div className={`shrink-0 bg-bg-main border-t border-border-light px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-4 z-20 transition-opacity duration-300 ${guestLimitReached ? "opacity-60" : ""}`}>
-      <div className="w-full max-w-3xl mx-auto flex flex-col gap-2">
+      <div className="w-full max-w-3xl mx-auto flex flex-col gap-2 relative">
+      
+        {/* Smart UX Trigger Toast */}
+        {showUpgradeToast && (
+          <div className="absolute bottom-[calc(100%+12px)] left-0 right-0 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-none">
+            <div className="mx-auto w-fit bg-[#1a1b26]/90 backdrop-blur-md border border-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.3)] rounded-2xl px-5 py-3 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 pointer-events-auto">
+              <span className="text-white text-[13px] font-medium text-center sm:text-left">
+                Tired of waiting? Get Pro for Instant Responses!
+              </span>
+              <button
+                onClick={() => {
+                  setShowUpgradeToast(false);
+                  openPremium();
+                }}
+                className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:brightness-110 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-[0_0_15px_rgba(168,85,247,0.4)] whitespace-nowrap active:scale-95"
+              >
+                Upgrade Now
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Stop Generating button — shown above input while AI is responding */}
         {isGenerating && onStop && (

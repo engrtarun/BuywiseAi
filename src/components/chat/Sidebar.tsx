@@ -14,6 +14,8 @@ import { THEME_PRESETS, generateCustomTheme } from "@/lib/themes";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SettingsModal } from "./SettingsModal";
 import { FoodModeToggle } from "@/components/shared/FoodModeToggle";
+import { usePremium } from "@/contexts/PremiumContext";
+import { UpgradeMiniCard } from "@/components/premium/UpgradeMiniCard";
 
 /* ── Inline SVG Icons (animatable via CSS) ───────────── */
 
@@ -639,6 +641,7 @@ function SidebarContent({
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const [menuRect, setMenuRect] = React.useState<DOMRect | null>(null);
   const { theme, setTheme, mode, setMode, customSeedColor, setCustomSeedColor } = useTheme();
+  const { openPremium } = usePremium();
 
   useEffect(() => {
     async function loadUserProfile() {
@@ -1118,6 +1121,10 @@ function SidebarContent({
             </div>
           </PopoverContent>
         </Popover>
+
+        <div className="py-2">
+          <UpgradeMiniCard onClick={openPremium} isCollapsed={isCollapsed} />
+        </div>
 
         <Tooltip text="User Profile" isCollapsed={isCollapsed}>
           <div

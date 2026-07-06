@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { ArrowLeft, User, Mail, DollarSign, Tag, Loader2, Upload, CheckCircle } from "lucide-react";
+import { ArrowLeft, User, Mail, DollarSign, Tag, Loader2, Upload, CheckCircle, Zap } from "lucide-react";
+import { usePremium } from "@/contexts/PremiumContext";
 
 export default function ProfilePage() {
   const router = useRouter();
   const supabase = createClient();
+  const { openPremium } = usePremium();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -168,12 +170,28 @@ export default function ProfilePage() {
           <span>Back to Chat</span>
         </button>
 
-        <h1 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary-light mb-2">
-          Your Profile
-        </h1>
-        <p className="text-text-secondary text-sm mb-8">
-          Manage your personal shopping preferences and details.
-        </p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-heading font-bold text-text-primary-light mb-1">
+              Your Profile
+            </h1>
+            <p className="text-text-secondary text-sm">
+              Manage your personal shopping preferences and details.
+            </p>
+          </div>
+          
+          <div className="flex flex-col items-end gap-1">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-white/70">
+              Account Status: Free Explorer
+            </span>
+            <button
+              onClick={openPremium}
+              className="text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1 group"
+            >
+              (Upgrade Now) <Zap className="size-3 group-hover:scale-110 transition-transform" />
+            </button>
+          </div>
+        </div>
 
         {errorMsg && (
           <div className="bg-chili/10 border border-chili/20 text-chili px-4 py-3 rounded-2xl mb-6 text-sm">
