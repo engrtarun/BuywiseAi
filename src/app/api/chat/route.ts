@@ -251,9 +251,6 @@ export async function POST(req: NextRequest) {
     // ── Step 1: Router determines mode (already done above) ──────────────────
     // `mode` is now set to "explore" or "deep_research" by determineIntent.
 
-<<<<<<< HEAD
-    // ── Step 2: Search & Deep Reranking (only in deep_research) ───────────────
-=======
     // ── Step 2: Cache check ───────────────────────────────────────────────────
     // Skip cache for regenerate requests and buy_explanation (handled above).
     const normalizedMsg = normalizeMessage(userMessage);
@@ -269,11 +266,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── Step 3: Search (only in deep_research when requirements are ready) ────
+    // ── Step 3: Search & Deep Reranking (only in deep_research) ───────────────
     // In explore mode the writer handles inline search via search_intent.
     // In deep_research mode we only search when the user has already supplied
     // both use-case and budget (i.e. requirements is non-empty).
->>>>>>> 3c2368236997c08552c610a4ddfdc6f02c9eb8e1
     let searchResults: SearchedProduct[] = [];
     let rerankedContext: RerankedContext | null = null;
     const requirementsReady =
