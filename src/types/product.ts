@@ -4,6 +4,7 @@ export interface Product {
   price: string;
   originalPrice?: string;
   discountBadge?: string;
+  badge?: string;
   rating: number;
   reviewCount: string;
   description: string;

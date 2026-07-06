@@ -95,15 +95,45 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
         image: String(p.image || "/placeholder.png"),
         link: String(p.link || "https://amazon.in"),
       }));
-    } else if (parsedJson.ui_type === "results" || parsedJson.type === "results") {
-      aiMsg.content = parsedJson.acknowledgement || "Based on your options, here are the best fits:";
+    } else if (parsedJson.ui_type === "deep_research_results" || parsedJson.type === "deep_research_results" || parsedJson.ui_type === "results") {
+      aiMsg.content = parsedJson.summary || "Based on your options, here are the best fits:";
       aiMsg.deepResearchResults = {
-        primaryProduct: undefined,
-        backupProducts: [],
-        acknowledgement: parsedJson.acknowledgement,
-        primaryQuery: parsedJson.primary_query,
-        backupQueries: parsedJson.backup_queries || [],
+        summary: parsedJson.summary,
+        finalVerdict: parsedJson.final_verdict,
+        comparison: Array.isArray(parsedJson.comparison) ? parsedJson.comparison : [],
       };
+      let items = Array.isArray(parsedJson.recommended_products) ? parsedJson.recommended_products : [];
+      
+      // Recommendation Recovery: if LLM failed to output the array but gave us the verdict
+      if (items.length === 0) {
+         if (parsedJson.primary_query) {
+             items.push({ name: parsedJson.primary_query, badge: "🏆 Best Overall" });
+         }
+         if (Array.isArray(parsedJson.backup_queries)) {
+             parsedJson.backup_queries.forEach((q: string) => items.push({ name: q, badge: "⭐ Alternative Option" }));
+         }
+         if (items.length === 0 && (parsedJson.final_verdict || parsedJson.summary)) {
+            items.push({
+              name: "Recommended Choice",
+              description: String(parsedJson.final_verdict || parsedJson.summary).substring(0, 100) + "...",
+              badge: "💡 Top Pick",
+              price: "See Retailer"
+            });
+         }
+      }
+
+      aiMsg.products = items.map((p: any) => ({
+        id: String(p.id || Math.random()),
+        name: String(p.name || "Unknown Product"),
+        price: String(p.price || "₹0"),
+        rating: typeof p.rating === "number" ? p.rating : 4.5,
+        reviewCount: String(p.reviewCount || "100+"),
+        description: String(p.description || "Recommended product matching your request."),
+        platform: String(p.platform || "Amazon"),
+        image: String(p.image || "/placeholder.png"),
+        link: String(p.link || "https://amazon.in"),
+        badge: String(p.badge || "⭐ Recommended")
+      }));
     } else if (parsedJson.ui_type === "text_response") {
       aiMsg.content = parsedJson.text || "";
     }
@@ -172,6 +202,7 @@ export default function Page() {
   // Chat sessions state
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [selectedMode, setSelectedMode] = useState<ChatMode>("explore");
+  const [pendingModeChange, setPendingModeChange] = useState<ChatMode | null>(null);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -481,6 +512,18 @@ export default function Page() {
     // Clear any temporary chats from the list
     setChatSessions((prev) => prev.filter((s) => !s.isTemporary));
   }, []);
+
+  const handleModeChangeRequest = useCallback((newMode: ChatMode) => {
+    const session = chatSessions.find((s) => s.id === activeChatId);
+    const hasMessages = session && session.messages.length > 0;
+    const currentMode = hasMessages ? (session.mode || "explore") : selectedMode;
+
+    if (hasMessages && newMode !== currentMode) {
+      setPendingModeChange(newMode);
+    } else {
+      setSelectedMode(newMode);
+    }
+  }, [activeChatId, chatSessions, selectedMode]);
 
   const handleNewTemporaryChat = useCallback(() => {
     if (isTemporaryChat) {
@@ -847,11 +890,41 @@ export default function Page() {
           onNewChat={handleNewChat}
           onNewTemporaryChat={handleNewTemporaryChat}
           selectedMode={selectedMode}
-          onModeChange={setSelectedMode}
+          onModeChange={handleModeChangeRequest}
           activeMode={activeMode}
           onProductBuy={handleProductBuy}
         />
       </div>
+
+      {/* Persistent Chat Mode Confirmation Dialog */}
+      {pendingModeChange && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-[#1A1A18] border border-border-dark w-full max-w-sm rounded-2xl shadow-2xl p-6 flex flex-col gap-4">
+            <h2 className="font-heading font-bold text-lg text-text-primary-dark">Change Chat Mode?</h2>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              This conversation is currently using <strong>{activeMode === "deep_research" ? "Deep Research" : "Explore"} Mode</strong>. 
+              To use <strong>{pendingModeChange === "deep_research" ? "Deep Research" : "Explore"} Mode</strong>, you need to start a new conversation.
+            </p>
+            <div className="flex flex-col gap-2 mt-2">
+              <button
+                onClick={() => {
+                  handleNewChat(pendingModeChange);
+                  setPendingModeChange(null);
+                }}
+                className="w-full px-4 py-2.5 rounded-xl text-sm font-sans font-bold text-ink-deeper bg-marigold hover:bg-marigold/90 transition-colors"
+              >
+                Start New Chat
+              </button>
+              <button
+                onClick={() => setPendingModeChange(null)}
+                className="w-full px-4 py-2.5 rounded-xl text-sm font-sans font-medium text-text-primary-dark bg-white/[0.05] hover:bg-white/[0.1] transition-colors"
+              >
+                Continue Current Chat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

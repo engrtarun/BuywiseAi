@@ -25,11 +25,9 @@ export interface Message {
     acknowledgement?: string;
   };
   deepResearchResults?: {
-    primaryProduct?: Product;
-    backupProducts?: Product[];
-    acknowledgement?: string;
-    primaryQuery?: string;
-    backupQueries?: string[];
+    summary?: string;
+    finalVerdict?: string;
+    comparison?: { aspect: string; winner: string; reason: string }[];
   };
   suggestedMode?: ChatMode;
   searchTag?: string;

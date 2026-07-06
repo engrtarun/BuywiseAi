@@ -95,21 +95,18 @@ My safest pick: wireless earbuds or a Kindle. Both feel personal enough, but the
   },
   {
     keywords: [],
-    text: `Here is how I would approach this purchase:
+    text: `Here is how I would approach finding the right product for you:
 
-1. Decide the top priority
-Performance, durability, camera/display quality, battery life, after-sales service, or lowest price.
+1. Understand your exact need
+Think about how you'll primarily use this item and what specific problem it solves for you.
 
-2. Avoid paying extra for features you will not use
-For most buyers, the best value is usually one step below the flagship or premium model.
+2. Set a clear budget
+There are good options at every price point, but knowing your budget helps narrow down the best value immediately.
 
-3. Check long-term ownership cost
-Warranty, service network, replacement parts, battery health, and software support matter as much as launch specs.
+3. Look for the right features
+Depending on the item, focus on the 2-3 most important factors (e.g. material, durability, size, or specific capabilities).
 
-4. Pick the balanced option
-I would choose the product that has strong reviews, dependable service, and no major compromise in the feature you care about most.
-
-If you share your budget and the product category, I can narrow this to a clear top 3 with a best overall pick.`,
+If you share what you're looking for and your budget, I can search the market and show you the top options right now.`,
   },
 ];
 

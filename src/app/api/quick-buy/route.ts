@@ -108,39 +108,38 @@ export async function GET(request: Request) {
     const searchQuery = searchParams.get('query') || searchParams.get('q') || '';
     const cleanSearchQuery = searchQuery.toLowerCase().trim();
 
-    const filteredProducts = formattedProducts.filter((product: any) => {
-      let matchesSize = true;
-      let matchesBudget = true;
-      let matchesCategory = true;
+    const scoredProducts = formattedProducts.map((product: any) => {
+      let score = 0;
 
-      if (userSizes.length > 0) {
-        matchesSize = product.sizes.some((size: string) => userSizes.includes(size));
+      // 70% personalization scoring
+      if (preferredCategories.length > 0 && preferredCategories.includes(product.category)) {
+        score += 50;
+      }
+      if (maxBudget !== null && !Number.isNaN(maxBudget) && product.price <= maxBudget) {
+        score += 30;
+      }
+      if (userSizes.length > 0 && product.sizes.some((size: string) => userSizes.includes(size))) {
+        score += 20;
       }
 
-      if (maxBudget !== null && !Number.isNaN(maxBudget)) {
-        matchesBudget = product.price <= maxBudget;
+      // Add a randomized discovery factor (0 to 30 points) to break ties and introduce variety
+      const discoveryFactor = (Math.sin(Number(product.id) * 12.9898) * 10000 % 1) * 30;
+      score += Math.abs(discoveryFactor);
+
+      if (cleanSearchQuery) {
+        const titleMatch = product.name.toLowerCase().includes(cleanSearchQuery);
+        const categoryMatch = product.category.toLowerCase().includes(cleanSearchQuery);
+        if (titleMatch) score += 200;
+        if (categoryMatch) score += 100;
       }
 
-      if (preferredCategories.length > 0) {
-        matchesCategory = preferredCategories.includes(product.category);
-      }
-
-      return matchesSize && matchesBudget && matchesCategory;
+      return { ...product, recommendationScore: score };
     });
 
-    if (cleanSearchQuery) {
-      filteredProducts.sort((a: any, b: any) => {
-        const aTitleMatch = a.name.toLowerCase().includes(cleanSearchQuery);
-        const aCategoryMatch = a.category.toLowerCase().includes(cleanSearchQuery);
-        const bTitleMatch = b.name.toLowerCase().includes(cleanSearchQuery);
-        const bCategoryMatch = b.category.toLowerCase().includes(cleanSearchQuery);
+    // Sort descending by score
+    scoredProducts.sort((a: any, b: any) => b.recommendationScore - a.recommendationScore);
 
-        const aScore = (aTitleMatch ? 2 : 0) + (aCategoryMatch ? 1 : 0);
-        const bScore = (bTitleMatch ? 2 : 0) + (bCategoryMatch ? 1 : 0);
-
-        return bScore - aScore; // Descending order: highest score comes first
-      });
-    }
+    const filteredProducts = scoredProducts;
 
     const totalFiltered = filteredProducts.length;
     let paginatedProducts = [];

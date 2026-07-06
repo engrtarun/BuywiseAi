@@ -39,51 +39,42 @@ import { searchProducts } from "@/lib/productSearch";
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
-const EXPLORE_SYSTEM_PROMPT = `You are BuyWise AI, a smart shopping assistant for the Indian market.
-The user is in Explore Mode — a lightweight, visual, browse-first experience.
+const EXPLORE_SYSTEM_PROMPT = `You are BuyWise AI, an ALL-IN-ONE smart shopping assistant for the Indian market.
+The user is in Explore Mode — a visual, browse-first experience. You support ALL product categories (Electronics, Groceries, Water, Clothing, Books, Furniture, Shoes, Snacks, etc.).
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CONVERSATION FLOW — follow this exact sequence:
+CONVERSATION FLOW — follow this exact intent-based sequence:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. QUALIFY PURPOSE FIRST.
-   If the user has not stated their use case, ask ONE short question using a clarifying_question payload.
+1. CLASSIFY THE INTENT FIRST:
+   - Shopping Intent: The user wants to buy something, look for recommendations, or find products (e.g., "I need water", "Code in Python", "Suggest shoes").
+   - Conversation: The user is just chatting (e.g., "Hi", "Who are you").
+   - Clarification Needed: The request is too vague to search for ANYTHING.
 
-2. ASK BUDGET SECOND.
-   Only after you understand their purpose, ask about budget using a clarifying_question payload. Skip if they already stated it.
+2. IF SHOPPING INTENT (Direct to Search!):
+   Do NOT ask for purpose or budget for everyday items unless absolutely necessary.
+   IMMEDIATELY output a \`search_intent\` payload to search for real products.
+   Infer the best search query based on their request. (e.g., "I need water" -> query: "mineral water bottles", "Code in Python" -> query: "Python programming books").
 
-3. SEARCH INTENT (IN-BUDGET).
-   Once BOTH purpose and budget are known, DO NOT output product options directly. Instead, output a search_intent payload so our backend can search real products.
+3. PRESENT PRODUCT OPTIONS (The 20/80 Rule):
+   After we provide you with real product listings (from your search), you MUST output an \`explore_carousel\` payload with the best options.
+   - The \`deep_dive\` MUST be category-specific. Do NOT reuse generic electronics advice (e.g., battery life, camera) for non-electronics.
+   - Instead, discuss factors relevant to the specific category (e.g., water -> mineral vs RO, pack size; books -> beginner vs advanced; coffee -> roast level).
 
-4. PRESENT PRODUCT OPTIONS.
-   After we provide you with real product listings, output an explore_carousel payload with 2-3 in-budget options.
+4. IF CONVERSATION INTENT:
+   Return a simple \`text_response\` payload. Do NOT search.
 
-5. FOLLOW-UP WITH STRETCH BUDGET QUESTION.
-   IMMEDIATELY AFTER outputting the explore_carousel, you MUST output a clarifying_question payload asking: "Want me to check options about 10% above your budget too?" with options "Yes, show me" and "No, these are fine."
-
-6. HANDLE STRETCH BUDGET RESPONSE.
-   - If they say "Yes, show me" or similar: Output a search_intent payload with the budget increased by 10%.
-   - If they say "No, these are fine." or similar: Output a text_response with a short closing message ("Got it! Let me know if you'd like to buy one of these.").
+5. IF CLARIFICATION TRULY NEEDED:
+   Return a \`clarifying_question\` payload.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 JSON RESPONSE FORMATS (all responses must be valid JSON):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-When asking a question (purpose, budget, or the yes/no stretch question):
-{
-  "ui_type": "clarifying_question",
-  "thought": "Short reflection...",
-  "question": "Your question here...",
-  "options": [
-    { "id": "1", "label": "Option A", "value": "A" }
-  ],
-  "allow_skip": true
-}
-
-When you have both purpose and budget and are ready to search (or expanding budget):
+When you have a Shopping Intent and need to search:
 {
   "ui_type": "search_intent",
-  "query": "laptop for coding under 60000"
+  "query": "laptop for coding under 60000" // Replace with inferred query
 }
 
 When presenting product options (after we inject real listings):
@@ -93,7 +84,18 @@ When presenting product options (after we inject real listings):
   "products": [
     { "id": "1", "name": "...", "price": "₹...", "rating": 4.5, "image": "...", "reason": "...", "stretch": false }
   ],
-  "deep_dive": "### Why these picks?\\n..."
+  "deep_dive": "### Why these picks?\\n..." // MUST be category-specific!
+}
+
+When asking a question (only if truly ambiguous):
+{
+  "ui_type": "clarifying_question",
+  "thought": "Short reflection...",
+  "question": "Your question here...",
+  "options": [
+    { "id": "1", "label": "Option A", "value": "A" }
+  ],
+  "allow_skip": true
 }
 
 For general text replies:
@@ -152,31 +154,50 @@ If more context is needed, return ONLY this format (no other text, no markdown b
 
 If you have gathered enough details (or the user insists on results), return ONLY this format:
 {
-  "ui_type": "results",
-  "acknowledgement": "Based on our conversation, here are the best picks for you.",
-  "primary_query": "Exact product name or keyword for the best-match hero product — tailored to their stated use case and budget",
-  "backup_queries": [
-    "Exact keyword for backup option 1",
-    "Exact keyword for backup option 2"
-  ],
-  "stretch_query": "Exact keyword for the ONE stretch option — ~10-15% above budget, clearly better for their specific use case",
-  "stretch_note": "One sentence explaining why the stretch option is worth the extra cost, e.g. 'The RTX 3050 makes a real difference for gaming and will last longer before feeling outdated.'"
+  "ui_type": "deep_research_results",
+  "summary": "A cohesive paragraph summarizing your research and options.",
+  "final_verdict": "A clear, decisive final recommendation.",
+  "recommended_products": [
+    {
+      "id": "1",
+      "name": "Exact Product Name",
+      "price": "5000",
+      "rating": 4.5,
+      "reviewCount": "1200",
+      "description": "Short description of key features.",
+      "platform": "Amazon",
+      "image": "/placeholder.png",
+      "link": "https://amazon.in",
+      "badge": "🏆 Best Overall"
+    }
+  ]
 }
 
-Omit stretch_query and stretch_note if the user asked for cheapest or showed price sensitivity.
+Provide 2-3 products in the recommended_products array, sorted by rank. Assign appropriate badges like "🏆 Best Overall", "💰 Best Value", "⭐ Alternative Choice", etc. Use "/placeholder.png" as the default image URL.
 
 Ensure queries match real Indian market products. Return ONLY the raw JSON string. Do not wrap in markdown code blocks.`;
 
 export function validateModeJSONPayload(rawText: string, expectedMode: 'explore' | 'deep_research'): boolean {
   try {
-    const cleanedText = rawText.replace(/```json|```/gi, "").trim();
+    const cleanedText = rawText.replace(/```(?:json)?|```/gi, "").trim();
     const parsedData = JSON.parse(cleanedText);
+    
+    // Partial success for deep research: if it has a summary or verdict, we can recover it
+    if (expectedMode === 'deep_research') {
+      if (parsedData.ui_type === 'clarifying_question') return true;
+      if (parsedData.ui_type === 'deep_research_results' || parsedData.ui_type === 'results' || parsedData.summary || parsedData.final_verdict) {
+        return true; 
+      }
+      return false;
+    }
+    
     if (expectedMode === 'explore') {
       return (parsedData.ui_type === 'explore_carousel' && Array.isArray(parsedData.products)) || parsedData.ui_type === 'text_response' || parsedData.ui_type === 'clarifying_question' || parsedData.ui_type === 'search_intent';
-    } else {
-      return parsedData.ui_type === 'clarifying_question' || parsedData.ui_type === 'results';
     }
-  } catch {
+    return false;
+  } catch (err) {
+    console.error("[validateModeJSONPayload] JSON Parse Error:", err);
+    console.error("[validateModeJSONPayload] Raw Text was:", rawText);
     return false;
   }
 }
@@ -318,16 +339,7 @@ export async function POST(req: NextRequest) {
          responseTexts = [carouselText]; // Replace the search_intent message with the actual carousel
          isValid = validateModeJSONPayload(carouselText, 'explore');
 
-         let parsedCarousel = null;
-         try { parsedCarousel = JSON.parse(carouselText.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim()); } catch (e) {}
-         
-         // Immediately follow-up with stretch question if we just showed a carousel
-         if (parsedCarousel && parsedCarousel.ui_type === "explore_carousel") {
-            const stretchPrompt = `You just showed the products. Now output the clarifying_question JSON asking: "Want me to check options about 10% above your budget too?" with exactly two options: "Yes, show me" and "No, these are fine."`;
-            const thirdResult = await chat.sendMessage(stretchPrompt);
-            const stretchText = (await thirdResult.response).text();
-            responseTexts.push(stretchText); // Append the second message
-         }
+
        } catch (err) {
          console.error("[chat route] Failed to search products:", err);
          responseTexts = [JSON.stringify({ ui_type: "text_response", text: getFallbackChatResponse(userMessage, userHistory) })];
@@ -336,7 +348,23 @@ export async function POST(req: NextRequest) {
 
     if (!isValid) {
       console.warn("AI generated invalid JSON payload. Retrying or falling back...");
-      if (isDeepResearch) {
+      
+      // Try to aggressively extract JSON before falling back completely
+      try {
+         const match = text.match(/\{[\s\S]*\}/);
+         if (match) {
+           const potentialJson = match[0];
+           const parsed = JSON.parse(potentialJson);
+           if (parsed.ui_type === 'deep_research_results' || parsed.summary || parsed.final_verdict) {
+             text = potentialJson;
+             isValid = true;
+             responseTexts = [text];
+             console.log("Successfully extracted partial JSON via regex");
+           }
+         }
+      } catch (e) {}
+
+      if (!isValid && isDeepResearch) {
         try {
           const retryResult = await chat.sendMessage("Your last response was not valid JSON or was missing required fields. Please return strictly the JSON payload.");
           text = (await retryResult.response).text();
@@ -347,13 +375,13 @@ export async function POST(req: NextRequest) {
         }
         if (!isValid) {
           responseTexts = [JSON.stringify({
-            ui_type: "results",
-            acknowledgement: "We had some trouble processing the details, but here are some safe recommendations.",
-            primary_query: "Top rated products",
-            backup_queries: []
+            ui_type: "deep_research_results",
+            summary: "We had some trouble processing the exact details, but we found some safe recommendations.",
+            final_verdict: "Please try your query again or explore these popular options.",
+            recommended_products: []
           })];
         }
-      } else {
+      } else if (!isValid && !isDeepResearch) {
         responseTexts = [JSON.stringify({
           ui_type: "text_response",
           text: getFallbackChatResponse(userMessage, userHistory)

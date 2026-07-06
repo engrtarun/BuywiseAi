@@ -223,6 +223,20 @@ export function useQuickBuy() {
     }
   }, [activeProfile, updateProfile]);
 
+  const handleInteractionLearn = useCallback((product: QuickBuyProduct) => {
+    if (!activeProfile || !product.category) return;
+    
+    const currentCategories = activeProfile.preferredCategories || [];
+    if (!currentCategories.includes(product.category)) {
+      const nextCategories = [...currentCategories, product.category];
+      
+      // Silently update profile for continuous learning
+      updateProfile(activeProfile.id, {
+        preferredCategories: nextCategories
+      }).catch(err => console.error("Failed to learn preference:", err));
+    }
+  }, [activeProfile, updateProfile]);
+
   const saveItem = useCallback((productId: string) => {
     setSavedItemIds((prev) => {
       if (prev.includes(productId)) return prev;
@@ -236,6 +250,8 @@ export function useQuickBuy() {
       console.warn("Quick Buy save skipped because product data was not available in the current catalog.");
       return;
     }
+
+    handleInteractionLearn(product);
 
     void fetch("/api/quick-buy/actions", {
       method: "POST",
@@ -281,6 +297,8 @@ export function useQuickBuy() {
       sessionStorage.setItem(TOTAL_SPENT_KEY, JSON.stringify(next));
       return next;
     });
+
+    handleInteractionLearn(product);
 
     void fetch("/api/quick-buy/actions", {
       method: "POST",

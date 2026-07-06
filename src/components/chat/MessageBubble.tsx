@@ -14,7 +14,7 @@ import { SpoilerText } from "./SpoilerText";
 import { ClarifyingQuestionCard } from "./ClarifyingQuestionCard";
 import { DeepResearchClarifyingCard, ClarifyingQuestion } from "./DeepResearchClarifyingCard";
 import { ChatMode } from "@/types/chat";
-import { Brain, Pencil, ArrowRight, ChevronRight } from "lucide-react";
+import { Brain, Pencil, ArrowRight, ChevronRight, CheckCircle } from "lucide-react";
 import { getExploreLayoutParts } from "@/app/page";
 
 function getCuratedProductImage(productName: string): string {
@@ -174,15 +174,6 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   const [customText, setCustomText] = useState("");
   const [hasAnswered, setHasAnswered] = useState(false);
 
-  // Lazy loading state for Deep Research recommendations:
-  const dr = message.deepResearchResults;
-  const hasDrQueries = !!(dr && (dr.primaryQuery || (dr.backupQueries && dr.backupQueries.length > 0)));
-  const isDrAlreadyLoaded = !!(message.deepResearchResults?.primaryProduct || (message.deepResearchResults?.backupProducts && message.deepResearchResults.backupProducts.length > 0));
-
-  const [primaryProduct, setPrimaryProduct] = useState<Product | undefined>(message.deepResearchResults?.primaryProduct);
-  const [backupProducts, setBackupProducts] = useState<Product[]>(message.deepResearchResults?.backupProducts || []);
-  const [loadingDeepResearch, setLoadingDeepResearch] = useState(hasDrQueries && !isDrAlreadyLoaded);
-
   // Lazy loading state for Explore Mode:
   const hasSearchTag = !!message.searchTag;
   const isExploreAlreadyLoaded = !!(message.products && message.products.length > 0);
@@ -330,72 +321,6 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   };
 
 
-  // Fetch Deep Research products lazily
-  useEffect(() => {
-    const activeDr = message.deepResearchResults;
-    if (activeDr && (activeDr.primaryQuery || (activeDr.backupQueries && activeDr.backupQueries.length > 0))) {
-      // If already resolved, do not fetch again
-      if (primaryProduct || backupProducts.length > 0) return;
-
-      let isMounted = true;
-
-      const fetchProducts = async () => {
-        let pProd: Product | undefined = undefined;
-        const bProds: Product[] = [];
-
-        try {
-          if (activeDr.primaryQuery) {
-            const res = await fetch(`/api/quick-buy?q=${encodeURIComponent(activeDr.primaryQuery)}`);
-            if (res.ok) {
-              const pData = await res.json();
-              if (pData.success && pData.data && pData.data.length > 0) {
-                pProd = pData.data[0];
-              }
-            }
-          }
-
-          if (activeDr.backupQueries && activeDr.backupQueries.length > 0) {
-            const promises = activeDr.backupQueries.map(async (q) => {
-              try {
-                const res = await fetch(`/api/quick-buy?q=${encodeURIComponent(q)}`);
-                if (res.ok) {
-                  const pData = await res.json();
-                  if (pData.success && pData.data && pData.data.length > 0) {
-                    return pData.data[0];
-                  }
-                }
-              } catch (e) {
-                console.error("Failed to fetch backup product:", q, e);
-              }
-              return null;
-            });
-            const resolved = await Promise.all(promises);
-            resolved.forEach((item) => {
-              if (item) bProds.push(item);
-            });
-          }
-
-          if (isMounted) {
-            setPrimaryProduct(pProd);
-            setBackupProducts(bProds);
-          }
-        } catch (err) {
-          console.error("Failed to lazy load products:", err);
-        } finally {
-          if (isMounted) {
-            setLoadingDeepResearch(false);
-          }
-        }
-      };
-
-      fetchProducts();
-
-      return () => {
-        isMounted = false;
-      };
-    }
-  }, [message.content, message.deepResearchResults, primaryProduct, backupProducts.length]);
-
   // Fetch Explore Mode products lazily
   useEffect(() => {
     const searchTag = message.searchTag;
@@ -474,7 +399,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
  
         <div className="flex flex-col gap-2 w-full min-w-0">
           {/* Default AI Bubble (Standard markdown prose / Fallback) */}
-          {!isQuestionnaire && (!isExploreModeLayout || !shouldRenderSplitLayout) && message.content && (
+          {!isQuestionnaire && (!isExploreModeLayout || !shouldRenderSplitLayout) && !message.deepResearchResults && message.content && (
             <div
               dir="auto"
               style={{
@@ -494,6 +419,74 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
               >
                 {isExploreModeLayout ? fullTextFallback : processedContent}
               </ReactMarkdown>
+            </div>
+          )}
+
+          {/* Deep Research Visual Recommendations Layout */}
+          {message.deepResearchResults && (
+            <div className="flex flex-col gap-4 w-full animate-in fade-in duration-300">
+              {/* 1. Research Summary */}
+              {message.deepResearchResults.summary && (
+                <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-4 text-[14px] sm:text-[15px] leading-relaxed break-words font-sans text-zinc-200 shadow-xl backdrop-blur-md">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    components={markdownComponents}
+                  >
+                    {message.deepResearchResults.summary}
+                  </ReactMarkdown>
+                </div>
+              )}
+
+              {/* 2. Comparison Table (Optional) */}
+              {message.deepResearchResults.comparison && message.deepResearchResults.comparison.length > 0 && (
+                <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-4 text-[14px] sm:text-[15px] font-sans text-zinc-200 shadow-xl backdrop-blur-md overflow-hidden">
+                  <h3 className="font-bold text-marigold mb-3 text-sm uppercase tracking-wider">Feature Comparison</h3>
+                  <div className="overflow-x-auto rounded-xl border border-white/10">
+                    <table className="w-full text-left text-[13px] border-collapse min-w-[400px]">
+                      <thead className="bg-marigold/[0.08] border-b border-marigold/20">
+                        <tr>
+                          <th className="px-3.5 py-2.5 font-semibold text-marigold uppercase tracking-wider">Aspect</th>
+                          <th className="px-3.5 py-2.5 font-semibold text-marigold uppercase tracking-wider">Winner</th>
+                          <th className="px-3.5 py-2.5 font-semibold text-marigold uppercase tracking-wider">Reason</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {message.deepResearchResults.comparison.map((row: any, idx: number) => (
+                          <tr key={idx} className="border-b border-white/5 last:border-b-0 odd:bg-black/[0.02]">
+                            <td className="px-3.5 py-2.5 font-medium border-r border-white/5 text-zinc-300 align-top">{row.aspect}</td>
+                            <td className="px-3.5 py-2.5 font-bold border-r border-white/5 text-brand-accent align-top">{row.winner}</td>
+                            <td className="px-3.5 py-2.5 text-zinc-400 whitespace-normal align-top">{row.reason}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* 3. Final Verdict */}
+              {message.deepResearchResults.finalVerdict && (
+                <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-4 text-[14px] sm:text-[15px] leading-relaxed break-words font-sans text-zinc-200 shadow-xl backdrop-blur-md">
+                  <div className="flex items-center gap-2 mb-2 text-brand-accent font-bold uppercase tracking-wider text-sm">
+                    <CheckCircle className="size-4" /> Final Verdict
+                  </div>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    components={markdownComponents}
+                  >
+                    {message.deepResearchResults.finalVerdict}
+                  </ReactMarkdown>
+                </div>
+              )}
+
+              {/* 4. Recommended Products Carousel */}
+              {message.products && message.products.length > 0 && (
+                <div className="ml-[-8px] sm:ml-[-12px] p-1 bg-zinc-950/40 rounded-2xl border border-white/5 shadow-inner mt-2">
+                  <ProductCarousel products={message.products} onBuyCallback={onProductBuy} />
+                </div>
+              )}
             </div>
           )}
 
