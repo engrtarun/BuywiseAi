@@ -10,7 +10,7 @@ import { Search, Menu, Camera, Palette, Check, MoreVertical, Pencil, Ghost, LogO
 import { ChatSession, ChatMode } from "@/types/chat";
 import { useSidebarResize } from "./useSidebarResize";
 import { useTheme } from "@/hooks/useTheme";
-import { THEME_PRESETS } from "@/lib/themes";
+import { THEME_PRESETS, generateCustomTheme } from "@/lib/themes";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SettingsModal } from "./SettingsModal";
 import { FoodModeToggle } from "@/components/shared/FoodModeToggle";
@@ -638,7 +638,7 @@ function SidebarContent({
   const menuRef = React.useRef<HTMLDivElement>(null);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const [menuRect, setMenuRect] = React.useState<DOMRect | null>(null);
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, mode, setMode, customSeedColor, setCustomSeedColor } = useTheme();
 
   useEffect(() => {
     async function loadUserProfile() {
@@ -1057,6 +1057,61 @@ function SidebarContent({
                   </button>
                 );
               })}
+              
+              {/* Custom Theme Option */}
+              <button
+                onClick={() => setTheme("custom")}
+                className={`
+                  group flex flex-col w-full p-2 rounded-xl text-left text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all cursor-pointer select-none
+                  ${theme === "custom" ? "bg-white/[0.08] border border-white/5" : "border border-transparent"}
+                `}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className="size-5 rounded-md flex overflow-hidden border border-white/10 shrink-0 relative"
+                      style={{ 
+                        background: "linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)"
+                      }}
+                    />
+                    <span className="truncate font-medium">Custom</span>
+                  </div>
+                  {theme === "custom" && <Check className="size-3.5 text-marigold shrink-0" />}
+                </div>
+
+                {/* Custom Color Controls */}
+                {theme === "custom" && (
+                  <div className="mt-3 flex flex-col gap-2 w-full pr-1" onClick={(e) => e.stopPropagation()}>
+                    {/* Presets */}
+                    <div className="flex justify-between items-center gap-2">
+                      <button 
+                        title="Luxury Gold" 
+                        onClick={() => setCustomSeedColor("#FFD700")}
+                        className="flex-1 h-6 rounded-md bg-[#FFD700] hover:scale-105 transition-transform border border-white/20"
+                      />
+                      <button 
+                        title="Cyber Neon" 
+                        onClick={() => setCustomSeedColor("#00FFCC")}
+                        className="flex-1 h-6 rounded-md bg-[#00FFCC] hover:scale-105 transition-transform border border-white/20"
+                      />
+                      <button 
+                        title="Eco Mint" 
+                        onClick={() => setCustomSeedColor("#98FF98")}
+                        className="flex-1 h-6 rounded-md bg-[#98FF98] hover:scale-105 transition-transform border border-white/20"
+                      />
+                    </div>
+                    {/* Native Color Picker */}
+                    <div className="flex items-center gap-2 mt-1">
+                      <input 
+                        type="color" 
+                        value={customSeedColor}
+                        onChange={(e) => setCustomSeedColor(e.target.value)}
+                        className="w-full h-8 rounded-md cursor-pointer bg-transparent border-0 p-0"
+                      />
+                    </div>
+                  </div>
+                )}
+              </button>
             </div>
           </PopoverContent>
         </Popover>

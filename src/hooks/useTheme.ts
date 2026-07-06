@@ -5,11 +5,15 @@ import { createClient } from "@/lib/supabase/client";
 
 const isBrowser = typeof window !== "undefined";
 
+import { generateCustomTheme } from "@/lib/themes";
+
 interface ThemeContextType {
   theme: string;
   setTheme: (theme: string) => Promise<void>;
   mode: string;
   setMode: (mode: string) => Promise<void>;
+  customSeedColor: string;
+  setCustomSeedColor: (color: string) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -17,8 +21,9 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [theme, setThemeState] = useState<string>("default");
   const [mode, setModeState] = useState<string>("light");
+  const [customSeedColor, setCustomSeedColorState] = useState<string>("#FC8019");
 
-  const applyThemeAndMode = (newTheme: string, newMode: string) => {
+  const applyThemeAndMode = (newTheme: string, newMode: string, newSeed?: string) => {
     const root = document.documentElement;
     root.setAttribute("data-theme", newTheme);
     root.setAttribute("data-mode", newMode);
@@ -28,15 +33,61 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
     } else {
       root.classList.remove("dark");
     }
+
+    if (newTheme === "custom") {
+      const activeSeed = newSeed || customSeedColor;
+      const themeVars = generateCustomTheme(activeSeed);
+      
+      let customStyle = document.getElementById("custom-theme-vars");
+      if (!customStyle) {
+        customStyle = document.createElement("style");
+        customStyle.id = "custom-theme-vars";
+        document.head.appendChild(customStyle);
+      }
+      
+      customStyle.innerHTML = \`
+        :root[data-theme="custom"] {
+          --ink-deep: \${themeVars.background};
+          --ink-deeper: \${themeVars.background};
+          --bg-main: \${themeVars.background};
+          --background: \${themeVars.background};
+          
+          --sidebar-bg: \${themeVars.sidebar};
+          --bg-sidebar: \${themeVars.sidebar};
+          --sidebar: \${themeVars.sidebar};
+          
+          --bg-input: \${themeVars.sidebar};
+          --card: \${themeVars.sidebar};
+          --dropdown-bg: \${themeVars.sidebar};
+          --popover: \${themeVars.sidebar};
+          
+          --marigold: \${themeVars.primary};
+          --brand-accent: \${themeVars.primary};
+          --primary: \${themeVars.primary};
+          --sidebar-primary: \${themeVars.primary};
+          --sidebar-ring: \${themeVars.primary};
+          
+          --primary-foreground: \${themeVars.primaryForeground};
+          --sidebar-primary-foreground: \${themeVars.primaryForeground};
+        }
+      \`;
+    } else {
+      const customStyle = document.getElementById("custom-theme-vars");
+      if (customStyle) {
+        customStyle.remove();
+      }
+    }
   };
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("buywise-theme") || "default";
     const savedMode = localStorage.getItem("buywise-mode") || "light";
+    const savedSeed = localStorage.getItem("buywise_custom_seed_color") || "#FC8019";
 
     setThemeState(savedTheme);
     setModeState(savedMode);
-    applyThemeAndMode(savedTheme, savedMode);
+    setCustomSeedColorState(savedSeed);
+    applyThemeAndMode(savedTheme, savedMode, savedSeed);
 
     const syncWithProfile = async () => {
       try {
@@ -80,6 +131,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
     syncWithProfile();
   }, []);
 
+  const setCustomSeedColor = (newColor: string) => {
+    setCustomSeedColorState(newColor);
+    localStorage.setItem("buywise_custom_seed_color", newColor);
+    if (theme === "custom") {
+      applyThemeAndMode("custom", mode, newColor);
+    }
+  };
+
   const setTheme = async (newTheme: string) => {
     setThemeState(newTheme);
     localStorage.setItem("buywise-theme", newTheme);
@@ -114,7 +173,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
 
   return React.createElement(
     ThemeContext.Provider,
-    { value: { theme, setTheme, mode, setMode } },
+    { value: { theme, setTheme, mode, setMode, customSeedColor, setCustomSeedColor } },
     children
   );
 }
@@ -127,6 +186,8 @@ export function useTheme() {
       setTheme: async () => {},
       mode: "light",
       setMode: async () => {},
+      customSeedColor: "#FC8019",
+      setCustomSeedColor: () => {},
     };
   }
   return context;

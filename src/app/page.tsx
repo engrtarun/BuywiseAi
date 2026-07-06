@@ -7,6 +7,7 @@ import { ChatWindow } from "@/components/chat/ChatWindow";
 import { Sidebar } from "@/components/chat/Sidebar";
 import { useGuestAccess } from "@/hooks/useGuestAccess";
 import { useDailyMessageLimit } from "@/hooks/useDailyMessageLimit";
+import { useTheme } from "@/hooks/useTheme";
 import { createClient } from "@/lib/supabase/client";
 
 import {
@@ -62,6 +63,10 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
 
   const parsedJson = parseJSONSafe(rawContent);
   if (parsedJson && typeof parsedJson === "object") {
+    if (parsedJson.user_fingerprint) {
+      aiMsg.userFingerprint = parsedJson.user_fingerprint;
+    }
+    
     if (parsedJson.ui_type === "clarifying_question" || parsedJson.ui_type === "questionnaire" || parsedJson.type === "clarifying_question") {
       aiMsg.content = parsedJson.thought || parsedJson.acknowledgement || parsedJson.question || "";
       aiMsg.clarifyingQuestion = {
@@ -204,6 +209,9 @@ export default function Page() {
   const [selectedMode, setSelectedMode] = useState<ChatMode>("explore");
   const [pendingModeChange, setPendingModeChange] = useState<ChatMode | null>(null);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [showTour, setShowTour] = useState(false); // If you have tour logic
+  const { theme, setCustomSeedColor } = useTheme();
+
   const [isTyping, setIsTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -254,6 +262,27 @@ export default function Page() {
   const activeSession = chatSessions.find((s) => s.id === activeChatId);
   const activeMessages = activeSession?.messages ?? [];
   const activeMode = activeSession && activeSession.messages.length > 0 ? (activeSession.mode || "explore") : null;
+
+  // --- AI MOOD MATCHING ---
+  // Subtly shift custom theme color based on the context of the chat
+  useEffect(() => {
+    if (theme !== "custom" || !activeSession || activeSession.messages.length === 0) return;
+
+    const lastUserMessage = [...activeSession.messages].reverse().find(m => m.role === 'user');
+    if (lastUserMessage) {
+      const text = lastUserMessage.content.toLowerCase();
+      if (text.match(/phone|laptop|pc|computer|tv|headphone|earbud|tech|electronic|gadget/)) {
+        // Tech -> Cyber Neon
+        setCustomSeedColor("#00FFCC");
+      } else if (text.match(/eco|organic|food|grocery|water|plant|natural|green/)) {
+        // Organic -> Eco Mint
+        setCustomSeedColor("#98FF98");
+      } else if (text.match(/luxury|jewelry|watch|gold|premium|expensive|diamond/)) {
+        // Luxury -> Luxury Gold
+        setCustomSeedColor("#FFD700");
+      }
+    }
+  }, [activeSession?.messages, theme, setCustomSeedColor]);
 
   // Load chat sessions and initial active history on mount
   useEffect(() => {
@@ -394,6 +423,7 @@ export default function Page() {
         
         const aiMsgContents = Array.isArray(data.text) ? data.text : [data.text];
         const newMessages: Message[] = [];
+        let newRequirements = currentReqs || session?.requirements || {};
         
         for (const aiMsgContent of aiMsgContents) {
           // Persist AI message to Supabase
@@ -402,8 +432,13 @@ export default function Page() {
           // Parse and restore rich layout client-side
           const aiMsg = parseAiMessageContent(dbAiMsg.id, dbAiMsg.message);
   
+          if (aiMsg.userFingerprint) {
+             newRequirements = { ...newRequirements, user_fingerprint: aiMsg.userFingerprint };
+             updateSessionRequirements(chatId, newRequirements).catch(e => console.error("Failed to update fingerprint", e));
+          }
+
           // If the API returned real product results (Serper/FakeStore fallback), attach them
-          if (data.products && Array.isArray(data.products) && aiMsg.ui_type === 'explore_carousel') {
+          if (data.products && Array.isArray(data.products) && (aiMsg as any).ui_type === 'explore_carousel') {
              // We attach products to the carousel message
              // (Assuming we still pass data.products for legacy support, but new flow embeds them directly into Gemini's JSON)
           }
@@ -412,7 +447,7 @@ export default function Page() {
 
         setChatSessions((prev) =>
           prev.map((s) =>
-            s.id === chatId ? { ...s, messages: [...s.messages, ...newMessages] } : s
+            s.id === chatId ? { ...s, messages: [...s.messages, ...newMessages], requirements: newRequirements } : s
           )
         );
       } catch (error: unknown) {

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
@@ -359,13 +360,31 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
 
   if (message.role === "user") {
     return (
-      <div className="flex justify-end w-full">
-        <div
+      <div className="flex justify-end w-full gap-2 overflow-visible">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.85, y: 20, rotateX: -15 }}
+          animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20, duration: 0.4 }}
+          style={{ willChange: "transform, opacity", transformOrigin: "bottom right" }}
           dir="auto"
-          className="bg-user-bubble-bg text-user-bubble-text rounded-2xl rounded-br-sm px-4 py-3 text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap break-words shadow-sm max-w-[85%] sm:max-w-[75%] md:max-w-[65%] font-sans font-medium"
+          className="bg-user-bubble-bg text-user-bubble-text rounded-2xl rounded-br-sm px-4 py-3 text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap break-words shadow-sm max-w-[85%] sm:max-w-[75%] md:max-w-[65%] font-[family:var(--font-user)] font-medium"
         >
           {message.content}
-        </div>
+        </motion.div>
+        
+        {/* User Avatar */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="self-end mb-[2px]"
+        >
+          <Avatar className="size-7 sm:size-8 shrink-0">
+            <AvatarFallback className="bg-brand-accent/20 text-brand-accent border border-brand-accent/30 font-heading font-bold text-[10px] sm:text-xs">
+              U
+            </AvatarFallback>
+          </Avatar>
+        </motion.div>
       </div>
     );
   }

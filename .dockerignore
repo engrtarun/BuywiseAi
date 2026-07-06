@@ -1,0 +1,67 @@
+# ============================================================================
+# BuyWise AI — .dockerignore
+# ============================================================================
+# Blocks unnecessary files from being sent to the Docker build context.
+# This dramatically reduces build time and prevents secret leakage.
+# ============================================================================
+
+# ── Dependencies (rebuilt inside container via npm ci) ───────────────────
+node_modules
+.pnp
+.pnp.js
+
+# ── Build artefacts & caches ────────────────────────────────────────────
+.next
+out
+dist
+build
+tsconfig.tsbuildinfo
+
+# ── Environment files (secrets must NEVER enter the image) ──────────────
+.env
+.env.*
+!.env.example
+
+# ── Version control ─────────────────────────────────────────────────────
+.git
+.gitignore
+
+# ── IDE & editor configs ────────────────────────────────────────────────
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# ── Documentation (not needed at runtime) ───────────────────────────────
+*.md
+LICENSE
+CHANGELOG
+
+# ── Test & debug files ──────────────────────────────────────────────────
+__tests__
+*.test.*
+*.spec.*
+test-*.js
+jest.config.*
+coverage
+
+# ── Docker meta (prevent recursive context) ─────────────────────────────
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# ── OS & misc ───────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+
+# ── Project-specific non-runtime files ──────────────────────────────────
+supabase
+folder_structure.txt
+gemini_raw_error.txt
+VIRTUAL_WARDROBE_CASE_STUDY.txt
+BRANCH_NOTES.md
+AGENTS.md
+CLAUDE.md

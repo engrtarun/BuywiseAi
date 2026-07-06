@@ -12,6 +12,11 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Global Theme Transition */
+body, .transition-theme-all * {
+  transition: background-color 0.5s ease-in-out, border-color 0.5s ease-in-out, color 0.5s ease-in-out;
+}
 /* ─────────────────────────────────────────────
    BuyWise AI – Design Tokens
    ───────────────────────────────────────────── */
@@ -21,6 +26,7 @@
   --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-ibm-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
   --font-heading: var(--font-sora), "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-user: var(--font-quicksand), "Quicksand", "Nunito", "Segoe UI Rounded", ui-sans-serif, system-ui, sans-serif;
 
   /* ── BuyWise brand colors ─────────────────── */
   --color-ink-deep: var(--ink-deep);

@@ -33,6 +33,11 @@ export interface Message {
   searchTag?: string;
   exploreIntro?: string;
   exploreDeepDive?: string;
+  userFingerprint?: {
+    detected_language?: string;
+    tone?: string;
+    verbosity?: string;
+  };
 }
 
 export interface ChatSession {

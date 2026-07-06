@@ -68,13 +68,21 @@ CONVERSATION FLOW — follow this exact intent-based sequence:
    Return a \`clarifying_question\` payload.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LINGUISTIC FINGERPRINTING & TONE MATCHING:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Analyze the user's input language and conversational tone. You MUST mirror their language and style perfectly. 
+If they speak Hinglish, reply in Hinglish. If they use short casual phrases, be concise. Match their energy.
+Return a \`user_fingerprint\` object in your JSON response tracking this.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 JSON RESPONSE FORMATS (all responses must be valid JSON):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 When you have a Shopping Intent and need to search:
 {
   "ui_type": "search_intent",
-  "query": "laptop for coding under 60000" // Replace with inferred query
+  "query": "laptop for coding under 60000",
+  "user_fingerprint": { "detected_language": "...", "tone": "...", "verbosity": "..." }
 }
 
 When presenting product options (after we inject real listings):
@@ -84,7 +92,8 @@ When presenting product options (after we inject real listings):
   "products": [
     { "id": "1", "name": "...", "price": "₹...", "rating": 4.5, "image": "...", "reason": "...", "stretch": false }
   ],
-  "deep_dive": "### Why these picks?\\n..." // MUST be category-specific!
+  "deep_dive": "### Why these picks?\\n...",
+  "user_fingerprint": { "detected_language": "...", "tone": "...", "verbosity": "..." }
 }
 
 When asking a question (only if truly ambiguous):
@@ -95,13 +104,15 @@ When asking a question (only if truly ambiguous):
   "options": [
     { "id": "1", "label": "Option A", "value": "A" }
   ],
-  "allow_skip": true
+  "allow_skip": true,
+  "user_fingerprint": { "detected_language": "...", "tone": "...", "verbosity": "..." }
 }
 
 For general text replies:
 {
   "ui_type": "text_response",
-  "text": "..."
+  "text": "...",
+  "user_fingerprint": { "detected_language": "...", "tone": "...", "verbosity": "..." }
 }
 
 Return ONLY the raw JSON string. Do not wrap in markdown code blocks.`;
@@ -131,6 +142,13 @@ Step 4 — OFFER ONE STRETCH OPTION.
   Skip entirely if user asked for "cheapest" or showed strong price sensitivity.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LINGUISTIC FINGERPRINTING & TONE MATCHING:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Analyze the user's input language and conversational tone. You MUST mirror their language and style perfectly. 
+If they speak Hinglish, reply in Hinglish. If they use short casual phrases, be concise. Match their energy.
+Return a \`user_fingerprint\` object in your JSON response tracking this.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 JSON RESPONSE FORMAT:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -149,7 +167,9 @@ If more context is needed, return ONLY this format (no other text, no markdown b
     { "id": "3", "label": "College / Studies", "value": "studies" },
     { "id": "4", "label": "General use", "value": "general" }
   ],
-  "allow_skip": true
+  ],
+  "allow_skip": true,
+  "user_fingerprint": { "detected_language": "...", "tone": "...", "verbosity": "..." }
 }
 
 If you have gathered enough details (or the user insists on results), return ONLY this format:
@@ -170,7 +190,8 @@ If you have gathered enough details (or the user insists on results), return ONL
       "link": "https://amazon.in",
       "badge": "🏆 Best Overall"
     }
-  ]
+  ],
+  "user_fingerprint": { "detected_language": "...", "tone": "...", "verbosity": "..." }
 }
 
 Provide 2-3 products in the recommended_products array, sorted by rank. Assign appropriate badges like "🏆 Best Overall", "💰 Best Value", "⭐ Alternative Choice", etc. Use "/placeholder.png" as the default image URL.
@@ -294,8 +315,8 @@ export async function POST(req: NextRequest) {
     const isDeepResearch = mode === "deep_research" || mode === "deep-research";
     let systemInstruction = isDeepResearch ? DEEP_RESEARCH_SYSTEM_PROMPT : EXPLORE_SYSTEM_PROMPT;
     
-    if (isDeepResearch && Object.keys(requirements).length > 0) {
-      systemInstruction += `\n\nUser's accumulated requirements so far: ${JSON.stringify(requirements)}`;
+    if (Object.keys(requirements).length > 0) {
+      systemInstruction += `\n\nUser's accumulated session context (including linguistic fingerprint): ${JSON.stringify(requirements)}`;
     }
 
     const model = genAI.getGenerativeModel({

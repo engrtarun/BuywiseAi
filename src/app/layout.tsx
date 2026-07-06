@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Inter, IBM_Plex_Mono } from "next/font/google";
 import { Sora } from "next/font/google";
+import { Quicksand } from "next/font/google";
 import { ThemeInitializer } from "@/components/ThemeInitializer";
 import { AppModeProvider } from "@/contexts/AppModeContext";
+import { OnboardingProvider } from "@/contexts/OnboardingContext";
+import { CanvasOnboardingTour } from "@/components/onboarding/CanvasOnboardingTour";
 import "./globals.css";
 
 const inter = Inter({
@@ -25,6 +28,13 @@ const ibmPlexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
+const quicksand = Quicksand({
+  variable: "--font-quicksand",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "BuyWise AI",
   description: "AI-powered smart shopping assistant",
@@ -40,7 +50,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${sora.variable} ${ibmPlexMono.variable} antialiased`}
+      className={`${inter.variable} ${sora.variable} ${ibmPlexMono.variable} ${quicksand.variable} antialiased`}
       suppressHydrationWarning
     >
       <head>
@@ -48,9 +58,12 @@ export default function RootLayout({
       </head>
       <body className="bg-ink-deeper">
         <ThemeProvider>
-          <AppModeProvider>
-            {children}
-          </AppModeProvider>
+          <OnboardingProvider>
+            <AppModeProvider>
+              {children}
+              <CanvasOnboardingTour />
+            </AppModeProvider>
+          </OnboardingProvider>
         </ThemeProvider>
       </body>
     </html>

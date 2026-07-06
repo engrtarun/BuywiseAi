@@ -248,6 +248,7 @@ export function ChatInput({
               }}
               className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-text-secondary hover:text-text-primary-light self-end mb-[2px] ${isDisabled ? "opacity-40 cursor-not-allowed" : ""}`}
               aria-label="Quick Actions"
+              data-tour-id="tour-mode-toggle"
             >
               <Plus className={`size-5 transition-transform duration-200 ${isQuickMenuOpen ? 'rotate-45' : 'rotate-0'}`} />
             </button>
@@ -260,7 +261,7 @@ export function ChatInput({
               isModeLocked={!!isModeLocked}
             />
 
-            <div className="relative flex-1 flex min-h-[44px] sm:min-h-[48px]">
+            <div className="relative flex-1 flex min-h-[44px] sm:min-h-[48px]" data-tour-id="tour-chat-input">
             {/* Custom Animated Placeholder */}
             {!inputText && (
               <div className="absolute inset-0 pointer-events-none px-4 flex items-center overflow-hidden">
@@ -333,6 +334,11 @@ export function ChatInput({
           </button>
           </div>
         </div>
+
+        {/* AI Disclaimer Text Element */}
+        <p className="text-center text-xs text-text-secondary/70 mt-1 px-4 selection:bg-transparent tracking-wide">
+          BuywiseAi is an AI and can make mistakes. Please double-check product suggestions.
+        </p>
       </div>
     </div>
   );

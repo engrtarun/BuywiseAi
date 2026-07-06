@@ -1,0 +1,73 @@
+# ============================================================================
+# BuyWise AI — Production Docker Compose
+# ============================================================================
+# Orchestrates the containerised application with:
+#   • Automated builds from local Dockerfile
+#   • Build-time args for client-side vars (NEXT_PUBLIC_*)
+#   • Runtime injection of server secrets (API keys)
+#   • Dynamic AI-Ready Health Checks (Supabase + Gemini)
+#   • Professional logging limits (10MB × 3 files)
+#   • Automatic restart policy
+# ============================================================================
+
+services:
+  buywise_ai_app:
+    container_name: buywise_ai_app
+
+    # ── Build Configuration ────────────────────────────────────────────────
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Client-side NEXT_PUBLIC_ vars are embedded into JS at BUILD time.
+      # They are NOT secrets — they are public identifiers.
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+
+    # ── Port Mapping ───────────────────────────────────────────────────────
+    ports:
+      - "3000:3000"
+
+    # ── Runtime Environment Variables (Server Secrets) ─────────────────────
+    # These are injected ONLY at runtime, never baked into the image.
+    # Docker Compose reads them from the .env.local file in the project root.
+    env_file:
+      - .env.local
+
+    environment:
+      - NODE_ENV=production
+      - HOSTNAME=0.0.0.0
+      - PORT=3000
+
+    # ── Restart Policy ─────────────────────────────────────────────────────
+    # "unless-stopped" restarts on crash / host reboot, but honours manual
+    # docker stop commands.
+    restart: unless-stopped
+
+    # ── Dynamic AI-Ready Health Checks ─────────────────────────────────────
+    # Every 30 seconds the daemon runs a multi-target check:
+    #   1. Next.js server on :3000
+    #   2. Supabase connectivity (via the public REST endpoint)
+    #   3. Gemini API connectivity (models endpoint with API key)
+    # If ANY check fails 3 times in a row, Docker marks the container
+    # "unhealthy" and the restart policy will cycle it automatically.
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - |
+          curl -sf http://localhost:3000/ > /dev/null &&
+          curl -sf "${NEXT_PUBLIC_SUPABASE_URL}/rest/v1/" -H "apikey: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}" > /dev/null &&
+          curl -sf "https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}" > /dev/null
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # ── Professional Logging Limits ────────────────────────────────────────
+    # Cap each log file at 10MB, rotate across 3 files maximum.
+    # This prevents a chatty AI service from filling up the host disk.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
