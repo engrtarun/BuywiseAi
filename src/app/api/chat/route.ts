@@ -41,8 +41,12 @@ import path from "path";
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
-const EXPLORE_SYSTEM_PROMPT = `You are BuyWise AI, an ALL-IN-ONE smart shopping assistant for the Indian market.
-The user is in Explore Mode — a visual, browse-first experience. You support ALL product categories (Electronics, Groceries, Water, Clothing, Books, Furniture, Shoes, Snacks, etc.).
+const EXPLORE_SYSTEM_PROMPT = `You are BuyWise AI, a universal, all-category shopping assistant. You are NOT limited to tech or electronics.
+
+RULE 1: For EVERY user intent—whether they ask for water, clothes, python programming, groceries, or cars—you MUST find a purchasable angle and return relevant product items.
+RULE 2: Never return generic tech-buying advice (like 'camera quality' or 'battery life') for non-tech items.
+RULE 3: You MUST output the \`explore_carousel\` JSON schema format every single time when presenting options.
+RULE 4: Enforce the 20/80 content rule. Provide a short \`headline\` (20%), a populated \`products\` array for the Mid-Cards, and a comprehensive \`deep_dive\` markdown string (80%).
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CONVERSATION FLOW — follow this exact intent-based sequence:
@@ -60,8 +64,9 @@ CONVERSATION FLOW — follow this exact intent-based sequence:
 
 3. PRESENT PRODUCT OPTIONS (The 20/80 Rule):
    After we provide you with real product listings (from your search), you MUST output an \`explore_carousel\` payload with the best options.
-   - The \`deep_dive\` MUST be category-specific. Do NOT reuse generic electronics advice (e.g., battery life, camera) for non-electronics.
-   - Instead, discuss factors relevant to the specific category (e.g., water -> mineral vs RO, pack size; books -> beginner vs advanced; coffee -> roast level).
+   - The \`headline\` MUST be a human-friendly, highly relevant opening paragraph validating the user's request (e.g., "Staying hydrated is crucial! Here are some of the best water options available right now.").
+   - The \`deep_dive\` MUST be category-specific. Do NOT reuse generic electronics advice for non-electronics.
+   - Instead, discuss factors relevant to the specific category (e.g., water -> pH levels, BPA-free plastics; books -> beginner vs advanced).
 
 4. IF CONVERSATION INTENT:
    Return a simple \`text_response\` payload. Do NOT search.
@@ -83,18 +88,18 @@ JSON RESPONSE FORMATS (all responses must be valid JSON):
 When you have a Shopping Intent and need to search:
 {
   "ui_type": "search_intent",
-  "query": "laptop for coding under 60000",
+  "query": "mineral water bottles",
   "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
 }
 
 When presenting product options (after we inject real listings):
 {
   "ui_type": "explore_carousel",
-  "headline": "Here are the top picks...",
+  "headline": "Staying hydrated is crucial! Here are some of the best water options available right now.",
   "products": [
     { "id": "1", "name": "...", "price": "₹...", "rating": 4.5, "image": "...", "reason": "...", "stretch": false }
   ],
-  "deep_dive": "### Why these picks?\\n...",
+  "deep_dive": "### The Science of Hydration\\n...",
   "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
 }
 
@@ -214,7 +219,10 @@ export function validateModeJSONPayload(rawText: string, expectedMode: 'explore'
     }
     
     if (expectedMode === 'explore') {
-      return (parsedData.ui_type === 'explore_carousel' && Array.isArray(parsedData.products)) || parsedData.ui_type === 'text_response' || parsedData.ui_type === 'clarifying_question' || parsedData.ui_type === 'search_intent';
+      if (parsedData.ui_type === 'explore_carousel') {
+        return typeof parsedData.headline === 'string' && Array.isArray(parsedData.products) && typeof parsedData.deep_dive === 'string';
+      }
+      return parsedData.ui_type === 'text_response' || parsedData.ui_type === 'clarifying_question' || parsedData.ui_type === 'search_intent';
     }
     return false;
   } catch (err) {
