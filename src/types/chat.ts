@@ -8,6 +8,19 @@ export type MessageStatus = "ok" | "error";
 
 export type ChatMode = "deep_research" | "explore";
 
+export interface UserFingerprint {
+  language: string; // e.g., "Hinglish", "English", "Hindi"
+  tone: string; // e.g., "casual", "urgent", "polite", "slang-heavy"
+  verbosity: string; // e.g., "concise", "detailed", "bullet-points"
+}
+
+export interface BaseAIResponse {
+  ui_type: string;
+  fingerprint?: UserFingerprint;
+  // Allows other arbitrary fields for specific response types
+  [key: string]: any;
+}
+
 export interface Message {
   id: string;
   role: Role;
@@ -33,11 +46,7 @@ export interface Message {
   searchTag?: string;
   exploreIntro?: string;
   exploreDeepDive?: string;
-  userFingerprint?: {
-    detected_language?: string;
-    tone?: string;
-    verbosity?: string;
-  };
+  fingerprint?: UserFingerprint;
 }
 
 export interface ChatSession {

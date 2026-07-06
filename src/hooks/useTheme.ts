@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 const isBrowser = typeof window !== "undefined";
 
 import { generateCustomTheme } from "@/lib/themes";
+import { hexToShadcnHsl } from "@/lib/colors";
 
 interface ThemeContextType {
   theme: string;
@@ -38,6 +39,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
       const activeSeed = newSeed || customSeedColor;
       const themeVars = generateCustomTheme(activeSeed);
       
+      const bgHsl = hexToShadcnHsl(themeVars.background);
+      const sidebarHsl = hexToShadcnHsl(themeVars.sidebar);
+      const primaryHsl = hexToShadcnHsl(themeVars.primary);
+      const fgHsl = hexToShadcnHsl(themeVars.primaryForeground);
+
       let customStyle = document.getElementById("custom-theme-vars");
       if (!customStyle) {
         customStyle = document.createElement("style");
@@ -47,28 +53,28 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
       
       customStyle.innerHTML = `
         :root[data-theme="custom"] {
-          --ink-deep: ${themeVars.background};
-          --ink-deeper: ${themeVars.background};
-          --bg-main: ${themeVars.background};
-          --background: ${themeVars.background};
+          --ink-deep: ${bgHsl};
+          --ink-deeper: ${bgHsl};
+          --bg-main: ${bgHsl};
+          --background: ${bgHsl};
           
-          --sidebar-bg: ${themeVars.sidebar};
-          --bg-sidebar: ${themeVars.sidebar};
-          --sidebar: ${themeVars.sidebar};
+          --sidebar-bg: ${sidebarHsl};
+          --bg-sidebar: ${sidebarHsl};
+          --sidebar: ${sidebarHsl};
           
-          --bg-input: ${themeVars.sidebar};
-          --card: ${themeVars.sidebar};
-          --dropdown-bg: ${themeVars.sidebar};
-          --popover: ${themeVars.sidebar};
+          --bg-input: ${sidebarHsl};
+          --card: ${sidebarHsl};
+          --dropdown-bg: ${sidebarHsl};
+          --popover: ${sidebarHsl};
           
-          --marigold: ${themeVars.primary};
-          --brand-accent: ${themeVars.primary};
-          --primary: ${themeVars.primary};
-          --sidebar-primary: ${themeVars.primary};
-          --sidebar-ring: ${themeVars.primary};
+          --marigold: ${primaryHsl};
+          --brand-accent: ${primaryHsl};
+          --primary: ${primaryHsl};
+          --sidebar-primary: ${primaryHsl};
+          --sidebar-ring: ${primaryHsl};
           
-          --primary-foreground: ${themeVars.primaryForeground};
-          --sidebar-primary-foreground: ${themeVars.primaryForeground};
+          --primary-foreground: ${fgHsl};
+          --sidebar-primary-foreground: ${fgHsl};
         }
       `;
     } else {
