@@ -12,3 +12,5 @@ Every response in Explore Mode MUST follow this UI structure:
 ## 3. The Data Fallback Contract
 Explore mode must NEVER fail. 
 It uses a try-catch-finally pipeline. It first attempts to fetch live data from the DB/API. If that fails, times out, or returns empty, it silently falls back to `quickBuyMockData.ts` to ensure the Mid-Cards are always populated.
+
+
