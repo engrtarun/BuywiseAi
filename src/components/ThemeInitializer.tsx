@@ -71,10 +71,16 @@ const scriptCode = `
         var hsl = hexToHSL(seedHex);
         var bgL = Math.max(5, Math.min(hsl.l, 12));
         var bgS = Math.min(hsl.s, 15);
-        var bgHex = HSLToHex(hsl.h, bgS, bgL);
         var cardL = Math.max(12, Math.min(hsl.l, 18));
-        var cardHex = HSLToHex(hsl.h, bgS, cardL);
-        var textContrast = hsl.l > 60 ? "#000000" : "#ffffff";
+        
+        function toShadcn(h, s, l) {
+          return h.toFixed(1) + " " + s.toFixed(1) + "% " + l.toFixed(1) + "%";
+        }
+        
+        var bgShadcn = toShadcn(hsl.h, bgS, bgL);
+        var cardShadcn = toShadcn(hsl.h, bgS, cardL);
+        var seedShadcn = toShadcn(hsl.h, hsl.s, hsl.l);
+        var textContrast = hsl.l > 60 ? "0 0% 0%" : "0 0% 100%";
         
         var customStyle = document.getElementById("custom-theme-vars");
         if (!customStyle) {
@@ -84,25 +90,25 @@ const scriptCode = `
         }
         customStyle.innerHTML = \`
           :root[data-theme="custom"] {
-            --ink-deep: \${bgHex};
-            --ink-deeper: \${bgHex};
-            --bg-main: \${bgHex};
-            --background: \${bgHex};
+            --ink-deep: \${bgShadcn};
+            --ink-deeper: \${bgShadcn};
+            --bg-main: \${bgShadcn};
+            --background: \${bgShadcn};
             
-            --sidebar-bg: \${cardHex};
-            --bg-sidebar: \${cardHex};
-            --sidebar: \${cardHex};
+            --sidebar-bg: \${cardShadcn};
+            --bg-sidebar: \${cardShadcn};
+            --sidebar: \${cardShadcn};
             
-            --bg-input: \${cardHex};
-            --card: \${cardHex};
-            --dropdown-bg: \${cardHex};
-            --popover: \${cardHex};
+            --bg-input: \${cardShadcn};
+            --card: \${cardShadcn};
+            --dropdown-bg: \${cardShadcn};
+            --popover: \${cardShadcn};
             
-            --marigold: \${seedHex};
-            --brand-accent: \${seedHex};
-            --primary: \${seedHex};
-            --sidebar-primary: \${seedHex};
-            --sidebar-ring: \${seedHex};
+            --marigold: \${seedShadcn};
+            --brand-accent: \${seedShadcn};
+            --primary: \${seedShadcn};
+            --sidebar-primary: \${seedShadcn};
+            --sidebar-ring: \${seedShadcn};
             
             --primary-foreground: \${textContrast};
             --sidebar-primary-foreground: \${textContrast};

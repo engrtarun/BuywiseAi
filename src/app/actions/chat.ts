@@ -287,7 +287,9 @@ export async function sendMessage(
   const supabase = await createClient()
   const user = await getAuthenticatedUser(supabase)
 
-  if (!user) {
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId);
+
+  if (!user || !isUUID) {
     return {
       id: getGuestSessionId(),
       session_id: sessionId,

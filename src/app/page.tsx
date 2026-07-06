@@ -450,15 +450,14 @@ export default function Page() {
           // Parse and restore rich layout client-side
           const aiMsg = parseAiMessageContent(dbAiMsg.id, dbAiMsg.message);
   
-          if (aiMsg.userFingerprint) {
-             newRequirements = { ...newRequirements, user_fingerprint: aiMsg.userFingerprint };
+          if (aiMsg.fingerprint) {
+             newRequirements = { ...newRequirements, fingerprint: aiMsg.fingerprint };
              updateSessionRequirements(chatId, newRequirements).catch(e => console.error("Failed to update fingerprint", e));
           }
 
           // If the API returned real product results (Serper/FakeStore fallback), attach them
           if (data.products && Array.isArray(data.products) && ((aiMsg as any).ui_type === 'explore_carousel' || aiMsg.products !== undefined)) {
-             // We attach products to the carousel message
-             // (Assuming we still pass data.products for legacy support, but new flow embeds them directly into Gemini's JSON)
+             (aiMsg as any).products = data.products;
           }
           newMessages.push(aiMsg);
         }

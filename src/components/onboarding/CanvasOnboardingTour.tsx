@@ -15,7 +15,7 @@ import React, { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { TOUR_STEPS } from "@/lib/tourSteps";
+import { TOUR_STEPS } from "@/config/tourSteps";
 import { CoachMarkTooltip } from "./CoachMarkTooltip";
 import type { TargetRect, TooltipPlacement } from "@/types/onboarding";
 

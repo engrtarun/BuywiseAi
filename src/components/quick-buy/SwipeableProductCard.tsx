@@ -357,38 +357,38 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
           </div>
 
           {/* Action Buttons (Bottom) */}
-          <div className="flex gap-3 mt-4">
+          <div className="flex gap-2 mt-4">
+            
+            {/* SKIP */}
+            <motion.button
+              whileTap={{ scale: 0.95, y: 2 }}
+              onClick={(e) => { e.stopPropagation(); manualSwipe("left"); }}
+              className="flex-[0.8] rounded-xl bg-white/5 border border-white/10 text-text-secondary flex flex-col items-center justify-center py-2 shadow-inner hover:bg-white/10 transition-colors"
+            >
+               <span className="font-bold text-sm tracking-wide">SKIP</span>
+            </motion.button>
+
+            {/* ADD TO CART */}
+            <motion.button
+              whileTap={{ scale: 0.95, y: 2 }}
+              onClick={(e) => { e.stopPropagation(); manualSwipe("right"); }}
+              className="flex-1 rounded-xl bg-brand-accent/10 border border-brand-accent/30 text-brand-accent flex flex-col items-center justify-center py-2 shadow-inner hover:bg-brand-accent/20 transition-colors"
+            >
+               <ShoppingCart className="size-4 mb-0.5" />
+               <span className="text-[10px] font-bold uppercase tracking-wider">Add to Cart</span>
+            </motion.button>
             
             {/* BUY ONE CLICK */}
             <motion.button
               whileTap={{ scale: 0.95, y: 2 }}
               onClick={handleBuy}
-              className="flex-1 relative overflow-hidden rounded-xl bg-brand-accent text-bg-main flex flex-col items-center justify-center py-2.5 shadow-[0_0_20px_rgba(255,176,103,0.2)] hover:shadow-[0_0_30px_rgba(255,176,103,0.4)] transition-shadow"
+              className="flex-[1.2] relative overflow-hidden rounded-xl bg-brand-accent text-bg-main flex flex-col items-center justify-center py-2 shadow-[0_0_20px_rgba(255,176,103,0.2)] hover:shadow-[0_0_30px_rgba(255,176,103,0.4)] transition-shadow"
             >
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
               <span className="font-heading font-black text-lg leading-none z-10 flex items-center gap-1.5">
                 <Zap className="size-4 fill-bg-main" /> BUY
               </span>
               <span className="text-[10px] font-bold tracking-wider opacity-80 mt-0.5 z-10">ONE CLICK</span>
-            </motion.button>
-            
-            {/* NEXT / SAVE */}
-            <motion.button
-              whileTap={{ scale: 0.95, y: 2 }}
-              onClick={(e) => { e.stopPropagation(); manualSwipe(isMobile ? "right" : "left"); }}
-              className="flex-1 rounded-xl bg-white/5 border border-white/10 text-text-primary-light flex items-center justify-center gap-2 font-bold hover:bg-white/10 transition-colors shadow-inner"
-            >
-              {isMobile ? (
-                <>
-                  <ShoppingCart className="size-4.5 text-brand-accent" />
-                  Cart
-                </>
-              ) : (
-                <>
-                  Next
-                  <ArrowRight className="size-4.5 text-text-secondary" />
-                </>
-              )}
             </motion.button>
             
           </div>

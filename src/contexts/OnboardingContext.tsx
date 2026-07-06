@@ -7,7 +7,7 @@
 // ============================================================================
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
-import { TOUR_STEPS } from "@/lib/tourSteps";
+import { TOUR_STEPS } from "@/config/tourSteps";
 
 const STORAGE_KEY = "buywise_v3_tour_done";
 
