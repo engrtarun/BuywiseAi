@@ -48,7 +48,7 @@ function saveState(state: SidebarState) {
  */
 export function useSidebarResize() {
   const [width, setWidth] = useState(DEFAULT_WIDTH);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const lastExpandedWidth = useRef(DEFAULT_WIDTH);
   const initialised = useRef(false);

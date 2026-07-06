@@ -786,6 +786,7 @@ function SidebarContent({
                 ${isCollapsed ? "size-10" : "size-8 shrink-0"}
               `}
               aria-label="Toggle Sidebar"
+              data-tour-id="tour-sidebar-toggle"
             >
               <Menu className={`text-text-primary-dark ${isCollapsed ? "size-5" : "size-4.5"}`} />
             </button>
