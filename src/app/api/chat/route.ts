@@ -215,6 +215,14 @@ export async function POST(req: NextRequest) {
           generationConfig: {
             maxOutputTokens: 500,
             responseMimeType: "application/json",
+            responseSchema: {
+              type: "object" as any,
+              properties: {
+                ui_type: { type: "string" as any },
+                text: { type: "string" as any },
+              },
+              required: ["ui_type", "text"],
+            },
           },
         });
 

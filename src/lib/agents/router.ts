@@ -33,6 +33,17 @@ export async function determineIntent(message: string, history: any[]): Promise<
       generationConfig: {
         responseMimeType: "application/json",
         maxOutputTokens: 150,
+        responseSchema: {
+          type: "object" as any,
+          properties: {
+            target_mode: {
+              type: "string" as any,
+              enum: ["explore", "deep_research"],
+            },
+            reasoning: { type: "string" as any },
+          },
+          required: ["target_mode", "reasoning"],
+        },
       }
     });
     
