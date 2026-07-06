@@ -149,10 +149,10 @@ export function DeepResearchClarifyingCard({
     <div className="flex flex-col gap-2 w-full max-w-[95%] sm:max-w-lg my-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div 
         ref={cardRef}
-        className="w-full bg-[#0C2823]/80 border border-white/10 rounded-2xl shadow-[0_8px_30px_rgba(245,158,11,0.15)] backdrop-blur-xl overflow-hidden box-border flex flex-col"
+        className="w-full bg-bg-input border border-border-light rounded-2xl shadow-md backdrop-blur-xl overflow-hidden box-border flex flex-col"
       >
         {/* Header Row */}
-        <div className="flex justify-between items-center px-4 py-3 border-b border-white/5 bg-white/[0.02]">
+        <div className="flex justify-between items-center px-4 py-3 border-b border-border-light bg-bg-sidebar/50">
           <h4 className="text-[14px] sm:text-[15px] font-sans font-medium text-text-primary-light/90 leading-snug flex-1 pr-4">
             {currentQ.question}
           </h4>
@@ -160,11 +160,11 @@ export function DeepResearchClarifyingCard({
           <div className="flex items-center gap-3 shrink-0">
             {/* Pagination Controls */}
             {totalQuestions > 1 && (
-              <div className="flex items-center gap-1.5 text-xs font-mono text-text-dim-ondark">
+              <div className="flex items-center gap-1.5 text-xs font-mono text-text-secondary">
                 <button 
                   disabled={currentIndex === 0 || isInteractionDisabled}
                   onClick={() => setCurrentIndex(prev => prev - 1)}
-                  className="p-1 rounded-md hover:bg-white/10 hover:text-text-primary-light disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                  className="p-1 rounded-md hover:bg-bg-sidebar hover:text-text-primary-light disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
                 >
                   <ChevronLeft className="size-3.5" />
                 </button>
@@ -172,7 +172,7 @@ export function DeepResearchClarifyingCard({
                 <button 
                   disabled={currentIndex === totalQuestions - 1 || isInteractionDisabled}
                   onClick={() => setCurrentIndex(prev => prev + 1)}
-                  className="p-1 rounded-md hover:bg-white/10 hover:text-text-primary-light disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                  className="p-1 rounded-md hover:bg-bg-sidebar hover:text-text-primary-light disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
                 >
                   <ChevronRight className="size-3.5" />
                 </button>
@@ -183,7 +183,7 @@ export function DeepResearchClarifyingCard({
             {onDismiss && !isInteractionDisabled && (
               <button 
                 onClick={onDismiss}
-                className="p-1 rounded-full hover:bg-white/10 text-text-secondary hover:text-text-primary-light transition-colors"
+                className="p-1 rounded-full hover:bg-bg-sidebar text-text-secondary hover:text-text-primary-light transition-colors"
                 aria-label="Dismiss clarification"
               >
                 <X className="size-4" />
@@ -214,15 +214,15 @@ export function DeepResearchClarifyingCard({
                     onClick={() => handleOptionClick(opt.label)}
                     onMouseEnter={() => !isInteractionDisabled && setHighlightedIndex(idx)}
                     className={`
-                      w-full flex items-center justify-between px-4 py-3 border-b border-white/5 transition-colors duration-150 text-left
+                      w-full flex items-center justify-between px-4 py-3 border-b border-border-light transition-colors duration-150 text-left
                       ${isInteractionDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-                      ${isHighlighted && !isInteractionDisabled ? "bg-marigold/10 border-l-2 border-l-marigold" : "bg-transparent border-l-2 border-l-transparent hover:bg-white/[0.04]"}
+                      ${isHighlighted && !isInteractionDisabled ? "bg-brand-accent/10 border-l-2 border-l-brand-accent" : "bg-transparent border-l-2 border-l-transparent hover:bg-bg-sidebar/50"}
                     `}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className={`
                         flex items-center justify-center size-6 shrink-0 rounded-md text-[11px] font-mono font-bold transition-colors
-                        ${isHighlighted && !isInteractionDisabled ? "bg-marigold text-ink-deeper shadow-sm shadow-marigold/20" : "bg-white/10 text-text-secondary"}
+                        ${isHighlighted && !isInteractionDisabled ? "bg-brand-accent text-primary-foreground shadow-sm shadow-brand-accent/20" : "bg-bg-sidebar text-text-secondary"}
                       `}>
                         {idx + 1}
                       </div>
@@ -239,7 +239,7 @@ export function DeepResearchClarifyingCard({
                       shrink-0 ml-3 transition-all duration-200
                       ${isHighlighted && !isInteractionDisabled ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"}
                     `}>
-                      <ArrowRight className="size-4 text-marigold" />
+                      <ArrowRight className="size-4 text-brand-accent" />
                     </div>
                   </button>
                 );
@@ -249,7 +249,7 @@ export function DeepResearchClarifyingCard({
         </div>
 
         {/* Footer Row (Something Else & Skip) */}
-        <div className="flex justify-between items-center px-4 py-3 bg-white/[0.01]">
+        <div className="flex justify-between items-center px-4 py-3 bg-bg-sidebar/30">
           {currentQ.allowCustom !== false ? (
             <button
               type="button"
@@ -260,7 +260,7 @@ export function DeepResearchClarifyingCard({
               }}
               className={`
                 flex items-center gap-2 px-2 py-1 -ml-2 rounded-lg text-[13px] font-sans font-medium transition-colors
-                ${isInteractionDisabled ? "opacity-50 cursor-not-allowed text-text-dim-ondark" : "text-text-dim-ondark hover:text-text-primary-light hover:bg-white/5 cursor-pointer"}
+                ${isInteractionDisabled ? "opacity-50 cursor-not-allowed text-text-secondary" : "text-text-primary-light/80 hover:text-text-primary-light hover:bg-bg-sidebar cursor-pointer"}
               `}
             >
               <Pencil className="size-3.5" /> Something else
@@ -274,7 +274,7 @@ export function DeepResearchClarifyingCard({
               onClick={handleSkip}
               className={`
                 px-3 py-1.5 rounded-lg text-[12px] font-sans font-medium transition-colors
-                ${isInteractionDisabled ? "opacity-40 cursor-not-allowed text-text-dim-ondark" : "text-text-dim-ondark border border-white/10 bg-white/5 hover:bg-white/10 hover:text-text-primary-light cursor-pointer"}
+                ${isInteractionDisabled ? "opacity-40 cursor-not-allowed text-text-secondary" : "text-text-secondary border border-border-light bg-bg-sidebar/50 hover:bg-bg-sidebar hover:text-text-primary-light cursor-pointer"}
               `}
             >
               Skip
@@ -291,7 +291,7 @@ export function DeepResearchClarifyingCard({
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
               onSubmit={handleCustomSubmit}
-              className="w-full flex gap-2 px-4 py-3 border-t border-white/5 bg-black/20 overflow-hidden box-border"
+              className="w-full flex gap-2 px-4 py-3 border-t border-border-light bg-black/5 overflow-hidden box-border"
             >
               <input
                 ref={customInputRef}
@@ -300,12 +300,12 @@ export function DeepResearchClarifyingCard({
                 onChange={(e) => setCustomText(e.target.value)}
                 placeholder="Type your response..."
                 disabled={isInteractionDisabled}
-                className="flex-1 min-w-0 bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-sm outline-none focus:border-marigold/50 focus-visible:ring-1 focus-visible:ring-marigold transition-all font-sans text-text-primary-light shadow-inner"
+                className="flex-1 min-w-0 bg-bg-input border border-border-light rounded-xl px-3 py-2 text-sm outline-none focus:border-brand-accent/50 focus-visible:ring-1 focus-visible:ring-brand-accent transition-all font-sans text-text-primary-light shadow-inner"
               />
               <button
                 type="submit"
                 disabled={isInteractionDisabled || !customText.trim()}
-                className="size-9 shrink-0 rounded-xl bg-marigold text-ink-deeper hover:bg-marigold/90 disabled:opacity-40 transition-colors cursor-pointer flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C2823]"
+                className="size-9 shrink-0 rounded-xl bg-brand-accent text-primary-foreground hover:bg-brand-accent/90 disabled:opacity-40 transition-colors cursor-pointer flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-sidebar"
               >
                 <ArrowRight className="size-4" />
               </button>
@@ -317,7 +317,7 @@ export function DeepResearchClarifyingCard({
       {/* Bottom Hint Text */}
       {!isInteractionDisabled && (
         <div className="text-center w-full px-2 mt-0.5">
-          <span className="text-[11px] font-mono text-text-dim-ondark/60 select-none">
+          <span className="text-[11px] font-mono text-text-secondary select-none">
             ↑↓ to navigate &middot; Enter to select &middot; or type below
           </span>
         </div>

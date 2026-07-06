@@ -34,6 +34,8 @@ import { env } from "@/lib/env";
 import { getFallbackChatResponse } from "@/lib/fallbackResponses";
 import { enforceChatAccess } from "@/lib/chatAccess";
 import { searchProducts } from "@/lib/productSearch";
+import fs from "fs";
+import path from "path";
 
 
 
@@ -254,8 +256,40 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { history = [], message, mode = "explore", requirements = {} } = body;
+    const { chatId = "default", history = [], message, mode = "explore", requirements = {}, isRegenerate = false } = body;
     userMessage = message;
+
+    // Backend JSON file logic (Msg Quality Improvement)
+    const chatDataDir = path.join(process.cwd(), "chat_data");
+    if (!fs.existsSync(chatDataDir)) {
+      fs.mkdirSync(chatDataDir);
+    }
+    const contextFilePath = path.join(chatDataDir, `${chatId}.json`);
+
+    let backendContext = { 
+      messageCount: history.length, 
+      lastActive: new Date().toISOString(), 
+      context: requirements 
+    };
+
+    if (fs.existsSync(contextFilePath)) {
+      try {
+        backendContext = JSON.parse(fs.readFileSync(contextFilePath, "utf8"));
+      } catch (e) {
+        console.warn("Failed to parse backend JSON file:", e);
+      }
+    }
+    
+    // Update and write back
+    backendContext.messageCount = history.length;
+    backendContext.lastActive = new Date().toISOString();
+    backendContext.context = { ...backendContext.context, ...requirements };
+    fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
+
+    if (isRegenerate) {
+      userMessage += `\n\n[SYSTEM NOTE: The user has requested to REGENERATE the response for this message. This means they were not fully satisfied with your previous answer. Please rethink their request, carefully consider the chat history, and provide a different, higher quality, or more accurate response.]`;
+    }
+
     userHistory = history;
 
     const access = await enforceChatAccess(req);
@@ -315,6 +349,11 @@ export async function POST(req: NextRequest) {
     const isDeepResearch = mode === "deep_research" || mode === "deep-research";
     let systemInstruction = isDeepResearch ? DEEP_RESEARCH_SYSTEM_PROMPT : EXPLORE_SYSTEM_PROMPT;
     
+    // Inject Backend JSON file data to improve message quality
+    if (backendContext && backendContext.context) {
+      systemInstruction += `\n\n[SYSTEM NOTE - BACKEND CONTEXT FILE]\nI have read your user profile from the backend JSON context file. Please use this data to greatly improve the quality and personalization of your response:\n${JSON.stringify(backendContext.context, null, 2)}`;
+    }
+
     if (Object.keys(requirements).length > 0) {
       systemInstruction += `\n\nUser's accumulated session context (including linguistic fingerprint): ${JSON.stringify(requirements)}`;
     }
@@ -432,9 +471,11 @@ interface ChatHistoryMessage {
 
 interface ChatRequestBody {
   message: string;
+  chatId?: string;
   history?: ChatHistoryMessage[];
   mode?: "deep_research" | "deep-research" | "explore" | "buy_explanation";
   requirements?: Record<string, unknown>;
+  isRegenerate?: boolean;
 }
 
 function isChatRequestBody(body: unknown): body is ChatRequestBody {

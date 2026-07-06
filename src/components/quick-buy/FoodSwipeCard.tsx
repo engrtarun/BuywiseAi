@@ -10,8 +10,8 @@ import confetti from "canvas-confetti";
 interface FoodSwipeCardProps {
   product: FoodItem;
   customizations?: string[];
-  onSwipeLeft: (id: string) => void;
-  onSwipeRight: (id: string) => void;
+  onSwipeLeft: (product: FoodItem) => void;
+  onSwipeRight: (product: FoodItem) => void;
   isTop: boolean;
   index: number;
 }
@@ -61,37 +61,50 @@ export function FoodSwipeCard({ product, customizations = [], onSwipeLeft, onSwi
 
   const triggerRightSwipe = async () => {
     setShowRightSwipeAnim(true);
-    playAccept();
-    confetti({ 
-      particleCount: 100, 
-      spread: 70, 
-      origin: { y: 0.6 },
-      colors: ['#22c55e', '#FC8019', '#ffffff'] 
-    });
-    
-    // Animate card off screen
-    await controls.start({ x: 500, rotateZ: 15, opacity: 0, transition: { duration: 0.4, ease: "easeOut" } });
-    setTimeout(() => onSwipeRight(product.id), 200);
+    try {
+      setShowRightSwipeAnim(true);
+      playAccept();
+      confetti({ 
+        particleCount: 100, 
+        spread: 70, 
+        origin: { y: 0.6 },
+        colors: ['#22c55e', '#FC8019', '#ffffff'] 
+      });
+      
+      // Animate card off screen
+      await controls.start({ x: 500, rotateZ: 15, opacity: 0, transition: { duration: 0.4, ease: "easeOut" } });
+      setTimeout(() => onSwipeRight(product), 200);
+    } catch (error) {
+      // Ignore unmounted component animation errors
+    }
   };
 
   const triggerLeftSwipe = async () => {
-    setShowLeftSwipeAnim(true);
-    playReject();
-    await controls.start({ x: -500, rotateZ: -15, opacity: 0, transition: { duration: 0.4, ease: "easeOut" } });
-    setTimeout(() => onSwipeLeft(product.id), 100);
+    try {
+      setShowLeftSwipeAnim(true);
+      playReject();
+      await controls.start({ x: -500, rotateZ: -15, opacity: 0, transition: { duration: 0.4, ease: "easeOut" } });
+      setTimeout(() => onSwipeLeft(product), 100);
+    } catch (error) {
+      // Ignore unmounted component animation errors
+    }
   };
 
   const handleDragEnd = async (event: any, info: PanInfo) => {
-    const offset = info.offset.x;
-    const velocity = info.velocity.x;
-    const swipeThreshold = 100;
+    try {
+      const offset = info.offset.x;
+      const velocity = info.velocity.x;
+      const swipeThreshold = 100;
 
-    if (offset > swipeThreshold || velocity > 500) {
-      triggerRightSwipe();
-    } else if (offset < -swipeThreshold || velocity < -500) {
-      triggerLeftSwipe();
-    } else {
-      controls.start({ x: 0, rotateZ: 0, transition: { type: "spring", stiffness: 300, damping: 20 } });
+      if (offset > swipeThreshold || velocity > 500) {
+        triggerRightSwipe();
+      } else if (offset < -swipeThreshold || velocity < -500) {
+        triggerLeftSwipe();
+      } else {
+        controls.start({ x: 0, rotateZ: 0, transition: { type: "spring", stiffness: 300, damping: 20 } });
+      }
+    } catch (error) {
+      // Ignore unmounted component animation errors
     }
   };
 

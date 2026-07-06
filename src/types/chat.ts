@@ -48,4 +48,5 @@ export interface ChatSession {
   isTemporary?: boolean;
   mode?: ChatMode;
   requirements?: Record<string, unknown>;
+  pinned?: boolean;
 }

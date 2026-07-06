@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { QuickBuyScreen } from '@/components/quick-buy/QuickBuyScreen';
 import { FloatingChatBubble } from '@/components/shared/FloatingChatBubble';
@@ -8,9 +9,25 @@ import { ChevronLeft } from 'lucide-react';
 
 export default function QuickBuyPage() {
   const router = useRouter();
+  const previousGhostRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const root = document.documentElement;
+    previousGhostRef.current = root.getAttribute('data-ghost');
+    root.setAttribute('data-ghost', 'true');
+
+    return () => {
+      if (previousGhostRef.current === null) {
+        root.removeAttribute('data-ghost');
+      } else {
+        root.setAttribute('data-ghost', previousGhostRef.current);
+      }
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 relative">
+    <div className="min-h-screen bg-bg-main relative">
       {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 h-14 z-50 bg-bg-main/80 backdrop-blur-xl border-b border-line-ondark flex items-center justify-between px-4">
         <button

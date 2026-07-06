@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 
 interface SwipeCardDeckProps {
   products: QuickBuyProduct[];
-  onSave: (id: string) => void;
+  onSave: (product: QuickBuyProduct) => void;
   onOpenSettings: () => void;
   hasMore: boolean;
   onPrefetch: () => void;
@@ -44,18 +44,18 @@ export function SwipeCardDeck({ products, onSave, onOpenSettings, hasMore, onPre
     }
   };
 
-  const handleSwipeLeft = (id: string) => {
+  const handleSwipeLeft = (product: QuickBuyProduct) => {
     setSwipedIds((prev) => {
-      const next = new Set(prev).add(id);
+      const next = new Set(prev).add(product.id);
       saveToSession(next);
       return next;
     });
   };
 
-  const handleSwipeRight = (id: string) => {
-    onSave(id);
+  const handleSwipeRight = (product: QuickBuyProduct) => {
+    onSave(product);
     setSwipedIds((prev) => {
-      const next = new Set(prev).add(id);
+      const next = new Set(prev).add(product.id);
       saveToSession(next);
       return next;
     });

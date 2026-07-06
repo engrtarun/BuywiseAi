@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Menu, Camera, Palette, Check, MoreVertical, Pencil, Ghost, LogOut, Shirt, Sparkles, UserCog } from "lucide-react";
+import { Search, Menu, Camera, Palette, Check, MoreVertical, Pencil, Ghost, LogOut, Shirt, Sparkles, UserCog, Pin } from "lucide-react";
 import { ChatSession, ChatMode } from "@/types/chat";
 import { useSidebarResize } from "./useSidebarResize";
 import { useTheme } from "@/hooks/useTheme";
@@ -425,9 +425,10 @@ interface ChatHistoryItemProps {
   onSelect: (id: string) => void;
   onDelete: (id: string) => void;
   onRename?: (id: string, title: string) => void;
+  onTogglePin?: (id: string, pinned: boolean) => void;
 }
 
-function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: ChatHistoryItemProps) {
+function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename, onTogglePin }: ChatHistoryItemProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isEditing, setIsEditing] = React.useState(false);
   const [editTitle, setEditTitle] = React.useState(session.title);
@@ -509,11 +510,16 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
           }}
           onBlur={handleSave}
           autoFocus
-          className="flex-1 bg-[#1A1A18] text-text-primary-dark text-[13px] font-sans px-1.5 py-0.5 rounded outline-none border border-brand-accent/50 min-w-0"
+          className="flex-1 bg-bg-input text-text-primary-dark text-[13px] font-sans px-1.5 py-0.5 rounded outline-none border border-brand-accent/50 min-w-0 shadow-inner"
         />
       ) : (
         <span className="flex-1 min-w-0 text-[13px] truncate font-sans leading-tight">
           {session.title}
+          {session.pinned && (
+            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-brand-accent/15 px-2 py-0.5 text-[10px] font-semibold text-brand-accent">
+              <Pin className="size-3" /> Pinned
+            </span>
+          )}
         </span>
       )}
       
@@ -561,7 +567,7 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
                   }}
                 />
                 
-                <div className="absolute right-0 mt-1.5 z-[70] bg-[#1A1A18] border border-border-dark rounded-xl p-1 shadow-xl flex flex-col gap-0.5 min-w-[120px] animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute right-0 mt-1.5 z-[70] bg-dropdown-bg border border-border-light rounded-xl p-1 shadow-xl flex flex-col gap-0.5 min-w-[120px] animate-in fade-in zoom-in-95 duration-100">
                   <button
                     type="button"
                     onClick={(e) => {
@@ -570,10 +576,24 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename }: Ch
                       setIsEditing(true);
                       setEditTitle(session.title);
                     }}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none"
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-sans text-text-primary-dark hover:bg-bg-sidebar transition-all select-none"
                   >
                     Rename
                   </button>
+                  {onTogglePin && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMenuOpen(false);
+                        onTogglePin(session.id, !session.pinned);
+                      }}
+                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-sans text-text-primary-dark hover:bg-bg-sidebar transition-all select-none flex items-center gap-2"
+                    >
+                      <Pin className="size-3.5" />
+                      {session.pinned ? "Unpin" : "Pin"}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -604,6 +624,7 @@ function SidebarContent({
   onSelectChat,
   onDeleteChat,
   onRenameChat,
+  onTogglePin,
   onClose,
   isCollapsed,
   onToggleCollapse,
@@ -615,6 +636,7 @@ function SidebarContent({
   onSelectChat: (id: string) => void;
   onDeleteChat: (id: string) => void;
   onRenameChat?: (id: string, title: string) => void;
+  onTogglePin?: (id: string, pinned: boolean) => void;
   onClose: () => void;
   isCollapsed: boolean;
   onToggleCollapse?: () => void;
@@ -732,7 +754,14 @@ function SidebarContent({
     router.push("/login");
   };
 
-  const filteredHistory = chatHistory.filter((session) =>
+  const sortedHistory = [...chatHistory].sort((a, b) => {
+    if (a.pinned === b.pinned) {
+      return b.createdAt - a.createdAt
+    }
+    return a.pinned ? -1 : 1
+  })
+
+  const filteredHistory = sortedHistory.filter((session) =>
     session.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -840,6 +869,7 @@ function SidebarContent({
                   onSelect={(id) => { onSelectChat(id); onClose(); }}
                   onDelete={onDeleteChat}
                   onRename={onRenameChat}
+                  onTogglePin={onTogglePin}
                 />
               ))
             )}
@@ -1212,6 +1242,7 @@ interface SidebarProps {
   onSelectChat: (id: string) => void;
   onDeleteChat: (id: string) => void;
   onRenameChat?: (id: string, title: string) => void;
+  onTogglePin?: (id: string, pinned: boolean) => void;
   isOpen: boolean;
   onClose: () => void;
   onNewTemporaryChat?: () => void;
@@ -1225,6 +1256,7 @@ export function Sidebar({
   onSelectChat,
   onDeleteChat,
   onRenameChat,
+  onTogglePin,
   isOpen,
   onClose,
   onNewTemporaryChat,
@@ -1244,7 +1276,7 @@ export function Sidebar({
     };
   }, [isOpen]);
 
-  const contentProps = { chatHistory, activeChatId, onNewChat, onSelectChat, onDeleteChat, onRenameChat, onClose, onNewTemporaryChat, isGuest };
+  const contentProps = { chatHistory, activeChatId, onNewChat, onSelectChat, onDeleteChat, onRenameChat, onTogglePin, onClose, onNewTemporaryChat, isGuest };
 
   return (
     <>

@@ -97,6 +97,9 @@ export function ProductCarousel({ products, onAddToCartToggle, onBuyCallback }: 
         <ChevronLeft className="size-5" />
       </button>
 
+      <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-bg-main to-transparent z-[5] pointer-events-none opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300" />
+      <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-bg-main to-transparent z-[5] pointer-events-none opacity-0 group-hover/carousel:opacity-100 transition-opacity duration-300" />
+
       {/* Scroll Container */}
       <div
         ref={scrollContainerRef}
@@ -107,20 +110,22 @@ export function ProductCarousel({ products, onAddToCartToggle, onBuyCallback }: 
         onMouseMove={handleMouseMove}
         onClickCapture={handleClickCapture}
         className="
-          flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory 
+          flex gap-4 overflow-x-auto snap-x snap-mandatory 
           scrollbar-none select-none cursor-grab active:cursor-grabbing
-          py-2 px-1
+          py-4 px-2 -mx-2 relative z-0
         "
         style={{
           // Hide scrollbar cross-browser
           scrollbarWidth: "none",
           msOverflowStyle: "none",
+          scrollPaddingLeft: "0.5rem",
+          scrollPaddingRight: "0.5rem",
         }}
       >
         {products.map((product) => (
           <div
             key={product.id}
-            className="snap-start shrink-0 w-[200px] sm:w-[220px] md:w-[250px]"
+            className="snap-start shrink-0 w-[240px] sm:w-[260px] md:w-[280px]"
           >
             <ProductCard product={product} onAddToCartToggle={onAddToCartToggle} onBuyCallback={onBuyCallback} />
           </div>

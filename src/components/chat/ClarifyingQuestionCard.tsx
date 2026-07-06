@@ -65,7 +65,7 @@ export function ClarifyingQuestionCard({
   };
 
   return (
-    <div className="w-full h-auto max-h-none max-w-lg box-border bg-[#0C2823]/80 border border-white/10 rounded-3xl p-4 sm:p-5 flex flex-col gap-4 shadow-[0_8px_30px_rgba(245,158,11,0.15)] backdrop-blur-xl my-2 overflow-hidden scrollbar-none">
+    <div className="w-full h-auto max-h-none max-w-lg box-border bg-bg-input border border-border-light rounded-3xl p-4 sm:p-5 flex flex-col gap-4 shadow-md backdrop-blur-xl my-2 overflow-hidden scrollbar-none">
       {/* Question Header */}
       <div className="flex justify-between items-center pb-1">
         <h4 className="text-[14px] sm:text-[15px] font-sans font-semibold text-text-primary-light leading-snug">
@@ -82,11 +82,11 @@ export function ClarifyingQuestionCard({
             disabled={isInteractionDisabled}
             onClick={() => handleOptionClick(opt.label)}
             className={`
-              inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.08]
-              transition-all duration-200 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-marigold focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C2823]
+              inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-bg-sidebar border border-border-light
+              transition-all duration-200 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-sidebar
               ${isInteractionDisabled 
                 ? "opacity-50 cursor-not-allowed" 
-                : "cursor-pointer hover:bg-white/[0.08] hover:border-marigold/40 hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0"}
+                : "cursor-pointer hover:bg-bg-sidebar/80 hover:border-brand-accent/40 hover:-translate-y-0.5 active:scale-[0.98] active:translate-y-0"}
             `}
           >
             <span className="text-xs sm:text-sm font-sans font-medium text-text-primary-light">
@@ -97,7 +97,7 @@ export function ClarifyingQuestionCard({
       </div>
 
       {/* Action Row */}
-      <div className="flex justify-between items-center mt-1 border-t border-white/5 pt-3">
+      <div className="flex justify-between items-center mt-1 border-t border-border-light pt-3">
         {allowCustom && (
           <button
             type="button"
@@ -105,16 +105,16 @@ export function ClarifyingQuestionCard({
             onClick={() => setShowCustomInput((prev) => !prev)}
             className={`
               flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-sans font-medium
-              bg-white/[0.02] border border-white/[0.06] transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-marigold
+              bg-bg-sidebar/50 border border-border-light transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent
               ${showCustomInput 
-                ? "text-marigold border-marigold/40 bg-marigold/5" 
-                : "text-text-secondary"}
+                ? "text-brand-accent border-brand-accent/40 bg-brand-accent/5" 
+                : "text-text-primary-light/80"}
               ${isInteractionDisabled 
                 ? "opacity-50 cursor-not-allowed" 
-                : "cursor-pointer hover:bg-white/[0.06] hover:border-marigold/30"}
+                : "cursor-pointer hover:bg-bg-sidebar hover:text-text-primary-light hover:border-brand-accent/30"}
             `}
           >
-            <Pencil className="size-3 text-marigold" /> Something else
+            <Pencil className="size-3 text-brand-accent" /> Something else
           </button>
         )}
 
@@ -124,11 +124,11 @@ export function ClarifyingQuestionCard({
             disabled={isInteractionDisabled}
             onClick={handleSkip}
             className={`
-              px-3 py-1.5 rounded-full text-xs sm:text-sm font-sans font-medium text-text-dim-ondark
-              bg-transparent border border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-marigold
+              px-3 py-1.5 rounded-full text-xs sm:text-sm font-sans font-medium text-text-secondary
+              bg-transparent border border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent
               ${isInteractionDisabled 
                 ? "opacity-40 cursor-not-allowed" 
-                : "cursor-pointer hover:bg-white/[0.04] hover:text-text-primary-light"}
+                : "cursor-pointer hover:bg-bg-sidebar/50 hover:text-text-primary-light"}
             `}
           >
             Skip
@@ -145,7 +145,7 @@ export function ClarifyingQuestionCard({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
             onSubmit={handleCustomSubmit}
-            className="w-full flex gap-2 pt-2 border-t border-white/5 overflow-hidden box-border"
+            className="w-full flex gap-2 pt-2 border-t border-border-light overflow-hidden box-border"
           >
             <input
               type="text"
@@ -153,12 +153,12 @@ export function ClarifyingQuestionCard({
               onChange={(e) => setCustomText(e.target.value)}
               placeholder="Type your response..."
               disabled={isInteractionDisabled}
-              className="flex-1 min-w-0 bg-white/[0.04] border border-white/10 rounded-full px-4 py-2 text-xs sm:text-sm outline-none focus:border-marigold/50 focus-visible:ring-2 focus-visible:ring-marigold transition-all font-sans text-text-primary-light"
+              className="flex-1 min-w-0 bg-bg-main border border-border-light rounded-full px-4 py-2 text-xs sm:text-sm outline-none focus:border-brand-accent/50 focus-visible:ring-2 focus-visible:ring-brand-accent transition-all font-sans text-text-primary-light"
             />
             <button
               type="submit"
               disabled={isInteractionDisabled || !customText.trim()}
-              className="size-9 sm:size-10 shrink-0 rounded-full bg-marigold text-ink-deeper hover:bg-marigold/90 disabled:opacity-40 transition-colors cursor-pointer flex items-center justify-center animate-in fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C2823]"
+              className="size-9 sm:size-10 shrink-0 rounded-full bg-brand-accent text-primary-foreground hover:bg-brand-accent/90 disabled:opacity-40 transition-colors cursor-pointer flex items-center justify-center animate-in fade-in focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-sidebar"
             >
               <ArrowRight className="size-4" />
             </button>

@@ -9,8 +9,8 @@ import { CheckoutFlow, CheckoutItem } from "../checkout/CheckoutFlow";
 
 interface SwipeableProductCardProps {
   product: QuickBuyProduct;
-  onSwipeLeft: (id: string) => void;
-  onSwipeRight: (id: string) => void;
+  onSwipeLeft: (product: QuickBuyProduct) => void;
+  onSwipeRight: (product: QuickBuyProduct) => void;
   onBuy?: (product: QuickBuyProduct) => void;
   isTop: boolean;
   index: number;
@@ -76,29 +76,37 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
     const velocity = info.velocity.x;
     const swipeThreshold = 100;
 
-    if (offset > swipeThreshold || velocity > 500) {
-      await controls.start({ x: 500, rotateZ: 15, rotateY: -30, opacity: 0, transition: { duration: 0.3 } });
-      playAccept();
-      onSwipeRight(product.id);
-    } else if (offset < -swipeThreshold || velocity < -500) {
-      await controls.start({ x: -500, rotateZ: -15, rotateY: 30, opacity: 0, transition: { duration: 0.3 } });
-      playReject();
-      onSwipeLeft(product.id);
-    } else {
-      // Snap back
-      controls.start({ x: 0, rotateZ: 0, rotateY: 0, transition: { type: "spring", stiffness: 300, damping: 20 } });
+    try {
+      if (offset > swipeThreshold || velocity > 500) {
+        await controls.start({ x: 500, rotateZ: 15, rotateY: -30, opacity: 0, transition: { duration: 0.3 } });
+        playAccept();
+        onSwipeRight(product);
+      } else if (offset < -swipeThreshold || velocity < -500) {
+        await controls.start({ x: -500, rotateZ: -15, rotateY: 30, opacity: 0, transition: { duration: 0.3 } });
+        playReject();
+        onSwipeLeft(product);
+      } else {
+        // Snap back
+        controls.start({ x: 0, rotateZ: 0, rotateY: 0, transition: { type: "spring", stiffness: 300, damping: 20 } });
+      }
+    } catch (error) {
+      // Ignore unmounted component animation errors
     }
   };
 
   const manualSwipe = async (direction: "left" | "right") => {
-    if (direction === "right") {
-      await controls.start({ x: 500, rotateZ: 15, rotateY: -30, opacity: 0, transition: { duration: 0.3 } });
-      playAccept();
-      onSwipeRight(product.id);
-    } else {
-      await controls.start({ x: -500, rotateZ: -15, rotateY: 30, opacity: 0, transition: { duration: 0.3 } });
-      playReject();
-      onSwipeLeft(product.id);
+    try {
+      if (direction === "right") {
+        await controls.start({ x: 500, rotateZ: 15, rotateY: -30, opacity: 0, transition: { duration: 0.3 } });
+        playAccept();
+        onSwipeRight(product);
+      } else {
+        await controls.start({ x: -500, rotateZ: -15, rotateY: 30, opacity: 0, transition: { duration: 0.3 } });
+        playReject();
+        onSwipeLeft(product);
+      }
+    } catch (error) {
+      // Ignore unmounted component animation errors
     }
   };
 

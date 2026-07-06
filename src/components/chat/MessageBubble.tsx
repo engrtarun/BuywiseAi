@@ -111,7 +111,7 @@ const markdownComponents = {
   code: ({ inline, ...props }: MarkdownProps) =>
     inline ? (
       <code
-        className="bg-[#2f2f2f] text-brand-accent px-1.5 py-0.5 rounded font-mono text-[13px]"
+        className="bg-bg-sidebar text-brand-accent px-1.5 py-0.5 rounded font-mono text-[13px] border border-border-light"
         {...props}
       />
     ) : (
@@ -523,10 +523,10 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
               }}
               className="text-[14px] sm:text-[15px] leading-relaxed break-words font-sans w-full min-w-0 inline-block mb-3 animate-in fade-in duration-300"
             >
-              <div className="flex items-center gap-1.5 text-xs font-mono select-none uppercase tracking-wider font-semibold text-text-secondary mb-1">
-                <Brain className="size-3.5 text-marigold animate-pulse" /> Thought Process
+              <div className="flex items-center gap-1.5 text-xs font-mono select-none uppercase tracking-wider font-semibold opacity-90 mb-1">
+                <Brain className="size-3.5 text-brand-accent animate-pulse" /> Thought Process
               </div>
-              <p className="text-text-primary-light whitespace-pre-wrap leading-relaxed">
+              <p className="whitespace-pre-wrap leading-relaxed">
                 {questionnaireThought}
               </p>
             </div>
@@ -568,7 +568,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
             <div className="flex flex-col gap-4 w-full animate-in fade-in duration-300">
               {/* 1. Context 20% (The Hook/Intro) */}
               {exploreIntroText && (
-                <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-4 text-[14px] sm:text-[15px] leading-relaxed break-words font-sans text-zinc-200 shadow-xl backdrop-blur-md">
+                <div className="bg-bg-sidebar/90 border border-border-light rounded-2xl p-4 text-[14px] sm:text-[15px] leading-relaxed break-words font-sans text-text-primary-light shadow-sm backdrop-blur-md">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeRaw]}
@@ -581,19 +581,19 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
 
               {/* 2. Dynamic Product Shelf */}
               {loadingExplore && exploreProductsToShow.length === 0 ? (
-                <div className="flex items-center gap-2 text-xs text-zinc-400 select-none py-3 px-4 bg-zinc-950/80 border border-white/5 rounded-2xl w-fit animate-pulse">
-                  <div className="size-3.5 border-2 border-marigold/20 border-t-marigold rounded-full animate-spin shrink-0" />
+                <div className="flex items-center gap-2 text-xs text-text-secondary select-none py-3 px-4 bg-bg-sidebar/90 border border-border-light rounded-2xl w-fit animate-pulse">
+                  <div className="size-3.5 border-2 border-brand-accent/20 border-t-brand-accent rounded-full animate-spin shrink-0" />
                   <span className="font-sans">Finding products...</span>
                 </div>
               ) : (
-                <div className="ml-[-8px] sm:ml-[-12px] p-1 bg-zinc-950/40 rounded-2xl border border-white/5 shadow-inner">
+                <div className="ml-[-8px] sm:ml-[-12px] p-1 bg-bg-main/50 rounded-2xl border border-border-light shadow-inner">
                   <ProductCarousel products={exploreProductsToShow} onBuyCallback={onProductBuy} />
                 </div>
               )}
 
               {/* 3. Context 80% (The Deep Dive) */}
               {exploreDeepDiveTextToRender && (
-                <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-5 text-[14px] sm:text-[15px] leading-relaxed break-words font-sans text-zinc-300 shadow-xl backdrop-blur-md mt-1">
+                <div className="bg-bg-sidebar/90 border border-border-light rounded-2xl p-5 text-[14px] sm:text-[15px] leading-relaxed break-words font-sans text-text-primary-light shadow-sm backdrop-blur-md mt-1">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeRaw]}
@@ -612,7 +612,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
               <button
                 type="button"
                 onClick={() => onNewChat?.(message.suggestedMode)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-marigold/10 border border-marigold/20 text-marigold hover:bg-marigold/20 transition-all font-semibold text-xs sm:text-sm cursor-pointer shadow-sm active:scale-[0.98]"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-accent/10 border border-brand-accent/20 text-brand-accent hover:bg-brand-accent/20 transition-all font-semibold text-xs sm:text-sm cursor-pointer shadow-sm active:scale-[0.98]"
               >
                 Start fresh chat in {message.suggestedMode === "deep_research" ? "Deep Research 🔬" : "Explore Mode 🧭"}
               </button>
