@@ -76,15 +76,9 @@ export async function enforceChatAccess(
     } = await supabase.auth.getUser();
 
     if (error || !user?.id) {
-      console.warn("[enforceChatAccess] No valid Supabase session found.");
+      console.warn("[enforceChatAccess] No valid Supabase session found. Allowing as Guest.");
       return {
-        response: NextResponse.json(
-          {
-            error: "Unauthorized",
-            message: "Please log in to continue.",
-          },
-          { status: 401 }
-        ),
+        response: null,
         isGuest: true,
       };
     }
