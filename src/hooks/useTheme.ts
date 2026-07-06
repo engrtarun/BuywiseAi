@@ -14,7 +14,7 @@ interface ThemeContextType {
   mode: string;
   setMode: (mode: string) => Promise<void>;
   customSeedColor: string;
-  setCustomSeedColor: (color: string) => void;
+  setCustomSeedColor: (color: string) => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -112,13 +112,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("theme_preference, mode_preference")
+          .select("theme_preference, mode_preference, custom_seed_color")
           .eq("id", user.id)
           .maybeSingle();
 
         if (profile) {
           let updatedTheme = savedTheme;
           let updatedMode = savedMode;
+          let updatedSeed = savedSeed;
           let needsUpdateLocal = false;
 
           if (profile.theme_preference && profile.theme_preference !== savedTheme) {
@@ -129,13 +130,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
             updatedMode = profile.mode_preference;
             needsUpdateLocal = true;
           }
+          if (profile.custom_seed_color && profile.custom_seed_color !== savedSeed) {
+            updatedSeed = profile.custom_seed_color;
+            needsUpdateLocal = true;
+          }
 
           if (needsUpdateLocal) {
             setThemeState(updatedTheme);
             setModeState(updatedMode);
-            applyThemeAndMode(updatedTheme, updatedMode);
+            setCustomSeedColorState(updatedSeed);
+            applyThemeAndMode(updatedTheme, updatedMode, updatedSeed);
             localStorage.setItem("buywise-theme", updatedTheme);
             localStorage.setItem("buywise-mode", updatedMode);
+            localStorage.setItem("buywise_custom_seed_color", updatedSeed);
           }
         }
       } catch (err) {
@@ -146,11 +153,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
     syncWithProfile();
   }, []);
 
-  const setCustomSeedColor = (newColor: string) => {
+  const setCustomSeedColor = async (newColor: string) => {
     setCustomSeedColorState(newColor);
     localStorage.setItem("buywise_custom_seed_color", newColor);
     if (theme === "custom") {
       applyThemeAndMode("custom", mode, newColor);
+    }
+
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("profiles").update({ custom_seed_color: newColor }).eq("id", user.id);
+      }
+    } catch (err) {
+      console.error("Failed to save custom color preference:", err);
     }
   };
 
@@ -202,7 +219,7 @@ export function useTheme() {
       mode: "light",
       setMode: async () => {},
       customSeedColor: "#FC8019",
-      setCustomSeedColor: () => {},
+      setCustomSeedColor: async () => {},
     };
   }
   return context;
