@@ -64,8 +64,8 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
 
   const parsedJson = parseJSONSafe(rawContent);
   if (parsedJson && typeof parsedJson === "object") {
-    if (parsedJson.user_fingerprint) {
-      aiMsg.userFingerprint = parsedJson.user_fingerprint;
+    if (parsedJson.fingerprint) {
+      aiMsg.fingerprint = parsedJson.fingerprint;
     }
     
     if (parsedJson.ui_type === "clarifying_question" || parsedJson.ui_type === "questionnaire" || parsedJson.type === "clarifying_question") {
@@ -761,6 +761,18 @@ export default function Page() {
             const questionText = lastMsg.clarifyingQuestion.question;
             currentReqs = { ...currentReqs, [questionText]: content };
             updateSessionRequirements(activeChatId, currentReqs).catch(e => console.error("Failed to update requirements", e));
+          }
+          
+          // Extract the latest linguistic fingerprint from history to pass into currentReqs
+          let latestFingerprint = undefined;
+          for (let i = history.length - 1; i >= 0; i--) {
+            if (history[i].fingerprint) {
+              latestFingerprint = history[i].fingerprint;
+              break;
+            }
+          }
+          if (latestFingerprint) {
+            currentReqs = { ...currentReqs, fingerprint: latestFingerprint };
           }
 
           setChatSessions((prev) =>
