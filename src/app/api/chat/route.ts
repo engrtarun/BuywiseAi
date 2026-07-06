@@ -43,88 +43,66 @@ const EXPLORE_SYSTEM_PROMPT = `You are BuyWise AI, a smart shopping assistant fo
 The user is in Explore Mode — a lightweight, visual, browse-first experience.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CONVERSATION FLOW — follow this for ANY product purchase request:
+CONVERSATION FLOW — follow this exact sequence:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. QUALIFY PURPOSE FIRST, BUDGET SECOND.
-   If the user says they need a product but hasn't stated WHY, ask ONE short,
-   natural question about their primary use case before asking about budget.
-   Examples by category:
-   - Laptop   → "What will you mainly use it for — coding/dev, studies, video editing, gaming, or general use?"
-   - Phone    → "What matters most to you — camera, gaming, battery life, or an all-rounder?"
-   - Headphones → "Are these mainly for calls/work, music, workouts, or gaming?"
-   - TV/Monitor → "Mainly for movies/streaming, gaming, or work?"
-   - Gift     → "Who's it for, and what are they into?"
-   Keep it conversational — one question, not a list of forms.
+1. QUALIFY PURPOSE FIRST.
+   If the user has not stated their use case, ask ONE short question using a clarifying_question payload.
 
-2. ONLY AFTER knowing their purpose, ask about budget.
-   Skip this step if they already stated a budget or say "you decide".
+2. ASK BUDGET SECOND.
+   Only after you understand their purpose, ask about budget using a clarifying_question payload. Skip if they already stated it.
 
-3. PRESENT 2-3 TOP OPTIONS WITHIN BUDGET.
-   Each option must include a one-line reason connecting it to the stated purpose.
-   Never recommend something irrelevant to their use case.
+3. SEARCH INTENT (IN-BUDGET).
+   Once BOTH purpose and budget are known, DO NOT output product options directly. Instead, output a search_intent payload so our backend can search real products.
 
-4. OFFER EXACTLY ONE STRETCH OPTION.
-   After the in-budget options, offer one product that is ~10-15% above budget
-   (or ₹2,000-15,000 more, depending on price range).
-   Frame it as "worth mentioning" or "if you're open to spending a bit more".
-   Give a clear one-sentence reason WHY it's worth the extra.
-   Always reassure them the in-budget options are solid too.
-   NEVER repeat the upsell if the user declines or ignores it.
+4. PRESENT PRODUCT OPTIONS.
+   After we provide you with real product listings, output an explore_carousel payload with 2-3 in-budget options.
 
-5. SKIP THE STRETCH OFFER if the user explicitly asks for "cheapest"
-   or signals strong price sensitivity. Respect that signal.
+5. FOLLOW-UP WITH STRETCH BUDGET QUESTION.
+   IMMEDIATELY AFTER outputting the explore_carousel, you MUST output a clarifying_question payload asking: "Want me to check options about 10% above your budget too?" with options "Yes, show me" and "No, these are fine."
 
-6. IF THE USER PROVIDES BOTH PURPOSE AND BUDGET IN THE SAME MESSAGE,
-   skip straight to presenting options — do not re-ask what they've already told you.
-
-7. ONCE THE USER PICKS AN OPTION, confirm clearly and guide toward checkout.
-   Do not re-litigate or re-present other options after they have decided.
-
-8. IF THE USER REJECTS ALL OPTIONS, ask what specifically is missing
-   (brand, colour, a spec) rather than showing more of the same list.
-
-9. IF THE USER SKIPS GIVING A BUDGET ("whatever's good, you decide"),
-   present 3 tiers: budget-friendly, mid-range, and premium — with prices shown.
+6. HANDLE STRETCH BUDGET RESPONSE.
+   - If they say "Yes, show me" or similar: Output a search_intent payload with the budget increased by 10%.
+   - If they say "No, these are fine." or similar: Output a text_response with a short closing message ("Got it! Let me know if you'd like to buy one of these.").
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-JSON RESPONSE FORMAT (all responses must be valid JSON):
+JSON RESPONSE FORMATS (all responses must be valid JSON):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-When you are ASKING A QUALIFYING QUESTION (purpose or budget) or having a
-conversational exchange (not yet presenting product options), return:
+When asking a question (purpose, budget, or the yes/no stretch question):
 {
-  "ui_type": "text_response",
-  "text": "Your conversational question or reply here."
+  "ui_type": "clarifying_question",
+  "thought": "Short reflection...",
+  "question": "Your question here...",
+  "options": [
+    { "id": "1", "label": "Option A", "value": "A" }
+  ],
+  "allow_skip": true
 }
 
-When you are PRESENTING PRODUCT OPTIONS (after purpose and budget are known),
-return the explore_carousel format. If you are also including a stretch-offer
-product, include it in the products array AFTER the in-budget options and add a
-"stretch": true flag on that product object, plus a "stretch_note" field at the
-top level with the framing sentence:
+When you have both purpose and budget and are ready to search (or expanding budget):
+{
+  "ui_type": "search_intent",
+  "query": "laptop for coding under 60000"
+}
+
+When presenting product options (after we inject real listings):
 {
   "ui_type": "explore_carousel",
-  "headline": "Based on [purpose], here are the top picks under [budget]:",
+  "headline": "Here are the top picks...",
   "products": [
-    { "id": "1", "name": "Product A", "price": "₹58,999", "rating": 4.5, "image": "/placeholder.png", "reason": "16GB RAM is ideal for running multiple dev environments.", "stretch": false },
-    { "id": "2", "name": "Product B", "price": "₹54,499", "rating": 4.3, "image": "/placeholder.png", "reason": "Best balance of CPU performance and battery life for students.", "stretch": false },
-    { "id": "3", "name": "Product C (Stretch)", "price": "₹67,500", "rating": 4.7, "image": "/placeholder.png", "reason": "RTX 3050 makes a real difference for gaming and will last longer.", "stretch": true }
+    { "id": "1", "name": "...", "price": "₹...", "rating": 4.5, "image": "...", "reason": "...", "stretch": false }
   ],
-  "stretch_note": "One more worth mentioning — it's about ₹8,000 over budget, but the dedicated RTX GPU is genuinely better for gaming long-term. Totally your call — the in-budget options above are solid too.",
-  "deep_dive": "### Why these picks?\\nMarkdown-formatted reasoning for the selections."
+  "deep_dive": "### Why these picks?\\n..."
 }
 
-If there is no stretch offer relevant, omit stretch_note and set stretch: false on all products.
-
-For GENERAL/NON-PRODUCT questions:
+For general text replies:
 {
   "ui_type": "text_response",
-  "text": "Your helpful response here using markdown."
+  "text": "..."
 }
 
-Return ONLY the raw JSON in ALL cases. Never wrap in markdown code blocks.
-Construct product objects with realistic Indian market names, prices in ₹, and accurate specs relevant to the stated use case.`;
+Return ONLY the raw JSON string. Do not wrap in markdown code blocks.`;
 
 const DEEP_RESEARCH_SYSTEM_PROMPT = `You are BuyWise AI, a smart shopping assistant for the Indian market.
 The user is in Deep Research Mode — an interactive, guided, multi-turn flow.
@@ -194,7 +172,7 @@ export function validateModeJSONPayload(rawText: string, expectedMode: 'explore'
     const cleanedText = rawText.replace(/```json|```/gi, "").trim();
     const parsedData = JSON.parse(cleanedText);
     if (expectedMode === 'explore') {
-      return (parsedData.ui_type === 'explore_carousel' && Array.isArray(parsedData.products)) || parsedData.ui_type === 'text_response';
+      return (parsedData.ui_type === 'explore_carousel' && Array.isArray(parsedData.products)) || parsedData.ui_type === 'text_response' || parsedData.ui_type === 'clarifying_question' || parsedData.ui_type === 'search_intent';
     } else {
       return parsedData.ui_type === 'clarifying_question' || parsedData.ui_type === 'results';
     }
@@ -205,6 +183,7 @@ export function validateModeJSONPayload(rawText: string, expectedMode: 'explore'
 
 export async function POST(req: NextRequest) {
   let userMessage = "";
+  let userHistory: ChatHistoryMessage[] = [];
 
   try {
     let body: unknown;
@@ -235,6 +214,7 @@ export async function POST(req: NextRequest) {
 
     const { history = [], message, mode = "explore", requirements = {} } = body;
     userMessage = message;
+    userHistory = history;
 
     const access = await enforceChatAccess(req);
     if (access.response) {
@@ -252,28 +232,49 @@ export async function POST(req: NextRequest) {
       };
     });
 
+    if (mode === "buy_explanation") {
+      try {
+        let product = JSON.parse(userMessage);
+        const explanationPrompt = `The user selected the product "${product.name}" priced at ${product.price}. Their stated need was their previous conversation context. Write a short, genuine 2-3 sentence explanation of why this specific product is a good fit for their stated need, referencing whatever real specs/features are available from the product title/description. Be honest — if the product isn't a perfect fit, say so briefly rather than oversell it. Output your response as a valid JSON object in this format: { "ui_type": "text_response", "text": "Your explanation here" }`;
+        
+        const model = genAI.getGenerativeModel({
+          model: "gemini-2.5-flash",
+        });
+        const chat = model.startChat({
+          history: formattedHistory,
+          generationConfig: {
+            maxOutputTokens: 500,
+            responseMimeType: "application/json",
+          },
+        });
+        
+        const result = await chat.sendMessage(explanationPrompt);
+        const text = (await result.response).text();
+        
+        // Simple check
+        const parsedData = JSON.parse(text.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
+        if (parsedData && parsedData.ui_type === "text_response") {
+           return NextResponse.json({ text: [text], products: null });
+        } else {
+           throw new Error("Invalid format from Gemini");
+        }
+      } catch (e) {
+        console.error("Failed to generate buy explanation:", e);
+        let product: any = { name: "this product" };
+        try { product = JSON.parse(userMessage); } catch {}
+        const fallback = JSON.stringify({
+          ui_type: "text_response",
+          text: `Great choice! ${product.name} is a solid pick within your budget.`
+        });
+        return NextResponse.json({ text: [fallback], products: null });
+      }
+    }
+
     const isDeepResearch = mode === "deep_research" || mode === "deep-research";
     let systemInstruction = isDeepResearch ? DEEP_RESEARCH_SYSTEM_PROMPT : EXPLORE_SYSTEM_PROMPT;
     
     if (isDeepResearch && Object.keys(requirements).length > 0) {
       systemInstruction += `\n\nUser's accumulated requirements so far: ${JSON.stringify(requirements)}`;
-    }
-
-    // Detect if the query is a product shopping query using a simple heuristic
-    const shoppingKeywords = /\b(buy|price|under|budget|rs|₹|laptop|phone|smartphone|headphone|earbud|shoe|sneaker|jacket|watch|tv|monitor|gift)\b/i;
-    const isShoppingQuery = shoppingKeywords.test(userMessage);
-
-    let serperProducts: any[] = [];
-    if (isShoppingQuery) {
-      try {
-        serperProducts = await searchProducts(userMessage, 5);
-      } catch (err) {
-        console.error("[chat route] Failed to search products:", err);
-      }
-    }
-
-    if (serperProducts.length > 0) {
-      systemInstruction += `\n\nHere are real current product listings matching the user's request: ${JSON.stringify(serperProducts)}. Write a natural, helpful response recommending the best 1-3 options and briefly explain why, referencing their actual names and prices.`;
     }
 
     const model = genAI.getGenerativeModel({
@@ -289,45 +290,86 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const result = await chat.sendMessage(userMessage);
+    let result = await chat.sendMessage(userMessage);
     let text = (await result.response).text();
 
     let isValid = validateModeJSONPayload(text, isDeepResearch ? 'deep_research' : 'explore');
+    
+    // We will accumulate texts to return to the frontend.
+    let responseTexts: string[] = [text];
+    let serperProducts: any[] = [];
+
+    // Parse the initial response safely
+    let parsedData = null;
+    try {
+       parsedData = JSON.parse(text.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
+    } catch (e) {}
+
+    // If Gemini wants to search
+    if (parsedData && parsedData.ui_type === "search_intent" && !isDeepResearch) {
+       try {
+         serperProducts = await searchProducts(parsedData.query, 5);
+         const searchContextMessage = serperProducts.length > 0 
+           ? `Here are real current product listings for your search: ${JSON.stringify(serperProducts)}. Please output the explore_carousel JSON now with the best options.`
+           : `No products found for: ${parsedData.query}. Please output a text_response explaining that no products were found.`;
+         
+         const secondResult = await chat.sendMessage(searchContextMessage);
+         const carouselText = (await secondResult.response).text();
+         responseTexts = [carouselText]; // Replace the search_intent message with the actual carousel
+         isValid = validateModeJSONPayload(carouselText, 'explore');
+
+         let parsedCarousel = null;
+         try { parsedCarousel = JSON.parse(carouselText.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim()); } catch (e) {}
+         
+         // Immediately follow-up with stretch question if we just showed a carousel
+         if (parsedCarousel && parsedCarousel.ui_type === "explore_carousel") {
+            const stretchPrompt = `You just showed the products. Now output the clarifying_question JSON asking: "Want me to check options about 10% above your budget too?" with exactly two options: "Yes, show me" and "No, these are fine."`;
+            const thirdResult = await chat.sendMessage(stretchPrompt);
+            const stretchText = (await thirdResult.response).text();
+            responseTexts.push(stretchText); // Append the second message
+         }
+       } catch (err) {
+         console.error("[chat route] Failed to search products:", err);
+         responseTexts = [JSON.stringify({ ui_type: "text_response", text: getFallbackChatResponse(userMessage, userHistory) })];
+       }
+    }
+
     if (!isValid) {
       console.warn("AI generated invalid JSON payload. Retrying or falling back...");
       if (isDeepResearch) {
         try {
           const retryResult = await chat.sendMessage("Your last response was not valid JSON or was missing required fields. Please return strictly the JSON payload.");
           text = (await retryResult.response).text();
+          responseTexts = [text];
           isValid = validateModeJSONPayload(text, 'deep_research');
         } catch (e) {
           isValid = false;
         }
         if (!isValid) {
-          text = JSON.stringify({
+          responseTexts = [JSON.stringify({
             ui_type: "results",
             acknowledgement: "We had some trouble processing the details, but here are some safe recommendations.",
             primary_query: "Top rated products",
             backup_queries: []
-          });
+          })];
         }
       } else {
-        text = JSON.stringify({
+        responseTexts = [JSON.stringify({
           ui_type: "text_response",
-          text: getFallbackChatResponse(userMessage)
-        });
+          text: getFallbackChatResponse(userMessage, userHistory)
+        })];
       }
     }
 
     return NextResponse.json({ 
-      text,
+      text: responseTexts,
       products: serperProducts.length > 0 ? serperProducts : null
     });
   } catch (error: unknown) {
     logGeminiFailure(error);
 
     return NextResponse.json({
-      text: getFallbackChatResponse(userMessage),
+      text: getFallbackChatResponse(userMessage, userHistory),
       fallback: true,
       products: null
     });
@@ -342,7 +384,7 @@ interface ChatHistoryMessage {
 interface ChatRequestBody {
   message: string;
   history?: ChatHistoryMessage[];
-  mode?: "deep_research" | "deep-research" | "explore";
+  mode?: "deep_research" | "deep-research" | "explore" | "buy_explanation";
   requirements?: Record<string, unknown>;
 }
 

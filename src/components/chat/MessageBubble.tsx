@@ -165,9 +165,10 @@ interface MessageBubbleProps {
   onNewChat?: (mode?: ChatMode) => void;
   setInputText?: (text: string) => void;
   mode?: ChatMode | null;
+  onProductBuy?: (product: Product) => void;
 }
 
-export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, onFeedback, onSend, onNewChat, setInputText, mode }: MessageBubbleProps) {
+export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, onFeedback, onSend, onNewChat, setInputText, mode, onProductBuy }: MessageBubbleProps) {
   // Local states for custom Questionnaire Card
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customText, setCustomText] = useState("");
@@ -574,7 +575,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
                 </div>
               ) : (
                 <div className="ml-[-8px] sm:ml-[-12px] p-1 bg-zinc-950/40 rounded-2xl border border-white/5 shadow-inner">
-                  <ProductCarousel products={exploreProductsToShow} />
+                  <ProductCarousel products={exploreProductsToShow} onBuyCallback={onProductBuy} />
                 </div>
               )}
 
@@ -611,10 +612,10 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
             <div className={`${!message.content ? "ml-[-8px] sm:ml-[-12px]" : ""}`}>
               {isSingleProduct ? (
                 <div className="w-full sm:max-w-[80%] md:max-w-[70%]">
-                  <ProductCard product={message.products![0]} />
+                  <ProductCard product={message.products![0]} onBuyCallback={onProductBuy} />
                 </div>
               ) : (
-                <ProductCarousel products={message.products!} />
+                <ProductCarousel products={message.products!} onBuyCallback={onProductBuy} />
               )}
             </div>
           )}

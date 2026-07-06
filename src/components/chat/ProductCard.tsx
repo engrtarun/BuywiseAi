@@ -7,6 +7,7 @@ import { ProductBottomSheet } from "./ProductBottomSheet";
 interface ProductCardProps {
   product: Product;
   onAddToCartToggle?: (productId: string, inCart: boolean) => void;
+  onBuyCallback?: (product: Product) => void;
 }
 
 /**
@@ -29,7 +30,7 @@ function renderStars(rating: number) {
   return stars.join("");
 }
 
-export function ProductCard({ product, onAddToCartToggle }: ProductCardProps) {
+export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: ProductCardProps) {
   const isAmazon = product.platform === "Amazon";
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
@@ -203,6 +204,7 @@ export function ProductCard({ product, onAddToCartToggle }: ProductCardProps) {
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                if (onBuyCallback) onBuyCallback(product);
                 setIsCheckoutOpen(true);
               }}
               className="flex items-center justify-center h-8 px-3 rounded-lg bg-marigold hover:bg-marigold/95 transition-colors text-zinc-950 font-bold text-xs gap-1"
@@ -232,6 +234,7 @@ export function ProductCard({ product, onAddToCartToggle }: ProductCardProps) {
         product={product}
         onBuy={(prod) => {
           setIsBottomSheetOpen(false);
+          if (onBuyCallback) onBuyCallback(prod);
           setIsCheckoutOpen(true);
         }}
       />

@@ -360,32 +360,28 @@ export default function Page() {
         }
 
         const data = await response.json();
-        const aiMsgContent = data.text;
-
-        // Persist AI message to Supabase
-        const dbAiMsg = await apiSendMessage(chatId, "ai", aiMsgContent);
-
-        // Parse and restore rich layout client-side
-        const aiMsg = parseAiMessageContent(dbAiMsg.id, dbAiMsg.message);
-
-        // If the API returned real product results (Serper/FakeStore fallback), attach them
-        if (data.products && Array.isArray(data.products)) {
-          aiMsg.products = data.products.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            price: `₹${p.price.toLocaleString("en-IN")}`,
-            image: p.image,
-            platform: p.platform,
-            link: p.url,
-            rating: p.rating || 4.0,
-            reviewCount: "42",
-            description: "Product match"
-          }));
+        
+        const aiMsgContents = Array.isArray(data.text) ? data.text : [data.text];
+        const newMessages: Message[] = [];
+        
+        for (const aiMsgContent of aiMsgContents) {
+          // Persist AI message to Supabase
+          const dbAiMsg = await apiSendMessage(chatId, "ai", aiMsgContent);
+  
+          // Parse and restore rich layout client-side
+          const aiMsg = parseAiMessageContent(dbAiMsg.id, dbAiMsg.message);
+  
+          // If the API returned real product results (Serper/FakeStore fallback), attach them
+          if (data.products && Array.isArray(data.products) && aiMsg.ui_type === 'explore_carousel') {
+             // We attach products to the carousel message
+             // (Assuming we still pass data.products for legacy support, but new flow embeds them directly into Gemini's JSON)
+          }
+          newMessages.push(aiMsg);
         }
 
         setChatSessions((prev) =>
           prev.map((s) =>
-            s.id === chatId ? { ...s, messages: [...s.messages, aiMsg] } : s
+            s.id === chatId ? { ...s, messages: [...s.messages, ...newMessages] } : s
           )
         );
       } catch (error: unknown) {
@@ -414,6 +410,67 @@ export default function Page() {
   );
 
   /* ── Handlers ─────────────────────────────────────── */
+
+  const handleProductBuy = useCallback(
+    async (product: any) => {
+      if (!activeChatId) return;
+      const session = chatSessions.find((s) => s.id === activeChatId);
+      if (!session) return;
+      
+      setIsTyping(true);
+      try {
+        const payloadStr = JSON.stringify({
+          name: product.name,
+          price: product.price,
+          platform: product.platform,
+        });
+
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            history: session.messages, 
+            message: payloadStr, 
+            mode: "buy_explanation" 
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const aiMsgContents = Array.isArray(data.text) ? data.text : [data.text];
+          const newMessages: Message[] = [];
+          
+          for (const aiMsgContent of aiMsgContents) {
+            const dbAiMsg = await apiSendMessage(activeChatId, "ai", aiMsgContent);
+            const aiMsg = parseAiMessageContent(dbAiMsg.id, dbAiMsg.message);
+            newMessages.push(aiMsg);
+          }
+
+          setChatSessions((prev) =>
+            prev.map((s) =>
+              s.id === activeChatId ? { ...s, messages: [...s.messages, ...newMessages] } : s
+            )
+          );
+        } else {
+          // If error, inject a generic fallback directly
+          const fallbackText = `Great choice! ${product.name} is a solid pick within your budget.`;
+          const dbAiMsg = await apiSendMessage(activeChatId, "ai", JSON.stringify({ ui_type: "text_response", text: fallbackText }));
+          const aiMsg = parseAiMessageContent(dbAiMsg.id, dbAiMsg.message);
+          
+          setChatSessions((prev) =>
+            prev.map((s) =>
+              s.id === activeChatId ? { ...s, messages: [...s.messages, aiMsg] } : s
+            )
+          );
+        }
+      } catch (err) {
+        console.error("Failed to explain buy action:", err);
+      } finally {
+        setIsTyping(false);
+      }
+    },
+    [activeChatId, chatSessions]
+  );
 
   const handleNewChat = useCallback((mode?: ChatMode) => {
     setIsTyping(false);
@@ -792,6 +849,7 @@ export default function Page() {
           selectedMode={selectedMode}
           onModeChange={setSelectedMode}
           activeMode={activeMode}
+          onProductBuy={handleProductBuy}
         />
       </div>
     </div>

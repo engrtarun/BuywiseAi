@@ -8,9 +8,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 interface ProductCarouselProps {
   products: Product[];
   onAddToCartToggle?: (productId: string, inCart: boolean) => void;
+  onBuyCallback?: (product: Product) => void;
 }
 
-export function ProductCarousel({ products, onAddToCartToggle }: ProductCarouselProps) {
+export function ProductCarousel({ products, onAddToCartToggle, onBuyCallback }: ProductCarouselProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -121,7 +122,7 @@ export function ProductCarousel({ products, onAddToCartToggle }: ProductCarousel
             key={product.id}
             className="snap-start shrink-0 w-[200px] sm:w-[220px] md:w-[250px]"
           >
-            <ProductCard product={product} onAddToCartToggle={onAddToCartToggle} />
+            <ProductCard product={product} onAddToCartToggle={onAddToCartToggle} onBuyCallback={onBuyCallback} />
           </div>
         ))}
       </div>

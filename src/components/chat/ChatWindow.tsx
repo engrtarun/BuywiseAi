@@ -83,6 +83,7 @@ interface ChatWindowProps {
   selectedMode: ChatMode;
   onModeChange: (mode: ChatMode) => void;
   activeMode: ChatMode | null;
+  onProductBuy?: (product: any) => void;
 }
 
 export function ChatWindow({
@@ -110,6 +111,7 @@ export function ChatWindow({
   selectedMode,
   onModeChange,
   activeMode,
+  onProductBuy,
 }: ChatWindowProps) {
   const [showQuickBuy, setShowQuickBuy] = React.useState(false);
   const [showFoodQuickBuy, setShowFoodQuickBuy] = React.useState(false);
@@ -178,6 +180,7 @@ export function ChatWindow({
           onNewChat={onNewChat}
           setInputText={setInputText}
           mode={activeMode}
+          onProductBuy={onProductBuy}
         />
       )}
       <ChatInput

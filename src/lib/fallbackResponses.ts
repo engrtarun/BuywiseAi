@@ -113,14 +113,29 @@ If you share your budget and the product category, I can narrow this to a clear 
   },
 ];
 
-export function getFallbackChatResponse(message: string): string {
-  const normalizedMessage = message.toLowerCase();
+export function getFallbackChatResponse(message: string, history: { role?: string; content?: string }[] = []): string {
+  const messagesToCheck = [message];
+  
+  // Add last 3 messages from history (most recent first)
+  const recentHistory = [...history].reverse().slice(0, 3);
+  for (const msg of recentHistory) {
+    if (msg.content) {
+      messagesToCheck.push(msg.content);
+    }
+  }
 
-  const matchedResponse = fallbackResponses.find((response) =>
-    response.keywords.some((keyword) => normalizedMessage.includes(keyword))
-  );
+  for (const msg of messagesToCheck) {
+    const normalizedMessage = msg.toLowerCase();
+    const matchedResponse = fallbackResponses.find((response) =>
+      response.keywords.some((keyword) => normalizedMessage.includes(keyword))
+    );
+    
+    if (matchedResponse) {
+      return matchedResponse.text;
+    }
+  }
 
-  return matchedResponse?.text ?? fallbackResponses[fallbackResponses.length - 1].text;
+  return fallbackResponses[fallbackResponses.length - 1].text;
 }
 
 export { fallbackResponses };
