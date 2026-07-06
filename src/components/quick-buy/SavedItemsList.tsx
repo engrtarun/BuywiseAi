@@ -20,12 +20,12 @@ interface SavedItemsListProps {
   onMoveToCart?: (id: string) => void;
 }
 
-export function SavedItemsList({ 
-  items, 
+export function SavedItemsList({
+  items,
   savedForLaterItems = [],
-  itemQuantities, 
-  onBack, 
-  onRemove, 
+  itemQuantities,
+  onBack,
+  onRemove,
   onUpdateQuantity,
   onClearCart,
   onMoveToSavedForLater,
@@ -88,7 +88,7 @@ export function SavedItemsList({
 
   return (
     <div className="flex flex-col h-full w-full bg-bg-main relative z-50 animate-in slide-in-from-right-8 duration-300">
-      
+
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4 border-b border-border-light bg-bg-main/80 backdrop-blur-md sticky top-0 z-10">
         <div className="flex items-center gap-2">
@@ -102,7 +102,7 @@ export function SavedItemsList({
             My Cart ({totalItems})
           </h2>
         </div>
-        
+
         {/* View Toggle */}
         {items.length > 0 && (
           <div className="flex items-center gap-2">
@@ -141,7 +141,7 @@ export function SavedItemsList({
         <VirtualWardrobe items={items} />
       ) : (
         <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-40">
-          
+
           {/* EMPTY STATE */}
           {items.length === 0 && savedForLaterItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-text-secondary animate-in fade-in zoom-in duration-500">
@@ -161,12 +161,12 @@ export function SavedItemsList({
             </div>
           ) : (
             <div className="space-y-8">
-              
+
               {/* ACTIVE CART ITEMS */}
               {items.length > 0 && (
                 <div>
                   <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider mb-4">Active Items</h3>
-                  <motion.div 
+                  <motion.div
                     variants={containerVariants}
                     initial="hidden"
                     animate="show"
@@ -176,8 +176,8 @@ export function SavedItemsList({
                       {items.map((item, index) => {
                         const quantity = itemQuantities[item.id] || 1;
                         return (
-                          <motion.div 
-                            key={item.id} 
+                          <motion.div
+                            key={item.id}
                             variants={itemVariants}
                             layout
                             exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
@@ -187,7 +187,7 @@ export function SavedItemsList({
                             <div className="w-24 aspect-square rounded-xl overflow-hidden bg-white/5 mr-4 relative flex-shrink-0">
                               <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                             </div>
-                            
+
                             {/* Details */}
                             <div className="flex-1 flex flex-col py-1">
                               <div className="flex justify-between items-start gap-2">
@@ -205,10 +205,10 @@ export function SavedItemsList({
                               <div className="text-brand-accent font-black text-lg mt-1 tracking-tight">
                                 ₹{item.price.toLocaleString('en-IN')}
                               </div>
-                              
+
                               <div className="flex items-center justify-between mt-auto pt-3">
                                 {/* Quantity Control */}
-                                <div 
+                                <div
                                   className={`flex items-center bg-black/30 rounded-lg border border-white/10 p-0.5 ${showTour && tourStep === 0 && index === 0 ? "ring-2 ring-brand-accent shadow-[0_0_15px_rgba(255,176,103,0.5)] z-50 relative bg-bg-main" : ""}`}
                                 >
                                   <button onClick={() => quantity > 1 ? onUpdateQuantity(item.id, quantity - 1) : onRemove(item.id)} className="p-1.5 hover:bg-white/10 rounded-md transition-colors text-text-primary-light">
@@ -219,7 +219,7 @@ export function SavedItemsList({
                                     <Plus className="size-3" />
                                   </button>
                                 </div>
-                                
+
                                 {/* Save for Later */}
                                 {onMoveToSavedForLater && (
                                   <button
@@ -244,7 +244,7 @@ export function SavedItemsList({
               {savedForLaterItems.length > 0 && (
                 <div className="mt-8 pt-8 border-t border-border-light">
                   <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider mb-4">Saved for Later ({savedForLaterItems.length})</h3>
-                  <motion.div 
+                  <motion.div
                     variants={containerVariants}
                     initial="hidden"
                     animate="show"
@@ -252,8 +252,8 @@ export function SavedItemsList({
                   >
                     <AnimatePresence>
                       {savedForLaterItems.map((item) => (
-                        <motion.div 
-                          key={item.id} 
+                        <motion.div
+                          key={item.id}
                           variants={itemVariants}
                           layout
                           exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
@@ -322,7 +322,7 @@ export function SavedItemsList({
               </div>
             </div>
 
-            <button 
+            <button
               onClick={() => {
                 setIsCheckoutOpen(true);
                 if (showTour) endTour();
@@ -352,15 +352,15 @@ export function SavedItemsList({
       */}
       <AnimatePresence>
         {showTour && items.length > 0 && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="absolute inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-auto"
             onClick={advanceTour}
           >
             <div className="absolute top-6 right-6">
-              <button 
+              <button
                 onClick={(e) => { e.stopPropagation(); endTour(); }}
                 className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white text-sm font-bold backdrop-blur-md transition-colors flex items-center gap-2"
               >
@@ -369,7 +369,7 @@ export function SavedItemsList({
             </div>
 
             <div className="max-w-[300px] w-full bg-bg-input border border-border-light rounded-2xl p-6 shadow-2xl relative" onClick={e => e.stopPropagation()}>
-              
+
               {/* Tour Steps Content */}
               <AnimatePresence mode="wait">
                 {tourStep === 0 && (
@@ -408,7 +408,7 @@ export function SavedItemsList({
                     <div key={step} className={`h-1.5 rounded-full transition-all duration-300 ${tourStep === step ? "w-6 bg-brand-accent" : "w-2 bg-white/20"}`} />
                   ))}
                 </div>
-                <button 
+                <button
                   onClick={advanceTour}
                   className="px-5 py-2 bg-brand-accent text-bg-main font-bold rounded-xl active:scale-95 transition-transform"
                 >

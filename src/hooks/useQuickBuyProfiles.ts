@@ -152,53 +152,7 @@ export function useQuickBuyProfiles() {
           }
         }
 
-        // 3. Supabase Synchronization
-        if (user) {
-          const { data: dbProfilesRaw, error } = await supabase
-            .from("quickbuy_profiles")
-            .select("*")
-            .order("created_at", { ascending: true });
-
-          if (error) {
-            console.warn("Failed to load quickbuy profiles from Supabase:", error.message);
-          } else if (dbProfilesRaw && dbProfilesRaw.length > 0) {
-            // Supabase is the source of truth if rows exist
-            const mappedProfiles: QuickBuyProfile[] = dbProfilesRaw.map((row: any) => ({
-              id: row.id,
-              name: row.name,
-              avatarLabel: row.avatar_label,
-              sizes: row.sizes,
-              preferredCategories: row.preferred_categories,
-              maxBudget: row.max_budget,
-              isDefault: row.is_default,
-              createdAt: row.created_at
-            }));
-
-            localProfiles = mappedProfiles;
-            
-            // Reconcile active ID
-            if (!activeId || !mappedProfiles.some(p => p.id === activeId)) {
-              const defProfile = mappedProfiles.find(p => p.isDefault) || mappedProfiles[0];
-              activeId = defProfile ? defProfile.id : null;
-            }
-            saveToLocalStorage(localProfiles, activeId);
-          } else if (localProfiles.length > 0) {
-            // Local profiles exist, but remote has none -> Sync local to remote
-            for (const profile of localProfiles) {
-              await supabase.from("quickbuy_profiles").insert({
-                id: profile.id,
-                user_id: user.id,
-                name: profile.name,
-                avatar_label: profile.avatarLabel,
-                sizes: profile.sizes,
-                preferred_categories: profile.preferredCategories,
-                max_budget: profile.maxBudget,
-                is_default: profile.isDefault,
-                created_at: profile.createdAt
-              });
-            }
-          }
-        }
+        // Supabase Synchronization disabled for Ghost Mode
 
         if (isMounted) {
           setProfiles(localProfiles);
@@ -259,30 +213,7 @@ export function useQuickBuyProfiles() {
     setActiveProfile(newProfile);
     saveToLocalStorage(nextProfiles, newProfile.id);
 
-    // Sync to Supabase (fire-and-forget)
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        void supabase.from("quickbuy_profiles").insert({
-          id: newProfile.id,
-          user_id: user.id,
-          name: newProfile.name,
-          avatar_label: newProfile.avatarLabel,
-          sizes: newProfile.sizes,
-          preferred_categories: newProfile.preferredCategories,
-          max_budget: newProfile.maxBudget,
-          is_default: newProfile.isDefault,
-          created_at: newProfile.createdAt
-        }).then(({ error }: any) => {
-          if (error) {
-            console.error("Failed to sync created profile to Supabase:", error.message);
-          }
-        });
-      }
-    } catch (err) {
-      console.error("Error signing in or getting user for Supabase sync:", err);
-    }
+    // Sync to Supabase removed for ghost mode
   }, [profiles]);
 
   const switchProfile = useCallback((id: string) => {
@@ -322,30 +253,7 @@ export function useQuickBuyProfiles() {
     }
     saveToLocalStorage(nextProfiles, activeProfile?.id || null);
 
-    // Sync to Supabase (fire-and-forget)
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const updates: any = {};
-        if (input.name !== undefined) {
-          updates.name = input.name.trim();
-          updates.avatar_label = getAvatarLabel(updates.name);
-        }
-        if (input.sizes !== undefined) updates.sizes = input.sizes;
-        if (input.preferredCategories !== undefined) updates.preferred_categories = input.preferredCategories;
-        if (input.maxBudget !== undefined) updates.max_budget = input.maxBudget;
-        updates.updated_at = new Date().toISOString();
-
-        void supabase.from("quickbuy_profiles").update(updates).eq("id", id).then(({ error }: any) => {
-          if (error) {
-            console.error("Failed to sync updated profile to Supabase:", error.message);
-          }
-        });
-      }
-    } catch (err) {
-      console.error("Error syncing profile update:", err);
-    }
+    // Sync to Supabase removed for ghost mode
   }, [profiles, activeProfile]);
 
   const deleteProfile = useCallback(async (id: string) => {
@@ -373,20 +281,7 @@ export function useQuickBuyProfiles() {
 
     saveToLocalStorage(nextProfiles, nextActiveId);
 
-    // Sync to Supabase (fire-and-forget)
-    try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        void supabase.from("quickbuy_profiles").delete().eq("id", id).then(({ error }: any) => {
-          if (error) {
-            console.error("Failed to sync deleted profile from Supabase:", error.message);
-          }
-        });
-      }
-    } catch (err) {
-      console.error("Error syncing profile deletion:", err);
-    }
+    // Sync to Supabase removed for ghost mode
   }, [profiles, activeProfile]);
 
   return {

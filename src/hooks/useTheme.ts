@@ -66,6 +66,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
           --card: ${sidebarHsl};
           --dropdown-bg: ${sidebarHsl};
           --popover: ${sidebarHsl};
+
+          --border-light: ${hexToShadcnHsl(themeVars.border)};
+          --border: ${hexToShadcnHsl(themeVars.border)};
+          
+          --text-primary-light: ${hexToShadcnHsl(themeVars.textPrimary)};
+          --foreground: ${hexToShadcnHsl(themeVars.textPrimary)};
+          --sidebar-foreground: ${hexToShadcnHsl(themeVars.textPrimary)};
+          
+          --text-secondary: ${hexToShadcnHsl(themeVars.textSecondary)};
           
           --marigold: ${primaryHsl};
           --brand-accent: ${primaryHsl};

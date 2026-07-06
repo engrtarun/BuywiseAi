@@ -1,14 +1,28 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { VirtualWardrobe } from '@/components/quick-buy/VirtualWardrobe';
 import { FloatingChatBubble } from '@/components/shared/FloatingChatBubble';
 import { SoundMuteToggle } from '@/components/shared/SoundMuteToggle';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ShoppingBag, X } from 'lucide-react';
 import { mockQuickBuyProducts } from '@/lib/quickBuyMockData';
+import { useQuickBuy } from '@/hooks/useQuickBuy';
+import { SavedItemsList } from '@/components/quick-buy/SavedItemsList';
 
 export default function VirtualWardrobePage() {
   const router = useRouter();
+  const [showCart, setShowCart] = useState(false);
+  const {
+    savedProducts,
+    savedForLaterProducts,
+    itemQuantities,
+    removeSavedItem,
+    updateQuantity,
+    clearCart,
+    moveToSavedForLater,
+    moveToCart
+  } = useQuickBuy();
 
   return (
     <div className="min-h-screen bg-slate-950 relative">
@@ -21,11 +35,48 @@ export default function VirtualWardrobePage() {
           <ChevronLeft className="size-5" />
           <span className="font-bold text-sm">Back to Chat</span>
         </button>
-        <SoundMuteToggle showTooltip={false} />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowCart(!showCart)}
+            className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary-light hover:bg-white/5 px-2 py-1.5 rounded-lg transition-all relative"
+          >
+            {showCart ? (
+              <>
+                 <X className="size-5" />
+                 <span className="font-bold text-sm hidden sm:inline">Close Cart</span>
+              </>
+            ) : (
+              <>
+                 <ShoppingBag className="size-5" />
+                 <span className="font-bold text-sm hidden sm:inline">View Cart</span>
+                 {savedProducts.length > 0 && (
+                   <span className="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-brand-accent text-[9px] font-bold text-white shadow-sm border border-bg-main">
+                     {savedProducts.length}
+                   </span>
+                 )}
+              </>
+            )}
+          </button>
+          <SoundMuteToggle showTooltip={false} />
+        </div>
       </div>
 
-      <div className="pt-14 h-screen">
-        <VirtualWardrobe items={mockQuickBuyProducts} />
+      <div className="pt-14 h-[100dvh]">
+        {showCart ? (
+          <SavedItemsList 
+            items={savedProducts} 
+            savedForLaterItems={savedForLaterProducts}
+            itemQuantities={itemQuantities}
+            onBack={() => setShowCart(false)}
+            onRemove={removeSavedItem}
+            onUpdateQuantity={updateQuantity}
+            onClearCart={clearCart}
+            onMoveToSavedForLater={moveToSavedForLater}
+            onMoveToCart={moveToCart}
+          />
+        ) : (
+          <VirtualWardrobe items={mockQuickBuyProducts} />
+        )}
       </div>
 
       <FloatingChatBubble />

@@ -106,7 +106,7 @@ function ActionTooltip({ text, children }: { text: string; children: React.React
       {children}
       <div className="
         absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 rounded-md
-        bg-ink-deep border border-line-ondark text-text-ondark text-[11px] font-sans whitespace-nowrap
+        bg-foreground border border-border text-background text-[11px] font-sans whitespace-nowrap
         opacity-0 translate-y-1 pointer-events-none z-50
         group-hover/tip:opacity-100 group-hover/tip:translate-y-0
         transition-all duration-200 ease-out
@@ -157,8 +157,8 @@ export function MessageActions({ message, isLastAiMessage, onRegenerate, onFeedb
           onClick={() => handleFeedback("up")}
           className={`${btnBase} ${
             message.feedback === "up"
-              ? "text-marigold bg-marigold/10"
-              : "text-text-dim-ondark hover:text-text-ondark hover:bg-white/[0.06]"
+              ? "text-brand-accent bg-brand-accent/10"
+              : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
           }`}
           aria-label="Good response"
         >
@@ -172,8 +172,8 @@ export function MessageActions({ message, isLastAiMessage, onRegenerate, onFeedb
           onClick={() => handleFeedback("down")}
           className={`${btnBase} ${
             message.feedback === "down"
-              ? "text-chili bg-chili/10"
-              : "text-text-dim-ondark hover:text-text-ondark hover:bg-white/[0.06]"
+              ? "text-destructive bg-destructive/10"
+              : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
           }`}
           aria-label="Bad response"
         >
@@ -187,8 +187,8 @@ export function MessageActions({ message, isLastAiMessage, onRegenerate, onFeedb
           onClick={handleCopy}
           className={`${btnBase} ${
             isCopied
-              ? "text-marigold bg-marigold/10"
-              : "text-text-dim-ondark hover:text-text-ondark hover:bg-white/[0.06]"
+              ? "text-brand-accent bg-brand-accent/10"
+              : "text-muted-foreground hover:text-foreground hover:bg-foreground/10"
           }`}
           aria-label="Copy message"
         >
@@ -201,7 +201,7 @@ export function MessageActions({ message, isLastAiMessage, onRegenerate, onFeedb
         <ActionTooltip text="Regenerate response">
           <button
             onClick={onRegenerate}
-            className={`${btnBase} text-text-dim-ondark hover:text-text-ondark hover:bg-white/[0.06]`}
+            className={`${btnBase} text-muted-foreground hover:text-foreground hover:bg-foreground/10`}
             aria-label="Regenerate response"
           >
             <RegenerateIcon className="transition-transform duration-300 hover:rotate-[-180deg]" />
