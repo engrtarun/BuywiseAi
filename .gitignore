@@ -51,3 +51,9 @@ gemini_raw_error.txt
 *.log
 *_debug.txt
 *_error.txt
+
+# Debug log files
+gemini_raw_error.txt
+*.log
+*_debug.txt
+*_error.txt
