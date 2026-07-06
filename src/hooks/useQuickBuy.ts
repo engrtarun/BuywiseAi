@@ -77,10 +77,10 @@ export function useQuickBuy() {
   const [totalSpent, setTotalSpent] = useState<number>(0);
   const [isLocalInitializing, setIsLocalInitializing] = useState(true);
 
-  // Computed cart item count based on quantities
+  // Computed cart item count based on unique products
   const cartItemCount = useMemo(() => {
-    return savedItemIds.reduce((sum, id) => sum + (itemQuantities[id] || 1), 0);
-  }, [savedItemIds, itemQuantities]);
+    return savedItemIds.length;
+  }, [savedItemIds]);
 
   const isInitializing = isProfilesInitializing || isLocalInitializing;
 
