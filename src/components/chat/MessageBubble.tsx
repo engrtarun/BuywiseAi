@@ -245,24 +245,26 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
         }
       }
     } else {
-      if (mode === "deep_research" || mode === "explore") {
+      if ((mode === "deep_research" || mode === "explore") && !message.intakeQuestionnaire && !message.clarifyingQuestion && !message.deepResearchResults && !message.searchTag && (!message.products || message.products.length === 0)) {
          parseError = true;
       }
     }
   } catch (e) {
-    if (mode === "deep_research" || mode === "explore") {
+    if ((mode === "deep_research" || mode === "explore") && !message.intakeQuestionnaire && !message.clarifyingQuestion && !message.deepResearchResults && !message.searchTag && (!message.products || message.products.length === 0)) {
        parseError = true;
     }
   }
 
   // Fallback to parsed properties if raw JSON wasn't matched/parsed
-  if (!isQuestionnaire && message.clarifyingQuestion) {
+  if (!isQuestionnaire && (message.clarifyingQuestion || message.intakeQuestionnaire)) {
     isQuestionnaire = true;
-    questionnaireThought = message.clarifyingQuestion.acknowledgement || "";
-    questionnaireQuestion = message.clarifyingQuestion.question || "";
-    questionnaireOptions = message.clarifyingQuestion.options || [];
-    questionnaireAllowSkip = message.clarifyingQuestion.allow_skip !== false;
-    questionnaireAllowCustom = message.clarifyingQuestion.allow_custom !== false;
+    if (message.clarifyingQuestion) {
+      questionnaireThought = message.clarifyingQuestion.acknowledgement || "";
+      questionnaireQuestion = message.clarifyingQuestion.question || "";
+      questionnaireOptions = message.clarifyingQuestion.options || [];
+      questionnaireAllowSkip = message.clarifyingQuestion.allow_skip !== false;
+      questionnaireAllowCustom = message.clarifyingQuestion.allow_custom !== false;
+    }
   }
 
   if (!isExploreCarousel && message.products && message.products.length > 0 && !message.deepResearchResults && !message.searchTag) {
