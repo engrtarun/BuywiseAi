@@ -205,12 +205,19 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
     if (cleaned.startsWith("{") && cleaned.endsWith("}")) {
       const parsed = JSON.parse(cleaned);
       if (parsed && typeof parsed === "object") {
-        if (parsed.ui_type === "clarifying_question" || parsed.ui_type === "questionnaire") {
+        if (parsed.ui_type === "clarifying_question" || parsed.ui_type === "questionnaire" || parsed.ui_type === "intake_questionnaire") {
           isQuestionnaire = true;
           questionnaireThought = parsed.thought || "";
           
           if (Array.isArray(parsed.questions)) {
             questionnaireQuestions = parsed.questions;
+          } else if (Array.isArray(parsed.key_attributes)) {
+            // Map DEEP_RESEARCH intake_questionnaire format to expected questions array
+            questionnaireQuestions = parsed.key_attributes.map((attr: any) => ({
+              id: attr.name,
+              question: attr.question,
+              options: []
+            }));
           } else {
             questionnaireQuestion = parsed.question || "";
             questionnaireOptions = parsed.options || [];
