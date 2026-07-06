@@ -205,6 +205,9 @@ function generateTitle(firstMessage: string): string {
 
 const MAX_PINNED_SESSIONS = 5;
 
+import { MODES_CONFIG } from "@/config/modesConfig";
+import { LoginRequiredModal } from "@/components/auth/LoginRequiredModal";
+
 export default function Page() {
   const router = useRouter();
   // Chat sessions state
@@ -222,6 +225,7 @@ export default function Page() {
   const [isTemporaryChat, setIsTemporaryChat] = useState(false);
   const [showQuickBuy, setShowQuickBuy] = useState(false);
   const [showFoodQuickBuy, setShowFoodQuickBuy] = useState(false);
+  const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
 
   // Guest access hook
   const {
@@ -568,6 +572,11 @@ export default function Page() {
   }, []);
 
   const handleModeChangeRequest = useCallback((newMode: ChatMode) => {
+    if (isGuest && MODES_CONFIG[newMode]?.requiresAuth) {
+      setShowLoginRequiredModal(true);
+      return;
+    }
+
     const session = chatSessions.find((s) => s.id === activeChatId);
     const hasMessages = session && session.messages.length > 0;
     const currentMode = hasMessages ? (session.mode || "explore") : selectedMode;
@@ -577,7 +586,7 @@ export default function Page() {
     } else {
       setSelectedMode(newMode);
     }
-  }, [activeChatId, chatSessions, selectedMode]);
+  }, [activeChatId, chatSessions, selectedMode, isGuest]);
 
   const handleNewTemporaryChat = useCallback(() => {
     setShowQuickBuy(false);
@@ -984,12 +993,33 @@ export default function Page() {
           onProductBuy={handleProductBuy}
           showQuickBuy={showQuickBuy}
           showFoodQuickBuy={showFoodQuickBuy}
-          onOpenQuickBuy={() => setShowQuickBuy(true)}
+          onOpenQuickBuy={() => {
+            if (isGuest && MODES_CONFIG.quick_buy.requiresAuth) {
+              setShowLoginRequiredModal(true);
+              return;
+            }
+            setShowQuickBuy(true);
+          }}
           onCloseQuickBuy={() => setShowQuickBuy(false)}
-          onOpenFoodQuickBuy={() => setShowFoodQuickBuy(true)}
+          onOpenFoodQuickBuy={() => {
+            if (isGuest && MODES_CONFIG.food.requiresAuth) {
+              setShowLoginRequiredModal(true);
+              return;
+            }
+            setShowFoodQuickBuy(true);
+          }}
           onCloseFoodQuickBuy={() => setShowFoodQuickBuy(false)}
         />
       </div>
+
+      <LoginRequiredModal
+        isOpen={showLoginRequiredModal}
+        onClose={() => setShowLoginRequiredModal(false)}
+        onLoginClick={() => {
+          setShowLoginRequiredModal(false);
+          router.push("/login");
+        }}
+      />
 
       {/* Persistent Chat Mode Confirmation Dialog */}
       {pendingModeChange && (
