@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const isBrowser = typeof window !== "undefined";
@@ -23,6 +23,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
   const [theme, setThemeState] = useState<string>("default");
   const [mode, setModeState] = useState<string>("light");
   const [customSeedColor, setCustomSeedColorState] = useState<string>("#FC8019");
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   const applyThemeAndMode = (newTheme: string, newMode: string, newSeed?: string) => {
     const root = document.documentElement;
@@ -112,13 +113,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("theme_preference, mode_preference")
+          .select("theme_preference, mode_preference, custom_primary_hsl")
           .eq("id", user.id)
           .maybeSingle();
 
         if (profile) {
           let updatedTheme = savedTheme;
           let updatedMode = savedMode;
+          let updatedSeed = savedSeed;
           let needsUpdateLocal = false;
 
           if (profile.theme_preference && profile.theme_preference !== savedTheme) {
@@ -129,13 +131,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
             updatedMode = profile.mode_preference;
             needsUpdateLocal = true;
           }
+          if (profile.custom_primary_hsl && profile.custom_primary_hsl !== savedSeed) {
+            updatedSeed = profile.custom_primary_hsl;
+            needsUpdateLocal = true;
+          }
 
           if (needsUpdateLocal) {
             setThemeState(updatedTheme);
             setModeState(updatedMode);
-            applyThemeAndMode(updatedTheme, updatedMode);
+            setCustomSeedColorState(updatedSeed);
+            applyThemeAndMode(updatedTheme, updatedMode, updatedSeed);
             localStorage.setItem("buywise-theme", updatedTheme);
             localStorage.setItem("buywise-mode", updatedMode);
+            localStorage.setItem("buywise_custom_seed_color", updatedSeed);
           }
         }
       } catch (err) {
@@ -152,6 +160,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
     if (theme === "custom") {
       applyThemeAndMode("custom", mode, newColor);
     }
+
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    debounceTimer.current = setTimeout(async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from("profiles").update({ custom_primary_hsl: newColor }).eq("id", user.id);
+        }
+      } catch (err) {
+        console.error("Failed to save custom color preference:", err);
+      }
+    }, 500);
   };
 
   const setTheme = async (newTheme: string) => {

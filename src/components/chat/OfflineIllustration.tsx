@@ -89,7 +89,7 @@ export function OfflineIllustration({ className }: { className?: string }) {
 
                 /* Layer 1 — hemisphere shading (light top-left → dark bottom-right) */
                 background:
-                  "radial-gradient(ellipse 65% 55% at 35% 30%, #f0be5e 0%, #E8A33D 40%, #b06e14 85%, #7a4c0c 100%)",
+                  "radial-gradient(ellipse 65% 55% at 35% 30%, hsl(var(--primary) / 0.8) 0%, hsl(var(--primary)) 40%, hsl(var(--primary) / 0.6) 85%, hsl(var(--primary) / 0.4) 100%)",
 
                 /* Layer 2 — glossy specular highlight overlay */
                 backgroundClip: "padding-box",
@@ -98,7 +98,7 @@ export function OfflineIllustration({ className }: { className?: string }) {
 
                 /* Rim glow / ambient light bleed */
                 boxShadow:
-                  "0 0 18px 4px rgba(232, 163, 61, 0.25), inset 0 -6px 14px rgba(0,0,0,0.25)",
+                  "0 0 18px 4px hsl(var(--primary) / 0.25), inset 0 -6px 14px rgba(0,0,0,0.25)",
 
                 display: "flex",
                 alignItems: "center",
@@ -126,7 +126,7 @@ export function OfflineIllustration({ className }: { className?: string }) {
                 height="26"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#0C2823"
+                stroke="hsl(var(--primary-foreground))"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -147,7 +147,7 @@ export function OfflineIllustration({ className }: { className?: string }) {
                 <path d="M8.53 16.11a6 6 0 0 1 6.95 0" opacity="0.8" />
 
                 {/* Center dot */}
-                <circle cx="12" cy="20" r="1" fill="#0C2823" stroke="none" />
+                <circle cx="12" cy="20" r="1" fill="hsl(var(--primary-foreground))" stroke="none" />
 
                 {/* Diagonal "disconnect" slash — micro-animated */}
                 <line
@@ -156,7 +156,7 @@ export function OfflineIllustration({ className }: { className?: string }) {
                   x2="23"
                   y2="23"
                   strokeWidth="2.2"
-                  stroke="#0C2823"
+                  stroke="hsl(var(--primary-foreground))"
                   style={{
                     animation: "offlineIconPulse 2.4s ease-in-out infinite",
                   }}
@@ -174,7 +174,7 @@ export function OfflineIllustration({ className }: { className?: string }) {
             marginTop: 6,
             borderRadius: "50%",
             background:
-              "radial-gradient(ellipse at center, rgba(232,163,61,0.30) 0%, transparent 70%)",
+              "radial-gradient(ellipse at center, hsl(var(--primary) / 0.3) 0%, transparent 70%)",
             animation: "offlineOrbShadow 3.2s ease-in-out infinite",
             willChange: "transform, opacity",
           }}
