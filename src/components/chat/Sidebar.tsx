@@ -1005,6 +1005,7 @@ function SidebarContent({
             <PopoverTrigger asChild>
               <button
                 type="button"
+                data-tour-id="theme-picker"
                 className={`
                   flex items-center gap-3 rounded-xl hover:bg-white/[0.08] transition-all duration-200 p-2 hover:scale-[1.02] active:scale-[0.98] cursor-pointer text-left
                   ${isCollapsed ? "justify-center size-8 p-0" : "w-full"}
@@ -1059,7 +1060,9 @@ function SidebarContent({
               })}
               
               {/* Custom Theme Option */}
-              <button
+              <div
+                role="button"
+                tabIndex={0}
                 onClick={() => setTheme("custom")}
                 className={`
                   group flex flex-col w-full p-2 rounded-xl text-left text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all cursor-pointer select-none
@@ -1111,7 +1114,7 @@ function SidebarContent({
                     </div>
                   </div>
                 )}
-              </button>
+              </div>
             </div>
           </PopoverContent>
         </Popover>

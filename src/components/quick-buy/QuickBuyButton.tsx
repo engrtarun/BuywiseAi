@@ -12,6 +12,7 @@ export function QuickBuyButton({ onClick }: QuickBuyButtonProps) {
     <button
       onClick={onClick}
       title="Quick Buy — swipe to shop"
+      data-tour-id="quick-cart"
       className="
         group relative flex items-center justify-center
         size-9 rounded-full
