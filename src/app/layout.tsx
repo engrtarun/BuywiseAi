@@ -6,6 +6,8 @@ import { ThemeInitializer } from "@/components/ThemeInitializer";
 import { AppModeProvider } from "@/contexts/AppModeContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { CanvasOnboardingTour } from "@/components/onboarding/CanvasOnboardingTour";
+import { PremiumProvider } from "@/contexts/PremiumContext";
+import { PremiumModal } from "@/components/premium/PremiumModal";
 import "./globals.css";
 
 const inter = Inter({
@@ -59,10 +61,13 @@ export default function RootLayout({
       <body className="bg-ink-deeper">
         <ThemeProvider>
           <OnboardingProvider>
-            <AppModeProvider>
-              {children}
-              <CanvasOnboardingTour />
-            </AppModeProvider>
+            <PremiumProvider>
+              <AppModeProvider>
+                {children}
+                <CanvasOnboardingTour />
+                <PremiumModal />
+              </AppModeProvider>
+            </PremiumProvider>
           </OnboardingProvider>
         </ThemeProvider>
       </body>

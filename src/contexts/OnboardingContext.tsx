@@ -1,66 +1,119 @@
 "use client";
+// ============================================================================
+// BuyWise AI — Onboarding Context (v3.0)
+// ============================================================================
+// Global React Context providing tour state and control methods.
+// Hydration-safe: reads localStorage only after client mount via useEffect.
+// ============================================================================
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
-import { tourSteps } from "@/config/tourSteps";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import { TOUR_STEPS } from "@/lib/tourSteps";
 
-interface OnboardingContextType {
+const STORAGE_KEY = "buywise_v3_tour_done";
+
+interface OnboardingContextValue {
+  /** Is the tour overlay currently showing? */
   isActive: boolean;
-  currentStepIndex: number;
+  /** Current step index (0-based) */
+  currentStep: number;
+  /** Total number of steps */
+  totalSteps: number;
+  /** Has the tour been completed or skipped? */
+  isDone: boolean;
+  /** Has the client mounted (hydration safety gate)? */
+  isMounted: boolean;
+  /** Begin the tour from step 0 */
   startTour: () => void;
-  nextStep: () => void;
+  /** Permanently skip/dismiss the tour */
   skipTour: () => void;
-  hasCompletedTour: boolean;
-  resetTour: () => void;
+  /** Advance to the next step, or finish if on the last */
+  nextStep: () => void;
+  /** Go back to the previous step */
+  prevStep: () => void;
 }
 
-const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
+const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 
-export function OnboardingProvider({ children }: { children: ReactNode }) {
-  const { hasCompletedTour, markTourCompleted, isInitialized, resetTour } = useOnboardingStatus();
+export function OnboardingProvider({ children }: { children: React.ReactNode }) {
+  const [isMounted, setIsMounted] = useState(false);
+  const [isDone, setIsDone] = useState(false);
   const [isActive, setIsActive] = useState(false);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const autoStartFired = useRef(false);
 
-  // Auto-start tour for new users once initialized
+  // ─── Hydration Safety Gate ───────────────────────────────────────────
+  // Only read localStorage AFTER the client mounts to avoid SSR mismatch.
   useEffect(() => {
-    if (isInitialized && !hasCompletedTour) {
-      // Small delay to let the app finish rendering before starting the tour
-      const timer = setTimeout(() => {
-        setIsActive(true);
-        setCurrentStepIndex(0);
-      }, 1000);
-      return () => clearTimeout(timer);
+    setIsMounted(true);
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored === "true") {
+        setIsDone(true);
+      }
+    } catch {
+      // localStorage may be unavailable (e.g. incognito in some browsers)
     }
-  }, [isInitialized, hasCompletedTour]);
+  }, []);
 
-  const startTour = () => {
-    setIsActive(true);
-    setCurrentStepIndex(0);
-  };
+  // ─── Auto-start tour for first-time users ────────────────────────────
+  // Wait 1.5s after mount to let the UI settle (lazy components, etc.)
+  useEffect(() => {
+    if (!isMounted || isDone || autoStartFired.current) return;
+    autoStartFired.current = true;
+    const timer = setTimeout(() => {
+      setIsActive(true);
+      setCurrentStep(0);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [isMounted, isDone]);
 
-  const nextStep = () => {
-    if (currentStepIndex < tourSteps.length - 1) {
-      setCurrentStepIndex(prev => prev + 1);
-    } else {
-      skipTour(); // Finish tour if on last step
-    }
-  };
-
-  const skipTour = () => {
+  // ─── Persistence helper ──────────────────────────────────────────────
+  const markDone = useCallback(() => {
+    setIsDone(true);
     setIsActive(false);
-    markTourCompleted();
-  };
+    setCurrentStep(0);
+    try {
+      localStorage.setItem(STORAGE_KEY, "true");
+    } catch {
+      // silent fail
+    }
+  }, []);
+
+  const startTour = useCallback(() => {
+    setCurrentStep(0);
+    setIsActive(true);
+  }, []);
+
+  const skipTour = useCallback(() => {
+    markDone();
+  }, [markDone]);
+
+  const nextStep = useCallback(() => {
+    const next = currentStep + 1;
+    if (next >= TOUR_STEPS.length) {
+      // Finished all steps
+      markDone();
+    } else {
+      setCurrentStep(next);
+    }
+  }, [currentStep, markDone]);
+
+  const prevStep = useCallback(() => {
+    setCurrentStep((prev) => Math.max(0, prev - 1));
+  }, []);
 
   return (
     <OnboardingContext.Provider
       value={{
         isActive,
-        currentStepIndex,
+        currentStep,
+        totalSteps: TOUR_STEPS.length,
+        isDone,
+        isMounted,
         startTour,
-        nextStep,
         skipTour,
-        hasCompletedTour,
-        resetTour
+        nextStep,
+        prevStep,
       }}
     >
       {children}
@@ -69,9 +122,9 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 }
 
 export function useOnboarding() {
-  const context = useContext(OnboardingContext);
-  if (context === undefined) {
+  const ctx = useContext(OnboardingContext);
+  if (!ctx) {
     throw new Error("useOnboarding must be used within an OnboardingProvider");
   }
-  return context;
+  return ctx;
 }

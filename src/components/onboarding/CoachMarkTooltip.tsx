@@ -1,145 +1,147 @@
 "use client";
+// ============================================================================
+// BuyWise AI — CoachMarkTooltip v3.0 (3D Premium Card)
+// ============================================================================
+// Beautiful, tactile tooltip with deep box-shadows, 3D physical buttons,
+// Framer Motion pop-in animation, and dynamic directional arrows.
+// ============================================================================
 
-import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { TourStep } from "@/config/tourSteps";
-import { X, ChevronRight } from "lucide-react";
+import React from "react";
+import { motion } from "framer-motion";
+import type { TooltipPlacement } from "@/types/onboarding";
 
 interface CoachMarkTooltipProps {
-  step: TourStep;
-  targetRect: DOMRect;
-  onNext: () => void;
-  onSkip: () => void;
-  isLastStep: boolean;
+  title: string;
+  content: string;
   stepIndex: number;
   totalSteps: number;
+  placement: TooltipPlacement;
+  onNext: () => void;
+  onPrev: () => void;
+  onSkip: () => void;
+  /** Whether this is a centered modal (no target) */
+  isCentered?: boolean;
 }
 
 export function CoachMarkTooltip({
-  step,
-  targetRect,
-  onNext,
-  onSkip,
-  isLastStep,
+  title,
+  content,
   stepIndex,
   totalSteps,
+  placement,
+  onNext,
+  onPrev,
+  onSkip,
+  isCentered = false,
 }: CoachMarkTooltipProps) {
-  const [tooltipStyle, setTooltipStyle] = useState<{ top?: number; left?: number; bottom?: number; right?: number; transform?: string }>({});
+  const isFirst = stepIndex === 0;
+  const isLast = stepIndex === totalSteps - 1;
 
-  useEffect(() => {
-    // Calculate tooltip position based on target rect and requested position
-    // Adding some padding
-    const PADDING = 16;
-    let newStyle: any = {};
-
-    // Standard positioning logic, with basic viewport boundary fallback
-    switch (step.position) {
-      case "bottom":
-        newStyle = {
-          top: targetRect.bottom + PADDING,
-          left: targetRect.left + targetRect.width / 2,
-          transform: "translateX(-50%)",
-        };
-        break;
-      case "top":
-        newStyle = {
-          top: targetRect.top - PADDING,
-          left: targetRect.left + targetRect.width / 2,
-          transform: "translate(-50%, -100%)",
-        };
-        break;
-      case "left":
-        newStyle = {
-          top: targetRect.top + targetRect.height / 2,
-          left: targetRect.left - PADDING,
-          transform: "translate(-100%, -50%)",
-        };
-        break;
-      case "right":
-        newStyle = {
-          top: targetRect.top + targetRect.height / 2,
-          left: targetRect.right + PADDING,
-          transform: "translateY(-50%)",
-        };
-        break;
-    }
-
-    setTooltipStyle(newStyle);
-  }, [targetRect, step.position]);
+  // Arrow direction CSS class (points towards the target element)
+  const arrowClasses: Record<TooltipPlacement, string> = {
+    top: "bottom-[-8px] left-1/2 -translate-x-1/2 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-[#1e1e2e]",
+    bottom: "top-[-8px] left-1/2 -translate-x-1/2 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-[#1e1e2e]",
+    left: "right-[-8px] top-1/2 -translate-y-1/2 border-t-8 border-b-8 border-l-8 border-t-transparent border-b-transparent border-l-[#1e1e2e]",
+    right: "left-[-8px] top-1/2 -translate-y-1/2 border-t-8 border-b-8 border-r-8 border-t-transparent border-b-transparent border-r-[#1e1e2e]",
+  };
 
   return (
-    <>
-      {/* The cutout mask (darkens screen except the target) */}
-      <motion.div
-        className="fixed inset-0 z-[9998] pointer-events-auto mix-blend-hard-light"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        style={{
-          background: `radial-gradient(
-            circle at ${targetRect.left + targetRect.width / 2}px ${targetRect.top + targetRect.height / 2}px,
-            transparent ${Math.max(targetRect.width, targetRect.height) / 2 + 10}px,
-            rgba(0, 0, 0, 0.75) ${Math.max(targetRect.width, targetRect.height) / 2 + 20}px
-          )`,
-        }}
-      />
+    <motion.div
+      initial={{ opacity: 0, scale: 0.85, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.85, y: 10 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      className={`
+        relative z-[9999]
+        w-[320px] max-w-[90vw]
+        bg-[#1e1e2e] text-white
+        rounded-2xl overflow-hidden
+        border border-white/10
+        shadow-[0_8px_30px_rgba(0,0,0,0.35),_0_8px_0px_0px_rgba(0,0,0,0.25)]
+      `}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Directional Arrow (hidden for centered modals) */}
+      {!isCentered && (
+        <div
+          className={`absolute w-0 h-0 ${arrowClasses[placement]}`}
+        />
+      )}
 
-      {/* The Tooltip */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={step.targetId}
-          initial={{ opacity: 0, scale: 0.9, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: -10 }}
-          transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          className="fixed z-[9999] w-72 bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl p-5 overflow-hidden font-sans"
-          style={tooltipStyle}
-        >
-          {/* Decorative background glow */}
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-marigold/10 rounded-full blur-2xl pointer-events-none" />
+      {/* Card Content */}
+      <div className="p-5">
+        {/* Step Counter */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-bold text-white/40 uppercase tracking-widest">
+            Step {stepIndex + 1} of {totalSteps}
+          </span>
+          <button
+            onClick={onSkip}
+            className="text-xs font-semibold text-white/40 hover:text-white/70 transition-colors"
+          >
+            Skip Tour
+          </button>
+        </div>
 
-          {/* Header */}
-          <div className="flex justify-between items-start mb-2 relative z-10">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-medium text-marigold uppercase tracking-wider bg-marigold/10 px-2 py-0.5 rounded-full">
-                Step {stepIndex + 1}/{totalSteps}
-              </span>
-            </div>
+        {/* Title */}
+        <h3 className="text-lg font-extrabold text-white mb-2 leading-tight">
+          {title}
+        </h3>
+
+        {/* Description */}
+        <p className="text-sm text-white/70 leading-relaxed mb-5">
+          {content}
+        </p>
+
+        {/* Progress Dots */}
+        <div className="flex gap-1.5 mb-5">
+          {Array.from({ length: totalSteps }).map((_, i) => (
+            <div
+              key={i}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i === stepIndex
+                  ? "w-7 bg-blue-500"
+                  : i < stepIndex
+                  ? "w-3 bg-blue-500/50"
+                  : "w-3 bg-white/15"
+              }`}
+            />
+          ))}
+        </div>
+
+        {/* 3D Physical Buttons */}
+        <div className="flex gap-3">
+          {!isFirst && (
             <button
-              onClick={onSkip}
-              className="text-zinc-400 hover:text-white transition-colors rounded-full p-1 hover:bg-white/10"
-              aria-label="Skip tour"
+              onClick={onPrev}
+              className="
+                flex-1 px-4 py-2.5
+                bg-white/10 text-white font-bold text-sm
+                border-b-[3px] border-white/20
+                active:border-b-0 active:translate-y-[3px]
+                rounded-xl transition-all duration-100
+                hover:bg-white/15
+              "
             >
-              <X className="size-4" />
+              Back
             </button>
-          </div>
-
-          {/* Content */}
-          <div className="relative z-10">
-            <h3 className="text-base font-bold text-white mb-2">{step.title}</h3>
-            <p className="text-sm text-zinc-400 leading-relaxed mb-5">
-              {step.content}
-            </p>
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-between items-center relative z-10">
-            <button
-              onClick={onSkip}
-              className="text-xs text-zinc-400 hover:text-white transition-colors font-medium"
-            >
-              Skip tour
-            </button>
-            <button
-              onClick={onNext}
-              className="flex items-center gap-1.5 bg-marigold text-ink-deeper px-4 py-2 rounded-xl text-sm font-semibold hover:bg-marigold/90 transition-all shadow-[0_0_15px_rgba(255,204,0,0.3)] hover:shadow-[0_0_20px_rgba(255,204,0,0.5)] active:scale-95"
-            >
-              {isLastStep ? "Finish" : "Next"}
-              {!isLastStep && <ChevronRight className="size-4" />}
-            </button>
-          </div>
-        </motion.div>
-      </AnimatePresence>
-    </>
+          )}
+          <button
+            onClick={onNext}
+            className="
+              flex-1 px-4 py-2.5
+              bg-blue-500 text-white font-bold text-sm
+              border-b-[3px] border-blue-700
+              active:border-b-0 active:translate-y-[3px]
+              rounded-xl transition-all duration-100
+              hover:bg-blue-400
+              shadow-[0_4px_15px_rgba(59,130,246,0.4)]
+            "
+          >
+            {isLast ? "Let's Go! 🎉" : "Next →"}
+          </button>
+        </div>
+      </div>
+    </motion.div>
   );
 }
