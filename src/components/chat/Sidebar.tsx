@@ -1061,37 +1061,44 @@ function SidebarContent({
             side={isCollapsed ? "right" : "top"}
             align={isCollapsed ? "end" : "start"}
             sideOffset={12}
-            className="w-60 bg-dropdown-bg border border-line-ondark rounded-2xl p-2 shadow-2xl flex flex-col gap-1 z-[120]"
+            className="w-[260px] bg-slate-900/90 backdrop-blur-md border border-slate-700/50 rounded-2xl p-3 shadow-2xl flex flex-col gap-2 z-[120]"
           >
-            <h3 className="font-sans text-[11px] font-bold text-text-dim-ondark uppercase tracking-wider px-2 py-1 select-none">
+            <h3 className="font-sans text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1 select-none">
               Select Theme
             </h3>
-            <div className="flex flex-col gap-1 mt-0.5">
+            <div className="flex flex-col gap-2">
               {THEME_PRESETS.map((preset) => {
                 const isActive = theme === preset.id;
+                
+                // Determine ring color based on preset
+                let ringColor = "ring-orange-500/80";
+                if (preset.id === "buywise-green") ringColor = "ring-emerald-500/80";
+                if (preset.id === "buywise-dark") ringColor = "ring-orange-600/80";
+
                 return (
                   <button
                     key={preset.id}
                     onClick={() => setTheme(preset.id)}
                     className={`
-                      group flex items-center justify-between w-full p-2 rounded-xl text-left text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all cursor-pointer select-none
-                      ${isActive ? "bg-white/[0.08] border border-white/5" : "border border-transparent"}
+                      relative group flex items-center justify-between w-full p-3 rounded-xl text-left text-[13px] font-sans text-white
+                      bg-gradient-to-br from-white/10 to-transparent
+                      shadow-[0_4px_14px_0_rgb(0,0,0,0.39)] shadow-[inset_0px_1px_1px_rgba(255,255,255,0.15)]
+                      transition-all duration-200 cursor-pointer select-none
+                      hover:scale-[1.02] active:scale-[0.98] active:translate-y-[1px]
+                      ${isActive ? `ring-2 ring-offset-2 ring-offset-slate-900 ${ringColor}` : "border border-transparent"}
                     `}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex items-center gap-3 min-w-0">
                       {/* Color Swatch Preview */}
                       <div
-                        className="size-5 rounded-md flex overflow-hidden border border-white/10 shrink-0"
+                        className="size-6 rounded-full flex overflow-hidden border border-white/20 shrink-0 shadow-inner"
                         style={{ backgroundColor: preset.colors.background }}
                       >
                         <div className="w-1/2 h-full" style={{ backgroundColor: preset.colors.sidebar }} />
                         <div className="w-1/2 h-full" style={{ backgroundColor: preset.colors.primary }} />
                       </div>
-                      <span className="truncate font-medium">{preset.name}</span>
+                      <span className="truncate font-semibold tracking-wide">{preset.name}</span>
                     </div>
-                    {isActive && (
-                      <Check className="size-3.5 text-marigold shrink-0" />
-                    )}
                   </button>
                 );
               })}
@@ -1102,51 +1109,39 @@ function SidebarContent({
                 tabIndex={0}
                 onClick={() => setTheme("custom")}
                 className={`
-                  group flex flex-col w-full p-2 rounded-xl text-left text-[13px] font-sans text-text-ondark hover:bg-white/[0.06] transition-all cursor-pointer select-none
-                  ${theme === "custom" ? "bg-white/[0.08] border border-white/5" : "border border-transparent"}
+                  relative group flex flex-col w-full p-3 rounded-xl text-left text-[13px] font-sans text-white
+                  bg-gradient-to-br from-white/10 to-transparent
+                  shadow-[0_4px_14px_0_rgb(0,0,0,0.39)] shadow-[inset_0px_1px_1px_rgba(255,255,255,0.15)]
+                  transition-all duration-200 cursor-pointer select-none
+                  hover:scale-[1.02] active:scale-[0.98] active:translate-y-[1px]
+                  ${theme === "custom" ? "ring-2 ring-offset-2 ring-offset-slate-900 ring-purple-500/80" : "border border-transparent"}
                 `}
               >
                 <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className="size-5 rounded-md flex overflow-hidden border border-white/10 shrink-0 relative"
-                      style={{ 
-                        background: "linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)"
-                      }}
+                      className="size-6 rounded-full flex overflow-hidden border border-white/20 shrink-0 shadow-inner bg-[conic-gradient(red,yellow,lime,aqua,blue,magenta,red)]"
                     />
-                    <span className="truncate font-medium">Custom</span>
+                    <span className="truncate font-semibold tracking-wide">Custom</span>
                   </div>
-                  {theme === "custom" && <Check className="size-3.5 text-marigold shrink-0" />}
                 </div>
 
                 {/* Custom Color Controls */}
                 {theme === "custom" && (
-                  <div className="mt-3 flex flex-col gap-2 w-full pr-1" onClick={(e) => e.stopPropagation()}>
-                    {/* Presets */}
-                    <div className="flex justify-between items-center gap-2">
-                      <button 
-                        title="Luxury Gold" 
-                        onClick={() => setCustomSeedColor("#FFD700")}
-                        className="flex-1 h-6 rounded-md bg-[#FFD700] hover:scale-105 transition-transform border border-white/20"
+                  <div className="mt-4 mb-1 flex items-center justify-between w-full px-1" onClick={(e) => e.stopPropagation()}>
+                    <span className="text-xs text-slate-300 font-medium">Pick Accent</span>
+                    {/* Native Circular Color Picker Mask */}
+                    <div className="relative size-8 rounded-full overflow-hidden shadow-[inset_0px_1px_2px_rgba(255,255,255,0.4)] border border-white/20 ring-2 ring-white/10 hover:ring-white/30 transition-all cursor-pointer">
+                      <div 
+                        className="absolute inset-0 pointer-events-none" 
+                        style={{ backgroundColor: customSeedColor }}
                       />
-                      <button 
-                        title="Cyber Neon" 
-                        onClick={() => setCustomSeedColor("#00FFCC")}
-                        className="flex-1 h-6 rounded-md bg-[#00FFCC] hover:scale-105 transition-transform border border-white/20"
-                      />
-                      <button 
-                        title="Eco Mint" 
-                        onClick={() => setCustomSeedColor("#98FF98")}
-                        className="flex-1 h-6 rounded-md bg-[#98FF98] hover:scale-105 transition-transform border border-white/20"
-                      />
-                    </div>
-                    {/* Native Color Picker */}
-                    <div className="flex items-center gap-2 mt-1">
                       <input 
                         type="color" 
                         value={customSeedColor}
                         onChange={(e) => setCustomSeedColor(e.target.value)}
-                        className="w-full h-8 rounded-md cursor-pointer bg-transparent border-0 p-0"
+                        className="absolute inset-[-10px] w-[200%] h-[200%] opacity-0 cursor-pointer"
+                        title="Choose custom color"
                       />
                     </div>
                   </div>
