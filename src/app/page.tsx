@@ -77,6 +77,12 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
         allow_custom: parsedJson.allow_custom !== undefined ? !!parsedJson.allow_custom : true,
         acknowledgement: parsedJson.thought || parsedJson.acknowledgement || "",
       };
+    } else if (parsedJson.ui_type === "intake_questionnaire") {
+      aiMsg.content = `Intake form for ${parsedJson.category || "category"}`;
+      aiMsg.intakeQuestionnaire = {
+        category: parsedJson.category || "category",
+        key_attributes: Array.isArray(parsedJson.key_attributes) ? parsedJson.key_attributes : [],
+      };
     } else if (parsedJson.ui_type === "explore_carousel") {
       aiMsg.content = parsedJson.headline || "Here are some recommendations:";
       aiMsg.exploreIntro = parsedJson.headline || "Here are some recommendations:";

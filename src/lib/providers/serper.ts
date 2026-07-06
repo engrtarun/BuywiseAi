@@ -25,6 +25,7 @@ export interface SerperProduct {
   platform: string;
   url: string;
   rating: number | null;
+  reviewCount: number | null;
 }
 
 /** Raw shape returned by Serper (only the fields we use). */
@@ -35,6 +36,7 @@ interface SerperShoppingItem {
   price?: string;
   imageUrl?: string;
   rating?: number;
+  ratingCount?: number;
 }
 
 /**
@@ -99,6 +101,7 @@ export async function searchShoppingIndia(
       platform: item.source ?? "Google Shopping",
       url: item.link ?? "",
       rating: typeof item.rating === "number" ? item.rating : null,
+      reviewCount: typeof item.ratingCount === "number" ? item.ratingCount : null,
     })
   );
 }

@@ -45,3 +45,9 @@ next-env.d.ts
 chat_data/
 gemini_raw_error.txt
 *.log
+
+# Debug log files
+gemini_raw_error.txt
+*.log
+*_debug.txt
+*_error.txt

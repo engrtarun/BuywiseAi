@@ -348,9 +348,9 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
               <span className="text-sm font-sans text-text-secondary ml-1 font-bold">
                 {product.rating}
               </span>
-              {product.reviewsCount && (
+              {product.reviewCount && (
                 <span className="text-xs font-sans text-text-secondary/60 ml-1">
-                  ({product.reviewsCount.toLocaleString()})
+                  ({product.reviewCount})
                 </span>
               )}
             </div>

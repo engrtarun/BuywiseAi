@@ -14,6 +14,7 @@ import { ProductCarousel } from "./ProductCarousel";
 import { SpoilerText } from "./SpoilerText";
 import { ClarifyingQuestionCard } from "./ClarifyingQuestionCard";
 import { DeepResearchClarifyingCard, ClarifyingQuestion } from "./DeepResearchClarifyingCard";
+import { IntakeQuestionnaireCard } from "./IntakeQuestionnaireCard";
 import { ChatMode } from "@/types/chat";
 import { Brain, Pencil, ArrowRight, ChevronRight, CheckCircle } from "lucide-react";
 import { getExploreLayoutParts } from "@/app/page";
@@ -565,6 +566,19 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
                 disabled={!isLastAiMessage}
               />
             )
+          )}
+
+          {/* Intake Specialist Questionnaire Card */}
+          {message.intakeQuestionnaire && onSend && (
+            <IntakeQuestionnaireCard
+              category={message.intakeQuestionnaire.category}
+              keyAttributes={message.intakeQuestionnaire.key_attributes}
+              onSubmit={(val) => {
+                setInputText?.(val);
+                onSend(val);
+              }}
+              disabled={!isLastAiMessage}
+            />
           )}
 
           {/* Case Explore Mode Split Layout Rendering */}

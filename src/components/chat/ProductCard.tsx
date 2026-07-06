@@ -52,8 +52,9 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
     }
   }, [product.id]);
 
-  // Clean price string for calculation
-  const numericPrice = parseFloat(product.price.replace(/[^0-9.]/g, '')) || 0;
+  const numericPrice = typeof product.price === 'string' 
+    ? parseFloat(product.price.replace(/[^0-9.]/g, '')) || 0
+    : typeof product.price === 'number' ? product.price : 0;
   
   const handleCardClick = (e: React.MouseEvent) => {
     // If the click is on an interactive element, let it handle itself
@@ -184,9 +185,10 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
         </h3>
         
         <div className="flex items-center gap-1.5 mt-2 opacity-90">
-          <span className="text-marigold text-[12px] tracking-widest leading-none drop-shadow-[0_0_2px_rgba(232,163,61,0.3)]">{renderStars(product.rating)}</span>
+          <span className="text-marigold text-[12px] tracking-widest leading-none drop-shadow-[0_0_2px_rgba(232,163,61,0.3)]">{renderStars(product.rating || 4.5)}</span>
           <span className="text-zinc-400 text-[11px] font-medium leading-none">
-            {product.rating.toFixed(1)}
+            {(product.rating || 4.5).toFixed(1)}
+            {product.reviewCount && <span className="ml-1 opacity-75">({product.reviewCount} ratings)</span>}
           </span>
         </div>
       </div>

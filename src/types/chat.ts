@@ -42,6 +42,10 @@ export interface Message {
     finalVerdict?: string;
     comparison?: { aspect: string; winner: string; reason: string }[];
   };
+  intakeQuestionnaire?: {
+    category: string;
+    key_attributes: { name: string; question: string }[];
+  };
   suggestedMode?: ChatMode;
   searchTag?: string;
   exploreIntro?: string;

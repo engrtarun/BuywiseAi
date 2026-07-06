@@ -33,204 +33,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import { getFallbackChatResponse } from "@/lib/fallbackResponses";
 import { enforceChatAccess } from "@/lib/chatAccess";
-import { searchProducts } from "@/lib/productSearch";
 import fs from "fs";
 import path from "path";
-
-
+import { determineIntent } from "@/lib/agents/router";
+import { searchForProducts } from "@/lib/agents/search";
+import { runWriter } from "@/lib/agents/writer";
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
-const EXPLORE_SYSTEM_PROMPT = `You are BuyWise AI, a universal, all-category shopping assistant. You are NOT limited to tech or electronics.
 
-RULE 1: For EVERY user intent—whether they ask for water, clothes, python programming, groceries, or cars—you MUST find a purchasable angle and return relevant product items.
-RULE 2: Never return generic tech-buying advice (like 'camera quality' or 'battery life') for non-tech items.
-RULE 3: You MUST output the \`explore_carousel\` JSON schema format every single time when presenting options.
-RULE 4: Enforce the 20/80 content rule. Provide a short \`headline\` (20%), a populated \`products\` array for the Mid-Cards, and a comprehensive \`deep_dive\` markdown string (80%).
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CONVERSATION FLOW — follow this exact intent-based sequence:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-1. CLASSIFY THE INTENT FIRST:
-   - Shopping Intent: The user wants to buy something, look for recommendations, or find products (e.g., "I need water", "Code in Python", "Suggest shoes").
-   - Conversation: The user is just chatting (e.g., "Hi", "Who are you").
-   - Clarification Needed: The request is too vague to search for ANYTHING.
-
-2. IF SHOPPING INTENT (Direct to Search!):
-   Do NOT ask for purpose or budget for everyday items unless absolutely necessary.
-   IMMEDIATELY output a \`search_intent\` payload to search for real products.
-   Infer the best search query based on their request. (e.g., "I need water" -> query: "mineral water bottles", "Code in Python" -> query: "Python programming books").
-
-3. PRESENT PRODUCT OPTIONS (The 20/80 Rule):
-   After we provide you with real product listings (from your search), you MUST output an \`explore_carousel\` payload with the best options.
-   - The \`headline\` MUST be a human-friendly, highly relevant opening paragraph validating the user's request (e.g., "Staying hydrated is crucial! Here are some of the best water options available right now.").
-   - The \`deep_dive\` MUST be category-specific. Do NOT reuse generic electronics advice for non-electronics.
-   - Instead, discuss factors relevant to the specific category (e.g., water -> pH levels, BPA-free plastics; books -> beginner vs advanced).
-
-4. IF CONVERSATION INTENT:
-   Return a simple \`text_response\` payload. Do NOT search.
-
-5. IF CLARIFICATION TRULY NEEDED:
-   Return a \`clarifying_question\` payload.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-LINGUISTIC FINGERPRINTING & TONE MATCHING:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Analyze the user's input language and conversational tone. Check the "User's accumulated session context" at the bottom of this prompt for any existing "fingerprint". You MUST mirror their language and style perfectly based on that context and their current message.
-If they speak Hinglish, reply in Hinglish. If they use short casual phrases, be concise. Match their energy.
-Return a \`fingerprint\` object in your JSON response tracking this on every turn.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-JSON RESPONSE FORMATS (all responses must be valid JSON):
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-When you have a Shopping Intent and need to search:
-{
-  "ui_type": "search_intent",
-  "query": "mineral water bottles",
-  "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
-}
-
-When presenting product options (after we inject real listings):
-{
-  "ui_type": "explore_carousel",
-  "headline": "Staying hydrated is crucial! Here are some of the best water options available right now.",
-  "products": [
-    { "id": "1", "name": "...", "price": "₹...", "rating": 4.5, "image": "...", "reason": "...", "stretch": false }
-  ],
-  "deep_dive": "### The Science of Hydration\\n...",
-  "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
-}
-
-When asking a question (only if truly ambiguous):
-{
-  "ui_type": "clarifying_question",
-  "thought": "Short reflection...",
-  "question": "Your question here...",
-  "options": [
-    { "id": "1", "label": "Option A", "value": "A" }
-  ],
-  "allow_skip": true,
-  "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
-}
-
-For general text replies:
-{
-  "ui_type": "text_response",
-  "text": "...",
-  "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
-}
-
-Return ONLY the raw JSON string. Do not wrap in markdown code blocks.`;
-
-const DEEP_RESEARCH_SYSTEM_PROMPT = `You are BuyWise AI, a smart shopping assistant for the Indian market.
-The user is in Deep Research Mode — an interactive, guided, multi-turn flow.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CONVERSATION ORDERING — always follow this sequence:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Step 1 — QUALIFY PURPOSE FIRST.
-  If the user has not stated their use case / reason for needing this product,
-  ask about purpose BEFORE asking about budget.
-  Examples: coding vs gaming (laptop), camera vs battery (phone), work vs casual (headphones).
-
-Step 2 — ASK BUDGET SECOND.
-  Only after you understand their purpose. Skip if they already stated a budget.
-
-Step 3 — PRESENT RESULTS.
-  Show 2-3 top-rated options matched to their stated purpose AND budget.
-  Each product needs a one-line reason connecting it to their specific use case.
-
-Step 4 — OFFER ONE STRETCH OPTION.
-  After in-budget options, offer exactly one product ~10-15% above budget.
-  Frame as "worth mentioning", give a clear reason, reassure in-budget options are solid too.
-  Skip entirely if user asked for "cheapest" or showed strong price sensitivity.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-LINGUISTIC FINGERPRINTING & TONE MATCHING:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Analyze the user's input language and conversational tone. Check the "User's accumulated session context" at the bottom of this prompt for any existing "fingerprint". You MUST mirror their language and style perfectly based on that context and their current message.
-If they speak Hinglish, reply in Hinglish. If they use short casual phrases, be concise. Match their energy.
-Return a \`fingerprint\` object in your JSON response tracking this on every turn.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-JSON RESPONSE FORMAT:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Based on the conversation history, decide whether to ask a clarifying question
-or to present final results. Usually ask 2-3 clarifying questions (one per turn)
-before presenting results — USE THE PURPOSE → BUDGET ORDER above.
-
-If more context is needed, return ONLY this format (no other text, no markdown blocks):
-{
-  "ui_type": "clarifying_question",
-  "thought": "A short reflection acknowledging their input and explaining why you're asking this — casual and natural, e.g. 'Bhai laptop lena hai, nice! Use case samajh lete hain pehle...'",
-  "question": "The clarifying question, e.g. 'What will you mainly use it for — coding, studies, gaming, or general use?'",
-  "options": [
-    { "id": "1", "label": "Coding / Dev work", "value": "coding" },
-    { "id": "2", "label": "Gaming", "value": "gaming" },
-    { "id": "3", "label": "College / Studies", "value": "studies" },
-    { "id": "4", "label": "General use", "value": "general" }
-  ],
-  "allow_skip": true,
-  "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
-}
-
-If you have gathered enough details (or the user insists on results), return ONLY this format:
-{
-  "ui_type": "deep_research_results",
-  "summary": "A cohesive paragraph summarizing your research and options.",
-  "final_verdict": "A clear, decisive final recommendation.",
-  "recommended_products": [
-    {
-      "id": "1",
-      "name": "Exact Product Name",
-      "price": "5000",
-      "rating": 4.5,
-      "reviewCount": "1200",
-      "description": "Short description of key features.",
-      "platform": "Amazon",
-      "image": "/placeholder.png",
-      "link": "https://amazon.in",
-      "badge": "🏆 Best Overall"
-    }
-  ],
-  "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
-}
-
-Provide 2-3 products in the recommended_products array, sorted by rank. Assign appropriate badges like "🏆 Best Overall", "💰 Best Value", "⭐ Alternative Choice", etc. Use "/placeholder.png" as the default image URL.
-
-Ensure queries match real Indian market products. Return ONLY the raw JSON string. Do not wrap in markdown code blocks.`;
-
-export function validateModeJSONPayload(rawText: string, expectedMode: 'explore' | 'deep_research'): boolean {
-  try {
-    const cleanedText = rawText.replace(/```(?:json)?|```/gi, "").trim();
-    const parsedData = JSON.parse(cleanedText);
-
-    // Partial success for deep research: if it has a summary or verdict, we can recover it
-    if (expectedMode === 'deep_research') {
-      if (parsedData.ui_type === 'clarifying_question') return true;
-      if (parsedData.ui_type === 'deep_research_results' || parsedData.ui_type === 'results' || parsedData.summary || parsedData.final_verdict) {
-        return true;
-      }
-      return false;
-    }
-
-    if (expectedMode === 'explore') {
-      if (parsedData.ui_type === 'explore_carousel') {
-        return typeof parsedData.headline === 'string' && Array.isArray(parsedData.products) && typeof parsedData.deep_dive === 'string';
-      }
-      return parsedData.ui_type === 'text_response' || parsedData.ui_type === 'clarifying_question' || parsedData.ui_type === 'search_intent';
-    }
-    return false;
-  } catch (err) {
-    console.error("[validateModeJSONPayload] JSON Parse Error:", err);
-    console.error("[validateModeJSONPayload] Raw Text was:", rawText);
-    return false;
-  }
-}
 
 export async function POST(req: NextRequest) {
   let userMessage = "";
@@ -263,8 +74,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { chatId = "default", history = [], message, mode = "explore", requirements = {}, isRegenerate = false } = body;
+    let { chatId = "default", history = [], message, mode = "explore", requirements = {}, isRegenerate = false } = body;
     userMessage = message;
+
+    if (mode !== "buy_explanation") {
+      mode = await determineIntent(userMessage, history);
+    }
 
     // Backend JSON file logic (Msg Quality Improvement)
     const chatDataDir = path.join(process.cwd(), "chat_data");
@@ -293,9 +108,6 @@ export async function POST(req: NextRequest) {
     backendContext.context = { ...backendContext.context, ...requirements };
     fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
 
-    if (isRegenerate) {
-      userMessage += `\n\n[SYSTEM NOTE: The user has requested to REGENERATE the response for this message. This means they were not fully satisfied with your previous answer. Please rethink their request, carefully consider the chat history, and provide a different, higher quality, or more accurate response.]`;
-    }
 
     userHistory = history;
 
@@ -353,165 +165,54 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const isDeepResearch = mode === "deep_research" || mode === "deep-research";
-    let systemInstruction = isDeepResearch ? DEEP_RESEARCH_SYSTEM_PROMPT : EXPLORE_SYSTEM_PROMPT;
+    // ── Step 1: Router determines mode (already done above) ──────────────────
+    // `mode` is now set to "explore" or "deep_research" by determineIntent.
 
-    // Inject Backend JSON file data to improve message quality
-    if (backendContext && backendContext.context) {
-      systemInstruction += `\n\n[SYSTEM NOTE - BACKEND CONTEXT FILE]\nI have read your user profile from the backend JSON context file. Please use this data to greatly improve the quality and personalization of your response:\n${JSON.stringify(backendContext.context, null, 2)}`;
+    // ── Step 2: Search (only in deep_research when requirements are ready) ────
+    // In explore mode the writer handles inline search via search_intent.
+    // In deep_research mode we only search when the user has already supplied
+    // both use-case and budget (i.e. requirements is non-empty).
+    let searchResults = [];
+    const requirementsReady =
+      mode === "deep_research" &&
+      requirements &&
+      typeof requirements === "object" &&
+      Object.keys(requirements).length >= 2;
+
+    if (requirementsReady) {
+      try {
+        const query = [
+          requirements.category,
+          requirements.use_case,
+          requirements.budget ? `under ${requirements.budget}` : "",
+        ]
+          .filter(Boolean)
+          .join(" ");
+        searchResults = await searchForProducts(query, 6);
+      } catch (searchErr) {
+        console.warn("[route] Pre-search failed, writer will proceed without products:", searchErr);
+      }
     }
 
-    if (Object.keys(requirements).length > 0) {
-      systemInstruction += `\n\nUser's accumulated session context (including linguistic fingerprint): ${JSON.stringify(requirements)}`;
-    }
-
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      systemInstruction,
-    });
-
-    const chat = model.startChat({
-      history: formattedHistory,
-      generationConfig: {
-        maxOutputTokens: 1000,
-        responseMimeType: "application/json",
+    // ── Step 3: Writer produces the final structured response ─────────────────
+    const { responseTexts, serperProducts } = await runWriter({
+      mode: mode === "deep_research" ? "deep_research" : "explore",
+      userMessage,
+      history: userHistory,
+      products: searchResults,
+      sessionContext: {
+        ...backendContext.context,
+        ...requirements,
       },
+      isRegenerate,
+      groqApiKey: process.env.GROQ_API_KEY,
     });
-
-    let text = "";
-    try {
-      let result = await chat.sendMessage(userMessage);
-      text = (await result.response).text();
-    } catch (geminiErr) {
-      console.warn("Gemini API failed, triggering Groq Fallback...", geminiErr);
-      if (!process.env.GROQ_API_KEY) throw geminiErr;
-
-      const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: "llama-3.1-8b-instant",
-          messages: [
-            { role: "system", content: systemInstruction },
-            ...history.map((m: any) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content || "" })),
-            { role: "user", content: userMessage }
-          ],
-          response_format: { type: "json_object" }
-        })
-      });
-
-      if (!groqRes.ok) {
-        throw new Error(`Groq API failed: ${groqRes.statusText}`);
-      }
-
-      const groqData = await groqRes.json();
-      text = groqData.choices[0].message.content;
-    }
-
-    let isValid = validateModeJSONPayload(text, isDeepResearch ? 'deep_research' : 'explore');
-
-    // We will accumulate texts to return to the frontend.
-    let responseTexts: string[] = [text];
-    let serperProducts: any[] = [];
-
-    // Parse the initial response safely
-    let parsedData = null;
-    try {
-      parsedData = JSON.parse(text.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
-    } catch (e) { }
-
-    // If Gemini wants to search
-    if (parsedData && parsedData.ui_type === "search_intent" && !isDeepResearch) {
-      try {
-        serperProducts = await searchProducts(parsedData.query, 5);
-        if (!serperProducts || serperProducts.length === 0) {
-          throw new Error('LIVE_DATA_EMPTY');
-        }
-      } catch (err) {
-        console.warn('Live DB failed, falling back to mock data:', err);
-        const { mockQuickBuyProducts } = await import('@/lib/quickBuyMockData');
-        serperProducts = mockQuickBuyProducts.slice(0, 5).map((p: any) => ({
-          id: String(p.id),
-          name: p.name,
-          price: p.price,
-          image: p.image,
-          platform: p.platform || 'BuyWise AI',
-          url: "#",
-          rating: p.rating || 4.5,
-          source: 'mock'
-        }));
-      } finally {
-        try {
-          const searchContextMessage = `Here are product listings for your search: ${JSON.stringify(serperProducts)}. Please output the explore_carousel JSON now with the best options. Make sure to provide a valid headline, products array, and deep_dive markdown string.`;
-          const secondResult = await chat.sendMessage(searchContextMessage);
-          const carouselText = (await secondResult.response).text();
-          responseTexts = [carouselText]; // Replace the search_intent message with the actual carousel
-          isValid = validateModeJSONPayload(carouselText, 'explore');
-          
-          if (!isValid) throw new Error('INVALID_JSON_FROM_LLM');
-        } catch (llmErr) {
-          console.warn("LLM failed to generate explore_carousel, forcing fallback schema:", llmErr);
-          responseTexts = [JSON.stringify({
-            ui_type: "explore_carousel",
-            headline: "Here are some great options for you based on your request.",
-            products: serperProducts,
-            deep_dive: "Explore these options carefully to find what best fits your needs."
-          })];
-          isValid = true;
-        }
-      }
-    }
-
-    if (!isValid) {
-      console.warn("AI generated invalid JSON payload. Retrying or falling back...");
-
-      // Try to aggressively extract JSON before falling back completely
-      try {
-        const match = text.match(/\{[\s\S]*\}/);
-        if (match) {
-          const potentialJson = match[0];
-          const parsed = JSON.parse(potentialJson);
-          if (parsed.ui_type === 'deep_research_results' || parsed.summary || parsed.final_verdict) {
-            text = potentialJson;
-            isValid = true;
-            responseTexts = [text];
-            console.log("Successfully extracted partial JSON via regex");
-          }
-        }
-      } catch (e) { }
-
-      if (!isValid && isDeepResearch) {
-        try {
-          const retryResult = await chat.sendMessage("Your last response was not valid JSON or was missing required fields. Please return strictly the JSON payload.");
-          text = (await retryResult.response).text();
-          responseTexts = [text];
-          isValid = validateModeJSONPayload(text, 'deep_research');
-        } catch (e) {
-          isValid = false;
-        }
-        if (!isValid) {
-          responseTexts = [JSON.stringify({
-            ui_type: "deep_research_results",
-            summary: "We had some trouble processing the exact details, but we found some safe recommendations.",
-            final_verdict: "Please try your query again or explore these popular options.",
-            recommended_products: []
-          })];
-        }
-      } else if (!isValid && !isDeepResearch) {
-        responseTexts = [JSON.stringify({
-          ui_type: "text_response",
-          text: getFallbackChatResponse(userMessage, userHistory)
-        })];
-      }
-    }
 
     return NextResponse.json({
       text: responseTexts,
-      products: serperProducts.length > 0 ? serperProducts : null
+      products: serperProducts.length > 0 ? serperProducts : null,
     });
+
   } catch (error: unknown) {
     logGeminiFailure(error);
 
@@ -545,13 +246,50 @@ function isChatRequestBody(body: unknown): body is ChatRequestBody {
   return "message" in body && typeof body.message === "string";
 }
 
+function sanitizeError(error: unknown): unknown {
+  if (!error) return error;
+
+  try {
+    // If it's a standard Error object, we might want to sanitize its message or stack
+    let errorStr = "";
+    if (error instanceof Error) {
+      errorStr = error.stack || error.message;
+    } else if (typeof error === "object") {
+      errorStr = JSON.stringify(error);
+    } else {
+      errorStr = String(error);
+    }
+
+    // Redact ?key=... in URLs
+    errorStr = errorStr.replace(/([?&]key=)[^&\s"\\]+/gi, '$1REDACTED');
+    // Redact Authorization headers or tokens if present
+    errorStr = errorStr.replace(/(Authorization:\s*Bearer\s+)[^\s"\\]+/gi, '$1REDACTED');
+    errorStr = errorStr.replace(/(x-goog-api-key:\s*)[^\s"\\]+/gi, '$1REDACTED');
+
+    // Return the sanitized string so it doesn't leak raw objects with hidden properties
+    return errorStr;
+  } catch (e) {
+    return "[Un-stringifiable Error Object]";
+  }
+}
+
 function logGeminiFailure(error: unknown) {
+  const sanitized = sanitizeError(error);
+
   if (isRateLimitError(error)) {
-    console.error("Gemini API rate limit hit. Serving fallback response.", error);
+    if (process.env.NODE_ENV === "development") {
+      console.error("Gemini API rate limit hit. Serving fallback response.", sanitized);
+    } else {
+      console.error("Gemini API rate limit hit. Serving fallback response.");
+    }
     return;
   }
 
-  console.error("Gemini API failed. Serving fallback response.", error);
+  if (process.env.NODE_ENV === "development") {
+    console.error("Gemini API failed. Serving fallback response.", sanitized);
+  } else {
+    console.error("Gemini API failed. Serving fallback response.");
+  }
 }
 
 function isRateLimitError(error: unknown): boolean {
