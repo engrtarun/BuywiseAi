@@ -196,10 +196,11 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   let exploreProductsList: Product[] = [];
   let exploreDeepDiveText = "";
   let textResponseContent = "";
+  let parseError = false;
 
   try {
     const rawContent = message.content || "";
-    const cleaned = rawContent.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
+    const cleaned = rawContent.replace(/```(?:json)?/gi, "").replace(/```/g, "").trim();
     if (cleaned.startsWith("{") && cleaned.endsWith("}")) {
       const parsed = JSON.parse(cleaned);
       if (parsed && typeof parsed === "object") {
@@ -235,9 +236,15 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
           textResponseContent = parsed.text || "";
         }
       }
+    } else {
+      if (mode === "deep_research" || mode === "explore") {
+         parseError = true;
+      }
     }
   } catch (e) {
-    // Non-JSON content
+    if (mode === "deep_research" || mode === "explore") {
+       parseError = true;
+    }
   }
 
   // Fallback to parsed properties if raw JSON wasn't matched/parsed
@@ -421,8 +428,16 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
         </Avatar>
  
         <div className="flex flex-col gap-2 w-full min-w-0">
+          {/* JSON Parse Error Fallback */}
+          {parseError && (
+            <div className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-[14px] sm:text-[15px] font-sans">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-triangle-alert shrink-0 animate-pulse"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              <span>Re-calibrating research data...</span>
+            </div>
+          )}
+
           {/* Default AI Bubble (Standard markdown prose / Fallback) */}
-          {!isQuestionnaire && (!isExploreModeLayout || !shouldRenderSplitLayout) && !message.deepResearchResults && message.content && (
+          {!parseError && !isQuestionnaire && (!isExploreModeLayout || !shouldRenderSplitLayout) && !message.deepResearchResults && message.content && (
             <div
               dir="auto"
               style={{
