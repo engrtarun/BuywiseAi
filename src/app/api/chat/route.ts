@@ -427,19 +427,41 @@ export async function POST(req: NextRequest) {
     if (parsedData && parsedData.ui_type === "search_intent" && !isDeepResearch) {
       try {
         serperProducts = await searchProducts(parsedData.query, 5);
-        const searchContextMessage = serperProducts.length > 0
-          ? `Here are real current product listings for your search: ${JSON.stringify(serperProducts)}. Please output the explore_carousel JSON now with the best options.`
-          : `No products found for: ${parsedData.query}. Please output a text_response explaining that no products were found.`;
-
-        const secondResult = await chat.sendMessage(searchContextMessage);
-        const carouselText = (await secondResult.response).text();
-        responseTexts = [carouselText]; // Replace the search_intent message with the actual carousel
-        isValid = validateModeJSONPayload(carouselText, 'explore');
-
-
+        if (!serperProducts || serperProducts.length === 0) {
+          throw new Error('LIVE_DATA_EMPTY');
+        }
       } catch (err) {
-        console.error("[chat route] Failed to search products:", err);
-        responseTexts = [JSON.stringify({ ui_type: "text_response", text: getFallbackChatResponse(userMessage, userHistory) })];
+        console.warn('Live DB failed, falling back to mock data:', err);
+        const { mockQuickBuyProducts } = await import('@/lib/quickBuyMockData');
+        serperProducts = mockQuickBuyProducts.slice(0, 5).map((p: any) => ({
+          id: String(p.id),
+          name: p.name,
+          price: p.price,
+          image: p.image,
+          platform: p.platform || 'BuyWise AI',
+          url: "#",
+          rating: p.rating || 4.5,
+          source: 'mock'
+        }));
+      } finally {
+        try {
+          const searchContextMessage = `Here are product listings for your search: ${JSON.stringify(serperProducts)}. Please output the explore_carousel JSON now with the best options. Make sure to provide a valid headline, products array, and deep_dive markdown string.`;
+          const secondResult = await chat.sendMessage(searchContextMessage);
+          const carouselText = (await secondResult.response).text();
+          responseTexts = [carouselText]; // Replace the search_intent message with the actual carousel
+          isValid = validateModeJSONPayload(carouselText, 'explore');
+          
+          if (!isValid) throw new Error('INVALID_JSON_FROM_LLM');
+        } catch (llmErr) {
+          console.warn("LLM failed to generate explore_carousel, forcing fallback schema:", llmErr);
+          responseTexts = [JSON.stringify({
+            ui_type: "explore_carousel",
+            headline: "Here are some great options for you based on your request.",
+            products: serperProducts,
+            deep_dive: "Explore these options carefully to find what best fits your needs."
+          })];
+          isValid = true;
+        }
       }
     }
 

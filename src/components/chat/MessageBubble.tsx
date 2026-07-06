@@ -282,6 +282,10 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
         exploreIntroText = parts.intro;
         exploreDeepDiveTextToRender = parts.deepDive;
       }
+      
+      if (!exploreDeepDiveTextToRender) {
+        exploreDeepDiveTextToRender = "Explore these options carefully to find what best fits your needs.";
+      }
     } else {
       exploreIntroText = message.exploreIntro || "";
       exploreDeepDiveTextToRender = message.exploreDeepDive || "";
