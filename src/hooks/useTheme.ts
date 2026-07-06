@@ -45,32 +45,32 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
         document.head.appendChild(customStyle);
       }
       
-      customStyle.innerHTML = \`
+      customStyle.innerHTML = `
         :root[data-theme="custom"] {
-          --ink-deep: \${themeVars.background};
-          --ink-deeper: \${themeVars.background};
-          --bg-main: \${themeVars.background};
-          --background: \${themeVars.background};
+          --ink-deep: ${themeVars.background};
+          --ink-deeper: ${themeVars.background};
+          --bg-main: ${themeVars.background};
+          --background: ${themeVars.background};
           
-          --sidebar-bg: \${themeVars.sidebar};
-          --bg-sidebar: \${themeVars.sidebar};
-          --sidebar: \${themeVars.sidebar};
+          --sidebar-bg: ${themeVars.sidebar};
+          --bg-sidebar: ${themeVars.sidebar};
+          --sidebar: ${themeVars.sidebar};
           
-          --bg-input: \${themeVars.sidebar};
-          --card: \${themeVars.sidebar};
-          --dropdown-bg: \${themeVars.sidebar};
-          --popover: \${themeVars.sidebar};
+          --bg-input: ${themeVars.sidebar};
+          --card: ${themeVars.sidebar};
+          --dropdown-bg: ${themeVars.sidebar};
+          --popover: ${themeVars.sidebar};
           
-          --marigold: \${themeVars.primary};
-          --brand-accent: \${themeVars.primary};
-          --primary: \${themeVars.primary};
-          --sidebar-primary: \${themeVars.primary};
-          --sidebar-ring: \${themeVars.primary};
+          --marigold: ${themeVars.primary};
+          --brand-accent: ${themeVars.primary};
+          --primary: ${themeVars.primary};
+          --sidebar-primary: ${themeVars.primary};
+          --sidebar-ring: ${themeVars.primary};
           
-          --primary-foreground: \${themeVars.primaryForeground};
-          --sidebar-primary-foreground: \${themeVars.primaryForeground};
+          --primary-foreground: ${themeVars.primaryForeground};
+          --sidebar-primary-foreground: ${themeVars.primaryForeground};
         }
-      \`;
+      `;
     } else {
       const customStyle = document.getElementById("custom-theme-vars");
       if (customStyle) {
