@@ -13,6 +13,7 @@ export interface QuickBuyPreferences {
 
 const PREFS_KEY = "buywise_quickbuy_prefs";
 const SAVED_ITEMS_KEY = "buywise_quickbuy_saved";
+const SAVED_LATER_KEY = "buywise_quickbuy_saved_later";
 const QUANTITIES_KEY = "buywise_quickbuy_quantities";
 const TOTAL_SPENT_KEY = "buywise_quickbuy_spent";
 
@@ -71,9 +72,15 @@ export function useQuickBuy() {
   }, [activeProfile]);
 
   const [savedItemIds, setSavedItemIds] = useState<string[]>([]);
+  const [savedForLaterIds, setSavedForLaterIds] = useState<string[]>([]);
   const [itemQuantities, setItemQuantities] = useState<Record<string, number>>({});
   const [totalSpent, setTotalSpent] = useState<number>(0);
   const [isLocalInitializing, setIsLocalInitializing] = useState(true);
+
+  // Computed cart item count based on quantities
+  const cartItemCount = useMemo(() => {
+    return savedItemIds.reduce((sum, id) => sum + (itemQuantities[id] || 1), 0);
+  }, [savedItemIds, itemQuantities]);
 
   const isInitializing = isProfilesInitializing || isLocalInitializing;
 
@@ -94,6 +101,13 @@ export function useQuickBuy() {
         if (storedSaved) {
           if (isMounted) {
             setSavedItemIds(JSON.parse(storedSaved));
+          }
+        }
+
+        const storedSavedLater = localStorage.getItem(SAVED_LATER_KEY);
+        if (storedSavedLater) {
+          if (isMounted) {
+            setSavedForLaterIds(JSON.parse(storedSavedLater));
           }
         }
 
@@ -291,6 +305,46 @@ export function useQuickBuy() {
     });
   }, []);
 
+  const clearCart = useCallback(() => {
+    setSavedItemIds([]);
+    setItemQuantities({});
+    localStorage.removeItem(SAVED_ITEMS_KEY);
+    localStorage.removeItem(QUANTITIES_KEY);
+  }, []);
+
+  const moveToSavedForLater = useCallback((productId: string) => {
+    // Remove from cart
+    setSavedItemIds((prev) => {
+      const next = prev.filter((id) => id !== productId);
+      localStorage.setItem(SAVED_ITEMS_KEY, JSON.stringify(next));
+      return next;
+    });
+    // Add to saved for later
+    setSavedForLaterIds((prev) => {
+      if (prev.includes(productId)) return prev;
+      const next = [...prev, productId];
+      localStorage.setItem(SAVED_LATER_KEY, JSON.stringify(next));
+      return next;
+    });
+    // We don't delete quantity so it's preserved if moved back
+  }, []);
+
+  const moveToCart = useCallback((productId: string) => {
+    // Remove from saved for later
+    setSavedForLaterIds((prev) => {
+      const next = prev.filter((id) => id !== productId);
+      localStorage.setItem(SAVED_LATER_KEY, JSON.stringify(next));
+      return next;
+    });
+    // Add to cart
+    setSavedItemIds((prev) => {
+      if (prev.includes(productId)) return prev;
+      const next = [...prev, productId];
+      localStorage.setItem(SAVED_ITEMS_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   const addExpense = useCallback((product: QuickBuyProduct) => {
     setTotalSpent((prev) => {
       const next = prev + product.price;
@@ -326,6 +380,10 @@ export function useQuickBuy() {
     .map((id) => allProducts.find((p) => p.id === id))
     .filter((p): p is QuickBuyProduct => p !== undefined);
 
+  const savedForLaterProducts = savedForLaterIds
+    .map((id) => allProducts.find((p) => p.id === id))
+    .filter((p): p is QuickBuyProduct => p !== undefined);
+
   return {
     isInitializing,
     isLoadingProducts,
@@ -334,12 +392,18 @@ export function useQuickBuy() {
     preferences,
     savePreferences,
     clearPreferences,
+    cartItemCount,
     savedItemIds,
     savedProducts,
+    savedForLaterIds,
+    savedForLaterProducts,
     itemQuantities,
     saveItem,
     removeSavedItem,
     updateQuantity,
+    clearCart,
+    moveToSavedForLater,
+    moveToCart,
     getFilteredProducts,
     fetchNextPage,
     totalSpent,

@@ -21,13 +21,19 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
     isInitializing, 
     isLoadingProducts,
     preferences, 
-    savePreferences, 
+    savePreferences,
     savedItemIds, 
     savedProducts, 
+    savedForLaterIds,
+    savedForLaterProducts,
+    cartItemCount,
     itemQuantities,
     saveItem, 
     removeSavedItem, 
     updateQuantity,
+    clearCart,
+    moveToSavedForLater,
+    moveToCart,
     getFilteredProducts,
     hasMore,
     fetchNextPage,
@@ -191,10 +197,14 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
       <div className="absolute inset-0 z-[100] bg-bg-main">
         <SavedItemsList 
           items={savedProducts} 
+          savedForLaterItems={savedForLaterProducts}
           itemQuantities={itemQuantities}
           onBack={() => setShowSaved(false)} 
           onRemove={removeSavedItem} 
           onUpdateQuantity={updateQuantity}
+          onClearCart={clearCart}
+          onMoveToSavedForLater={moveToSavedForLater}
+          onMoveToCart={moveToCart}
         />
       </div>
     );
@@ -265,7 +275,7 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
             className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-text-primary-light transition-colors relative"
           >
             <ShoppingCart className="size-4.5 text-brand-accent" />
-            <span className="font-bold text-[13px]">{savedItemIds.length}</span>
+            <span className="font-bold text-[13px]">{cartItemCount}</span>
           </button>
         </div>
       </div>
