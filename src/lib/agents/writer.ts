@@ -280,6 +280,86 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
     generationConfig: {
       maxOutputTokens: 1500,
       responseMimeType: "application/json",
+      responseSchema: {
+        type: "object" as any,
+        properties: {
+          ui_type: { type: "string" as any },
+          text: { type: "string" as any },
+          query: { type: "string" as any },
+          headline: { type: "string" as any },
+          deep_dive: { type: "string" as any },
+          products: {
+            type: "array" as any,
+            items: {
+              type: "object" as any,
+              properties: {
+                id: { type: "string" as any },
+                name: { type: "string" as any },
+                price: { type: "string" as any },
+                rating: { type: "number" as any },
+                image: { type: "string" as any },
+                reason: { type: "string" as any },
+                stretch: { type: "boolean" as any }
+              }
+            }
+          },
+          thought: { type: "string" as any },
+          question: { type: "string" as any },
+          options: {
+            type: "array" as any,
+            items: {
+              type: "object" as any,
+              properties: {
+                id: { type: "string" as any },
+                label: { type: "string" as any },
+                value: { type: "string" as any }
+              }
+            }
+          },
+          allow_skip: { type: "boolean" as any },
+          confirmed_category: { type: "string" as any },
+          category: { type: "string" as any },
+          key_attributes: {
+            type: "array" as any,
+            items: {
+              type: "object" as any,
+              properties: {
+                name: { type: "string" as any },
+                question: { type: "string" as any }
+              }
+            }
+          },
+          summary: { type: "string" as any },
+          final_verdict: { type: "string" as any },
+          recommended_products: {
+            type: "array" as any,
+            items: {
+              type: "object" as any,
+              properties: {
+                id: { type: "string" as any },
+                name: { type: "string" as any },
+                price: { type: "string" as any },
+                rating: { type: "number" as any },
+                reviewCount: { type: "string" as any },
+                description: { type: "string" as any },
+                platform: { type: "string" as any },
+                image: { type: "string" as any },
+                link: { type: "string" as any },
+                badge: { type: "string" as any }
+              }
+            }
+          },
+          fingerprint: {
+            type: "object" as any,
+            properties: {
+              language: { type: "string" as any },
+              tone: { type: "string" as any },
+              verbosity: { type: "string" as any }
+            }
+          }
+        },
+        required: ["ui_type"]
+      }
     },
   });
 

@@ -38,6 +38,8 @@ import path from "path";
 import { determineIntent } from "@/lib/agents/router";
 import { searchForProducts, type SearchedProduct } from "@/lib/agents/search";
 import { runWriter } from "@/lib/agents/writer";
+import { executeRerankedSearch } from "@/lib/providers/test-serper";
+import type { RerankedContext } from "@/lib/retrieval/index";
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
@@ -213,6 +215,14 @@ export async function POST(req: NextRequest) {
           generationConfig: {
             maxOutputTokens: 500,
             responseMimeType: "application/json",
+            responseSchema: {
+              type: "object" as any,
+              properties: {
+                ui_type: { type: "string" as any },
+                text: { type: "string" as any },
+              },
+              required: ["ui_type", "text"],
+            },
           },
         });
 
@@ -256,11 +266,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── Step 3: Search (only in deep_research when requirements are ready) ────
+    // ── Step 3: Search & Deep Reranking (only in deep_research) ───────────────
     // In explore mode the writer handles inline search via search_intent.
     // In deep_research mode we only search when the user has already supplied
     // both use-case and budget (i.e. requirements is non-empty).
     let searchResults: SearchedProduct[] = [];
+    let rerankedContext: RerankedContext | null = null;
     const requirementsReady =
       mode === "deep_research" &&
       requirements &&
@@ -277,6 +288,9 @@ export async function POST(req: NextRequest) {
           .filter(Boolean)
           .join(" ");
         searchResults = await searchForProducts(query, 6);
+        
+        // Execute Deep Web Scraping & Reranking Pipeline
+        rerankedContext = await executeRerankedSearch(query);
       } catch (searchErr) {
         console.warn("[route] Pre-search failed, writer will proceed without products:", searchErr);
       }
@@ -291,6 +305,12 @@ export async function POST(req: NextRequest) {
       sessionContext: {
         ...backendContext.context,
         ...requirements,
+        reranked_context: rerankedContext 
+          ? {
+              primary: rerankedContext.primary.map(c => c.text),
+              secondary: rerankedContext.secondary.map(c => c.text)
+            }
+          : undefined
       },
       isRegenerate,
       groqApiKey: process.env.GROQ_API_KEY,

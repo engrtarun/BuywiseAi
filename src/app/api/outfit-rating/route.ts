@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     const itemsList = body.items.join(", ");
     
-    const prompt = `Act as a savage fashion influencer and rate this outfit combination in 2 lines: [${itemsList}]. Also provide a numeric match score from 0-100 as the first line in the exact format 'SCORE: XX', followed by your 2-line witty commentary.`;
+    const prompt = `Act as a savage fashion influencer and rate this outfit combination in 2 lines: [${itemsList}]. Output a numeric match score from 0-100 and your 2-line witty commentary.`;
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
@@ -48,17 +48,30 @@ export async function POST(req: NextRequest) {
       generationConfig: {
         maxOutputTokens: 200,
         temperature: 0.8,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "object" as any, // SchemaType.OBJECT if we imported it, "object" string works in generative-ai
+          properties: {
+            score: { type: "integer" as any },
+            commentary: { type: "string" as any },
+          },
+          required: ["score", "commentary"],
+        },
       },
     });
 
     const responseText = result.response.text();
     
-    // Parse the response
-    const scoreMatch = responseText.match(/SCORE:\s*(\d+)/i);
-    const score = scoreMatch ? parseInt(scoreMatch[1], 10) : 50; // default to 50 if parsing fails
-    
-    // Extract commentary by removing the SCORE line
-    const commentary = responseText.replace(/SCORE:\s*\d+/i, '').trim();
+    // Parse the response with a fallback
+    let score = 50;
+    let commentary = "Not sure what to say about this fit.";
+    try {
+      const parsedData = JSON.parse(responseText.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
+      if (typeof parsedData.score === "number") score = parsedData.score;
+      if (typeof parsedData.commentary === "string") commentary = parsedData.commentary;
+    } catch (e) {
+      console.warn("Failed to parse outfit rating JSON", e);
+    }
 
     const response = NextResponse.json({ score, commentary });
     applyGuestCountCookie(response, guestCount);
