@@ -450,8 +450,8 @@ export default function Page() {
           // Parse and restore rich layout client-side
           const aiMsg = parseAiMessageContent(dbAiMsg.id, dbAiMsg.message);
   
-          if (aiMsg.userFingerprint) {
-             newRequirements = { ...newRequirements, user_fingerprint: aiMsg.userFingerprint };
+          if (aiMsg.fingerprint) {
+             newRequirements = { ...newRequirements, fingerprint: aiMsg.fingerprint };
              updateSessionRequirements(chatId, newRequirements).catch(e => console.error("Failed to update fingerprint", e));
           }
 
