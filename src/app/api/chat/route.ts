@@ -296,7 +296,23 @@ export async function POST(req: NextRequest) {
       groqApiKey: process.env.GROQ_API_KEY,
     });
 
-    // ── Step 5: Store in cache ────────────────────────────────────────────────
+    // ── Step 5: Extract confirmed_category and store in cache ─────────────────
+    // Parse the first response to pull out confirmed_category if the AI set it.
+    // Send it back to the client so it can be persisted into session requirements,
+    // preventing the category from being re-guessed on subsequent turns.
+    let confirmedCategory: string | null = null;
+    try {
+      const firstResponse = responseTexts[0];
+      if (firstResponse) {
+        const parsed = JSON.parse(firstResponse.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
+        if (typeof parsed?.confirmed_category === "string") {
+          confirmedCategory = parsed.confirmed_category;
+        }
+      }
+    } catch {
+      // Non-critical — ignore parse failures
+    }
+
     setCachedResponse(chatId, normalizedMsg, {
       responseTexts,
       products: serperProducts.length > 0 ? serperProducts : null,
@@ -305,6 +321,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       text: responseTexts,
       products: serperProducts.length > 0 ? serperProducts : null,
+      ...(confirmedCategory ? { confirmed_category: confirmedCategory } : {}),
     });
 
   } catch (error: unknown) {

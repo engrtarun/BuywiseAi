@@ -146,6 +146,9 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
         link: String(p.link || "https://amazon.in"),
         badge: String(p.badge || "⭐ Recommended")
       }));
+    } else if (parsedJson.ui_type === "unrecognized") {
+      // Gibberish / unrecognized input — render as a plain clarification prompt
+      aiMsg.content = parsedJson.text || "I'm not sure what product you're looking for — could you tell me more?";
     } else if (parsedJson.ui_type === "text_response") {
       aiMsg.content = parsedJson.text || "";
     }
@@ -463,6 +466,13 @@ export default function Page() {
           if (aiMsg.fingerprint) {
              newRequirements = { ...newRequirements, fingerprint: aiMsg.fingerprint };
              updateSessionRequirements(chatId, newRequirements).catch(e => console.error("Failed to update fingerprint", e));
+          }
+
+          // Persist confirmed_category if the API returned one — locks the category
+          // for the rest of this session so the AI doesn't re-guess it each turn.
+          if (data.confirmed_category && typeof data.confirmed_category === "string" && !newRequirements.confirmed_category) {
+            newRequirements = { ...newRequirements, confirmed_category: data.confirmed_category, category: data.confirmed_category };
+            updateSessionRequirements(chatId, newRequirements).catch(e => console.error("Failed to persist confirmed_category", e));
           }
 
           // If the API returned real product results (Serper/FakeStore fallback), attach them
