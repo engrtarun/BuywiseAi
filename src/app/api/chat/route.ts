@@ -36,7 +36,7 @@ import { enforceChatAccess } from "@/lib/chatAccess";
 import fs from "fs";
 import path from "path";
 import { determineIntent } from "@/lib/agents/router";
-import { searchForProducts } from "@/lib/agents/search";
+import { searchForProducts, type SearchedProduct } from "@/lib/agents/search";
 import { runWriter } from "@/lib/agents/writer";
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
@@ -172,7 +172,7 @@ export async function POST(req: NextRequest) {
     // In explore mode the writer handles inline search via search_intent.
     // In deep_research mode we only search when the user has already supplied
     // both use-case and budget (i.e. requirements is non-empty).
-    let searchResults = [];
+    let searchResults: SearchedProduct[] = [];
     const requirementsReady =
       mode === "deep_research" &&
       requirements &&
@@ -198,7 +198,7 @@ export async function POST(req: NextRequest) {
     const { responseTexts, serperProducts } = await runWriter({
       mode: mode === "deep_research" ? "deep_research" : "explore",
       userMessage,
-      history: userHistory,
+      history: userHistory.map((m) => ({ role: m.role ?? "user", content: m.content ?? "" })),
       products: searchResults,
       sessionContext: {
         ...backendContext.context,
