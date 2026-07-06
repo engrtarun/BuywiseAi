@@ -16,6 +16,7 @@ const SAVED_ITEMS_KEY = "buywise_quickbuy_saved";
 const SAVED_LATER_KEY = "buywise_quickbuy_saved_later";
 const QUANTITIES_KEY = "buywise_quickbuy_quantities";
 const TOTAL_SPENT_KEY = "buywise_quickbuy_spent";
+const PRODUCT_CACHE_KEY = "buywise_quickbuy_product_cache";
 
 function normalizeProfilePreferences(raw: Record<string, any> | null | undefined): QuickBuyPreferences | null {
   if (!raw) return null;
@@ -75,12 +76,8 @@ export function useQuickBuy() {
   const [savedForLaterIds, setSavedForLaterIds] = useState<string[]>([]);
   const [itemQuantities, setItemQuantities] = useState<Record<string, number>>({});
   const [totalSpent, setTotalSpent] = useState<number>(0);
+  const [productCache, setProductCache] = useState<Record<string, QuickBuyProduct>>({});
   const [isLocalInitializing, setIsLocalInitializing] = useState(true);
-
-  // Computed cart item count based on unique products
-  const cartItemCount = useMemo(() => {
-    return savedItemIds.length;
-  }, [savedItemIds]);
 
   const isInitializing = isProfilesInitializing || isLocalInitializing;
 
@@ -122,6 +119,13 @@ export function useQuickBuy() {
         if (storedSpent) {
           if (isMounted) {
             setTotalSpent(JSON.parse(storedSpent));
+          }
+        }
+
+        const storedCache = localStorage.getItem(PRODUCT_CACHE_KEY);
+        if (storedCache) {
+          if (isMounted) {
+            setProductCache(JSON.parse(storedCache));
           }
         }
       } catch (err) {
@@ -171,6 +175,24 @@ export function useQuickBuy() {
         } else {
           setAllProducts(json.data);
         }
+        
+        // Update product cache with any new products fetched
+        setProductCache(prev => {
+          const next = { ...prev };
+          let changed = false;
+          json.data.forEach((p: QuickBuyProduct) => {
+            if (!next[p.id]) {
+              next[p.id] = p;
+              changed = true;
+            }
+          });
+          if (changed) {
+            localStorage.setItem(PRODUCT_CACHE_KEY, JSON.stringify(next));
+            return next;
+          }
+          return prev;
+        });
+
         setHasMore(Boolean(json.pagination?.hasMore));
       } else {
         // Fallback to empty if error
@@ -384,14 +406,19 @@ export function useQuickBuy() {
     return allProducts;
   }, [allProducts]);
 
-  // Derived saved items list
+  // Derived saved items list using cache and allProducts
   const savedProducts = savedItemIds
-    .map((id) => allProducts.find((p) => p.id === id))
+    .map((id) => allProducts.find((p) => p.id === id) || productCache[id])
     .filter((p): p is QuickBuyProduct => p !== undefined);
 
   const savedForLaterProducts = savedForLaterIds
-    .map((id) => allProducts.find((p) => p.id === id))
+    .map((id) => allProducts.find((p) => p.id === id) || productCache[id])
     .filter((p): p is QuickBuyProduct => p !== undefined);
+
+  // Computed cart item count based on actual renderable products
+  const cartItemCount = useMemo(() => {
+    return savedProducts.length;
+  }, [savedProducts]);
 
   return {
     isInitializing,

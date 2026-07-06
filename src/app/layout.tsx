@@ -7,6 +7,7 @@ import { AppModeProvider } from "@/contexts/AppModeContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { CanvasOnboardingTour } from "@/components/onboarding/CanvasOnboardingTour";
 import { PremiumProvider } from "@/contexts/PremiumContext";
+import { UserProvider } from "@/contexts/UserContext";
 import { PremiumModal } from "@/components/premium/PremiumModal";
 import "./globals.css";
 
@@ -60,16 +61,18 @@ export default function RootLayout({
       </head>
       <body className="bg-ink-deeper">
         <ThemeProvider>
-          <OnboardingProvider>
-            <PremiumProvider>
-              <AppModeProvider>
+          <UserProvider>
+            <OnboardingProvider>
+              <PremiumProvider>
+                <AppModeProvider>
                 {children}
                 <CanvasOnboardingTour />
                 <PremiumModal />
               </AppModeProvider>
             </PremiumProvider>
           </OnboardingProvider>
-        </ThemeProvider>
+        </UserProvider>
+      </ThemeProvider>
       </body>
     </html>
   );

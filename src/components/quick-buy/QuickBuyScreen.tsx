@@ -291,7 +291,9 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
             className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-text-primary-light transition-colors relative"
           >
             <ShoppingCart className="size-4.5 text-brand-accent" />
-            <span className="font-bold text-[13px]">{cartItemCount}</span>
+            {cartItemCount > 0 && (
+              <span className="font-bold text-[13px]">{cartItemCount}</span>
+            )}
           </button>
         </div>
       </div>

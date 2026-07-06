@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Message, Feedback } from "@/types/chat";
 import { Product } from "@/types/product";
 import { MessageActions } from "./MessageActions";
@@ -18,6 +18,7 @@ import { IntakeQuestionnaireCard } from "./IntakeQuestionnaireCard";
 import { ChatMode } from "@/types/chat";
 import { Brain, Pencil, ArrowRight, ChevronRight, CheckCircle } from "lucide-react";
 import { getExploreLayoutParts } from "@/app/page";
+import { useUser } from "@/contexts/UserContext";
 
 function getCuratedProductImage(productName: string): string {
   const name = productName.toLowerCase();
@@ -175,6 +176,8 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customText, setCustomText] = useState("");
   const [hasAnswered, setHasAnswered] = useState(false);
+  
+  const { profile } = useUser();
 
   // Lazy loading state for Explore Mode:
   const hasSearchTag = !!message.searchTag;
@@ -214,7 +217,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
               questionnaireQuestions = parsed.questions;
             } else if (Array.isArray(parsed.key_attributes)) {
               // Map DEEP_RESEARCH intake_questionnaire format to expected questions array
-              questionnaireQuestions = parsed.key_attributes.map((attr: any) => ({
+              questionnaireQuestions = parsed.key_attributes.map((attr: { name?: string; question?: string }) => ({
                 id: attr.name,
                 question: attr.question,
                 options: []
@@ -230,7 +233,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
             exploreHeadline = parsed.headline || "";
             exploreDeepDiveText = parsed.deep_dive || "";
             const items = Array.isArray(parsed.products) ? parsed.products : [];
-            exploreProductsList = items.map((p: any) => ({
+            exploreProductsList = items.map((p: { id?: string | number; name?: string; price?: string | number; rating?: number; reviewCount?: string | number; description?: string; platform?: string; image?: string; link?: string; }) => ({
               id: String(p.id || Math.random()),
               name: String(p.name || "Unknown Product"),
               price: String(p.price || "₹0"),
@@ -252,23 +255,31 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
         }
       }
     } else {
+<<<<<<< HEAD
       // Doesn't start with '{' - it's plain text fallback from Groq or Gemini hallucination
       // Treat as plain text, do not show JSON parse error skeleton
+=======
+      if ((mode === "deep_research" || mode === "explore") && !message.intakeQuestionnaire && !message.clarifyingQuestion && !message.deepResearchResults && !message.searchTag && (!message.products || message.products.length === 0)) {
+         parseError = true;
+      }
+>>>>>>> 8eef288800fca6f8a8563562b0fc88b445ad8521
     }
   } catch (e) {
-    if (mode === "deep_research" || mode === "explore") {
+    if ((mode === "deep_research" || mode === "explore") && !message.intakeQuestionnaire && !message.clarifyingQuestion && !message.deepResearchResults && !message.searchTag && (!message.products || message.products.length === 0)) {
        parseError = true;
     }
   }
 
   // Fallback to parsed properties if raw JSON wasn't matched/parsed
-  if (!isQuestionnaire && message.clarifyingQuestion) {
+  if (!isQuestionnaire && (message.clarifyingQuestion || message.intakeQuestionnaire)) {
     isQuestionnaire = true;
-    questionnaireThought = message.clarifyingQuestion.acknowledgement || "";
-    questionnaireQuestion = message.clarifyingQuestion.question || "";
-    questionnaireOptions = message.clarifyingQuestion.options || [];
-    questionnaireAllowSkip = message.clarifyingQuestion.allow_skip !== false;
-    questionnaireAllowCustom = message.clarifyingQuestion.allow_custom !== false;
+    if (message.clarifyingQuestion) {
+      questionnaireThought = message.clarifyingQuestion.acknowledgement || "";
+      questionnaireQuestion = message.clarifyingQuestion.question || "";
+      questionnaireOptions = message.clarifyingQuestion.options || [];
+      questionnaireAllowSkip = message.clarifyingQuestion.allow_skip !== false;
+      questionnaireAllowCustom = message.clarifyingQuestion.allow_custom !== false;
+    }
   }
 
   if (!isExploreCarousel && message.products && message.products.length > 0 && !message.deepResearchResults && !message.searchTag) {
@@ -410,8 +421,11 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
           className="self-end mb-[2px]"
         >
           <Avatar className="size-7 sm:size-8 shrink-0">
+            {profile?.avatar_url && (
+              <AvatarImage src={profile.avatar_url} alt={profile.full_name || "User"} />
+            )}
             <AvatarFallback className="bg-brand-accent/20 text-brand-accent border border-brand-accent/30 font-heading font-bold text-[10px] sm:text-xs">
-              U
+              {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : "U"}
             </AvatarFallback>
           </Avatar>
         </motion.div>

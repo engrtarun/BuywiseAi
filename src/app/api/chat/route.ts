@@ -215,6 +215,14 @@ export async function POST(req: NextRequest) {
           generationConfig: {
             maxOutputTokens: 500,
             responseMimeType: "application/json",
+            responseSchema: {
+              type: "object" as any,
+              properties: {
+                ui_type: { type: "string" as any },
+                text: { type: "string" as any },
+              },
+              required: ["ui_type", "text"],
+            },
           },
         });
 
@@ -258,12 +266,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── Step 3: Search (only in deep_research when requirements are ready) ────
+    // ── Step 3: Search & Deep Reranking (only in deep_research) ───────────────
     // In explore mode the writer handles inline search via search_intent.
     // In deep_research mode we only search when the user has already supplied
     // both use-case and budget (i.e. requirements is non-empty).
+<<<<<<< HEAD
 
     // ── Step 3: Search & Deep Reranking (only in deep_research) ───────────────
+=======
+>>>>>>> 8eef288800fca6f8a8563562b0fc88b445ad8521
     let searchResults: SearchedProduct[] = [];
     let rerankedContext: RerankedContext | null = null;
     const requirementsReady =
