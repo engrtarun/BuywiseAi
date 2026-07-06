@@ -17,7 +17,7 @@ export async function scrapeWebText(urls: string[]): Promise<{ url: string; text
       clearTimeout(id);
       if (!res.ok) return null;
       return await res.text();
-    } catch (err) {
+    } catch (_err) {
       clearTimeout(id);
       return null;
     }

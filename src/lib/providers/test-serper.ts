@@ -31,7 +31,7 @@ export async function executeRerankedSearch(query: string): Promise<RerankedCont
 
     const data = await response.json();
     const organic = data.organic || [];
-    const urls: string[] = organic.map((r: any) => r.link).filter(Boolean);
+    const urls: string[] = organic.map((r: { link?: string }) => r.link).filter(Boolean);
 
     if (urls.length === 0) return null;
 

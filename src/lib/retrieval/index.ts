@@ -4,7 +4,7 @@
  */
 
 import { scrapeWebText } from "./scraper";
-import { slidingWindowChunker, type TextChunk } from "./chunker";
+import { slidingWindowChunker } from "./chunker";
 import { scoreChunks, type ScoredChunk } from "./crossEncoder";
 
 export interface RerankedContext {

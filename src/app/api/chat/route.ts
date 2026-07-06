@@ -270,11 +270,8 @@ export async function POST(req: NextRequest) {
     // In explore mode the writer handles inline search via search_intent.
     // In deep_research mode we only search when the user has already supplied
     // both use-case and budget (i.e. requirements is non-empty).
-<<<<<<< HEAD
 
     // ── Step 3: Search & Deep Reranking (only in deep_research) ───────────────
-=======
->>>>>>> 8eef288800fca6f8a8563562b0fc88b445ad8521
     let searchResults: SearchedProduct[] = [];
     let rerankedContext: RerankedContext | null = null;
     const requirementsReady =

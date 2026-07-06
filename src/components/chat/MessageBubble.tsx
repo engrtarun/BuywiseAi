@@ -255,14 +255,8 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
         }
       }
     } else {
-<<<<<<< HEAD
       // Doesn't start with '{' - it's plain text fallback from Groq or Gemini hallucination
       // Treat as plain text, do not show JSON parse error skeleton
-=======
-      if ((mode === "deep_research" || mode === "explore") && !message.intakeQuestionnaire && !message.clarifyingQuestion && !message.deepResearchResults && !message.searchTag && (!message.products || message.products.length === 0)) {
-         parseError = true;
-      }
->>>>>>> 8eef288800fca6f8a8563562b0fc88b445ad8521
     }
   } catch (e) {
     if ((mode === "deep_research" || mode === "explore") && !message.intakeQuestionnaire && !message.clarifyingQuestion && !message.deepResearchResults && !message.searchTag && (!message.products || message.products.length === 0)) {
