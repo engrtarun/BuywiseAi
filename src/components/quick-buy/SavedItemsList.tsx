@@ -60,7 +60,7 @@ export function SavedItemsList({
   };
 
   const totalPrice = items.reduce((sum, item) => sum + item.price * (itemQuantities[item.id] || 1), 0);
-  const totalItems = items.reduce((sum, item) => sum + (itemQuantities[item.id] || 1), 0);
+  const totalItems = items.length;
   const tax = Math.round(totalPrice * 0.18); // 18% mock tax
   const shipping = totalPrice > 5000 ? 0 : 250;
   const finalTotal = totalPrice + tax + (items.length > 0 ? shipping : 0);

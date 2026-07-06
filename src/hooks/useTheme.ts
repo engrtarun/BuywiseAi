@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const isBrowser = typeof window !== "undefined";
@@ -14,7 +14,7 @@ interface ThemeContextType {
   mode: string;
   setMode: (mode: string) => Promise<void>;
   customSeedColor: string;
-  setCustomSeedColor: (color: string) => void;
+  setCustomSeedColor: (color: string) => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -23,6 +23,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
   const [theme, setThemeState] = useState<string>("default");
   const [mode, setModeState] = useState<string>("light");
   const [customSeedColor, setCustomSeedColorState] = useState<string>("#FC8019");
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   const applyThemeAndMode = (newTheme: string, newMode: string, newSeed?: string) => {
     const root = document.documentElement;
@@ -38,7 +39,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
     if (newTheme === "custom") {
       const activeSeed = newSeed || customSeedColor;
       const themeVars = generateCustomTheme(activeSeed);
-      
+
       const bgHsl = hexToShadcnHsl(themeVars.background);
       const sidebarHsl = hexToShadcnHsl(themeVars.sidebar);
       const primaryHsl = hexToShadcnHsl(themeVars.primary);
@@ -50,7 +51,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
         customStyle.id = "custom-theme-vars";
         document.head.appendChild(customStyle);
       }
-      
+
       customStyle.innerHTML = `
         :root[data-theme="custom"] {
           --ink-deep: ${bgHsl};
@@ -119,6 +120,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
         if (profile) {
           let updatedTheme = savedTheme;
           let updatedMode = savedMode;
+          let updatedSeed = savedSeed;
           let needsUpdateLocal = false;
 
           if (profile.theme_preference && profile.theme_preference !== savedTheme) {
@@ -133,9 +135,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
           if (needsUpdateLocal) {
             setThemeState(updatedTheme);
             setModeState(updatedMode);
-            applyThemeAndMode(updatedTheme, updatedMode);
+            setCustomSeedColorState(updatedSeed);
+            applyThemeAndMode(updatedTheme, updatedMode, updatedSeed);
             localStorage.setItem("buywise-theme", updatedTheme);
             localStorage.setItem("buywise-mode", updatedMode);
+            localStorage.setItem("buywise_custom_seed_color", updatedSeed);
           }
         }
       } catch (err) {
@@ -146,7 +150,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
     syncWithProfile();
   }, []);
 
-  const setCustomSeedColor = (newColor: string) => {
+  const setCustomSeedColor = async (newColor: string) => {
     setCustomSeedColorState(newColor);
     localStorage.setItem("buywise_custom_seed_color", newColor);
     if (theme === "custom") {
@@ -198,11 +202,11 @@ export function useTheme() {
   if (context === undefined) {
     return {
       theme: "default",
-      setTheme: async () => {},
+      setTheme: async () => { },
       mode: "light",
-      setMode: async () => {},
+      setMode: async () => { },
       customSeedColor: "#FC8019",
-      setCustomSeedColor: () => {},
+      setCustomSeedColor: async () => { },
     };
   }
   return context;
