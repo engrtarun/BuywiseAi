@@ -20,6 +20,7 @@ import {
   generateChatTitle,
   checkAndIncrementMessageLimit,
   updateSessionRequirements,
+  updateChatSessionPinned,
 } from "@/app/actions/chat";
 
 function parseJSONSafe(text: string) {
@@ -202,6 +203,8 @@ function generateTitle(firstMessage: string): string {
 
 /* ── Page (top-level orchestrator) ────────────────────── */
 
+const MAX_PINNED_SESSIONS = 5;
+
 export default function Page() {
   const router = useRouter();
   // Chat sessions state
@@ -217,6 +220,8 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(true);
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
   const [isTemporaryChat, setIsTemporaryChat] = useState(false);
+  const [showQuickBuy, setShowQuickBuy] = useState(false);
+  const [showFoodQuickBuy, setShowFoodQuickBuy] = useState(false);
 
   // Guest access hook
   const {
@@ -314,6 +319,7 @@ export default function Page() {
               createdAt: new Date(s.created_at).getTime(),
               mode: s.mode,
               requirements: (s as any).requirements || {},
+              pinned: (s as any).pinned ?? false,
             };
           })
         );
@@ -348,6 +354,7 @@ export default function Page() {
             messages: freshMessages,
             createdAt: Date.now(),
             mode: freshMode,
+            pinned: false,
           };
 
           setChatSessions((prev) => [freshSession, ...prev]);
@@ -386,7 +393,7 @@ export default function Page() {
    * Get an AI response by calling the API route.
    */
   const getAiReply = useCallback(
-    async (chatId: string, history: Message[], message: string, currentReqs?: Record<string, unknown>) => {
+    async (chatId: string, history: Message[], message: string, currentReqs?: Record<string, unknown>, isRegenerate = false) => {
       setIsTyping(true);
       const startTime = Date.now();
       abortControllerRef.current = new AbortController();
@@ -399,7 +406,7 @@ export default function Page() {
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ history, message, mode: currentMode, requirements: currentReqs || session?.requirements || {} }),
+          body: JSON.stringify({ chatId, history, message, mode: currentMode, requirements: currentReqs || session?.requirements || {}, isRegenerate }),
           signal: abortControllerRef.current.signal,
         });
 
@@ -426,8 +433,19 @@ export default function Page() {
         let newRequirements = currentReqs || session?.requirements || {};
         
         for (const aiMsgContent of aiMsgContents) {
-          // Persist AI message to Supabase
-          const dbAiMsg = await apiSendMessage(chatId, "ai", aiMsgContent);
+          let dbAiMsg;
+          if (session?.isTemporary) {
+            dbAiMsg = {
+              id: generateId(),
+              session_id: chatId,
+              sender: "ai",
+              message: aiMsgContent,
+              created_at: new Date().toISOString(),
+            };
+          } else {
+            // Persist AI message to Supabase
+            dbAiMsg = await apiSendMessage(chatId, "ai", aiMsgContent);
+          }
   
           // Parse and restore rich layout client-side
           const aiMsg = parseAiMessageContent(dbAiMsg.id, dbAiMsg.message);
@@ -438,7 +456,7 @@ export default function Page() {
           }
 
           // If the API returned real product results (Serper/FakeStore fallback), attach them
-          if (data.products && Array.isArray(data.products) && (aiMsg as any).ui_type === 'explore_carousel') {
+          if (data.products && Array.isArray(data.products) && ((aiMsg as any).ui_type === 'explore_carousel' || aiMsg.products !== undefined)) {
              // We attach products to the carousel message
              // (Assuming we still pass data.products for legacy support, but new flow embeds them directly into Gemini's JSON)
           }
@@ -541,6 +559,8 @@ export default function Page() {
   const handleNewChat = useCallback((mode?: ChatMode) => {
     setIsTyping(false);
     setIsTemporaryChat(false);
+    setShowQuickBuy(false);
+    setShowFoodQuickBuy(false);
     const initialMode = mode || "explore";
     setSelectedMode(initialMode);
     setActiveChatId(null);
@@ -561,6 +581,8 @@ export default function Page() {
   }, [activeChatId, chatSessions, selectedMode]);
 
   const handleNewTemporaryChat = useCallback(() => {
+    setShowQuickBuy(false);
+    setShowFoodQuickBuy(false);
     if (isTemporaryChat) {
       // Exit temporary chat
       setIsTemporaryChat(false);
@@ -581,6 +603,8 @@ export default function Page() {
     setActiveChatId(id);
     setIsTyping(false);
     setIsTemporaryChat(false);
+    setShowQuickBuy(false);
+    setShowFoodQuickBuy(false);
     setChatSessions((prev) => prev.filter((s) => !s.isTemporary));
   }, []);
 
@@ -602,7 +626,25 @@ export default function Page() {
       console.error("Failed to delete chat session:", err);
     }
   }, [activeChatId, chatSessions, handleNewTemporaryChat]);
+  const handleToggleChatPin = useCallback(async (id: string, pinned: boolean) => {
+    const currentPinnedCount = chatSessions.filter((session) => session.pinned).length;
+    const isPinning = pinned;
 
+    if (isPinning && currentPinnedCount >= MAX_PINNED_SESSIONS) {
+      alert(`You can only pin up to ${MAX_PINNED_SESSIONS} chats. Unpin an existing chat before pinning a new one.`);
+      return;
+    }
+
+    setChatSessions((prev) =>
+      prev.map((session) => (session.id === id ? { ...session, pinned } : session))
+    );
+
+    try {
+      await updateChatSessionPinned(id, pinned);
+    } catch (err) {
+      console.error("Failed to update pinned state:", err);
+    }
+  }, [chatSessions]);
   /** Navigate to login (used by guest limit prompt) */
   const handleLoginClick = useCallback(() => {
     router.push("/login");
@@ -828,7 +870,7 @@ export default function Page() {
       })
     );
     if (lastUserMessage) {
-      getAiReply(activeChatId, history, lastUserMessage.content);
+      getAiReply(activeChatId, history, lastUserMessage.content, undefined, true);
     }
 
   }, [activeChatId, getAiReply]);
@@ -895,6 +937,7 @@ export default function Page() {
         onSelectChat={handleSelectChat}
         onDeleteChat={handleDeleteChat}
         onRenameChat={handleRenameChat}
+        onTogglePin={handleToggleChatPin}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         isGuest={isGuest}
@@ -928,6 +971,12 @@ export default function Page() {
           onModeChange={handleModeChangeRequest}
           activeMode={activeMode}
           onProductBuy={handleProductBuy}
+          showQuickBuy={showQuickBuy}
+          showFoodQuickBuy={showFoodQuickBuy}
+          onOpenQuickBuy={() => setShowQuickBuy(true)}
+          onCloseQuickBuy={() => setShowQuickBuy(false)}
+          onOpenFoodQuickBuy={() => setShowFoodQuickBuy(true)}
+          onCloseFoodQuickBuy={() => setShowFoodQuickBuy(false)}
         />
       </div>
 

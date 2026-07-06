@@ -51,6 +51,22 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
   const { extractCustomizations } = useVoiceCustomizationExtraction();
   
   const [showSettings, setShowSettings] = useState(false);
+  const previousGhostRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const root = document.documentElement;
+    previousGhostRef.current = root.getAttribute('data-ghost');
+    root.setAttribute('data-ghost', 'true');
+
+    return () => {
+      if (previousGhostRef.current === null) {
+        root.removeAttribute('data-ghost');
+      } else {
+        root.setAttribute('data-ghost', previousGhostRef.current);
+      }
+    };
+  }, []);
   const [showAddProfileForm, setShowAddProfileForm] = useState(false);
   const [showOnboardingForm, setShowOnboardingForm] = useState(false);
   const [showSaved, setShowSaved] = useState(false);

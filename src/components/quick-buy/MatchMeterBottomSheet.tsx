@@ -34,17 +34,25 @@ export function MatchMeterBottomSheet({ isOpen, onClose, score, commentary }: Ma
   }, [isOpen, controls]);
 
   const handleDragEnd = async (event: any, info: PanInfo) => {
-    if (info.offset.y > 100 || info.velocity.y > 500) {
-      await controls.start({ y: "100%", transition: { duration: 0.2 } });
-      onClose();
-    } else {
-      controls.start({ y: 0, transition: { type: "spring", damping: 25, stiffness: 200 } });
+    try {
+      if (info.offset.y > 100 || info.velocity.y > 500) {
+        await controls.start({ y: "100%", transition: { duration: 0.2 } });
+        onClose();
+      } else {
+        controls.start({ y: 0, transition: { type: "spring", damping: 25, stiffness: 200 } });
+      }
+    } catch (error) {
+      // Ignore unmounted component animation errors
     }
   };
 
   const handleBackdropClick = async () => {
-    await controls.start({ y: "100%", transition: { duration: 0.2 } });
-    onClose();
+    try {
+      await controls.start({ y: "100%", transition: { duration: 0.2 } });
+      onClose();
+    } catch (error) {
+      // Ignore unmounted component animation errors
+    }
   };
 
   if (!mounted || score === undefined) return null;

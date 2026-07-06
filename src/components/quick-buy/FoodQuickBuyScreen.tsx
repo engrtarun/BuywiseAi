@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { X, Settings2, Bike } from "lucide-react";
 import { FoodSwipeCardDeck } from "./FoodSwipeCardDeck";
 
@@ -13,6 +13,22 @@ export function FoodQuickBuyScreen({ onClose }: FoodQuickBuyScreenProps) {
   const [minBudget, setMinBudget] = useState<number | "">("");
   const [maxBudget, setMaxBudget] = useState<number | "">("");
   const [orderCount, setOrderCount] = useState(0);
+  const previousGhostRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const root = document.documentElement;
+    previousGhostRef.current = root.getAttribute('data-ghost');
+    root.setAttribute('data-ghost', 'true');
+
+    return () => {
+      if (previousGhostRef.current === null) {
+        root.removeAttribute('data-ghost');
+      } else {
+        root.setAttribute('data-ghost', previousGhostRef.current);
+      }
+    };
+  }, []);
 
   if (showSettings) {
     return (

@@ -251,7 +251,17 @@ export function useQuickBuy() {
     }
   }, [activeProfile, updateProfile]);
 
-  const saveItem = useCallback((productId: string) => {
+  const saveItem = useCallback((productOrId: string | QuickBuyProduct) => {
+    let productId = "";
+    let product: QuickBuyProduct | undefined;
+
+    if (typeof productOrId === "string") {
+      productId = productOrId;
+      product = allProducts.find((item) => item.id === productId);
+    } else {
+      productId = productOrId.id;
+      product = productOrId;
+    }
     setSavedItemIds((prev) => {
       if (prev.includes(productId)) return prev;
       const next = [...prev, productId];
@@ -259,7 +269,6 @@ export function useQuickBuy() {
       return next;
     });
 
-    const product = allProducts.find((item) => item.id === productId);
     if (!product) {
       console.warn("Quick Buy save skipped because product data was not available in the current catalog.");
       return;

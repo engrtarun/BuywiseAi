@@ -26,6 +26,7 @@ export interface ChatSession {
   created_at: string
   title?: string
   mode: "deep_research" | "explore"
+  pinned?: boolean
 }
 
 export interface ChatMessage {
@@ -240,15 +241,16 @@ export async function createChatSession(mode?: "deep_research" | "explore"): Pro
       status: "active",
       requirements: {},
       mode: mode || "explore",
+      pinned: false,
     })
     .select("id")
     .single()
 
-  // Graceful fallback if the remote database is missing the 'mode' column
-  if (error && error.message.includes("'mode' column")) {
-    console.warn("Graceful fallback: 'mode' column missing in remote Supabase, inserting without it.");
+  // Graceful fallback if the remote database is missing a newer column
+  if (error && (error.message.includes("'mode' column") || error.message.includes("'pinned' column"))) {
+    console.warn("Graceful fallback: some chat_sessions columns missing in remote Supabase, inserting without them.");
     
-    // Retry without the mode column
+    // Retry without the new columns when the DB schema is older.
     const fallbackResult = await supabase
       .from("chat_sessions")
       .insert({
@@ -408,6 +410,16 @@ export async function deleteChatSession(sessionId: string): Promise<void> {
     return
   }
 
+  // Delete all messages associated with the session first to avoid foreign key constraints
+  const { error: messagesError } = await supabase
+    .from("chat_messages")
+    .delete()
+    .eq("session_id", sessionId)
+
+  if (messagesError) {
+    throw new Error(`Failed to delete chat messages: ${messagesError.message}`)
+  }
+
   const { error } = await supabase
     .from("chat_sessions")
     .delete()
@@ -479,6 +491,24 @@ export async function updateSessionRequirements(sessionId: string, requirements:
 
   if (error) {
     throw new Error(`Failed to update session requirements: ${error.message}`)
+  }
+}
+
+export async function updateChatSessionPinned(sessionId: string, pinned: boolean): Promise<void> {
+  const supabase = await createClient()
+  const user = await getAuthenticatedUser(supabase)
+
+  if (!user || sessionId.startsWith("guest-")) {
+    return
+  }
+
+  const { error } = await supabase
+    .from("chat_sessions")
+    .update({ pinned })
+    .eq("id", sessionId)
+
+  if (error) {
+    throw new Error(`Failed to update chat session pin status: ${error.message}`)
   }
 }
 

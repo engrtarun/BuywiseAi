@@ -39,6 +39,8 @@ interface ChatInputProps {
   isClarifyingActive?: boolean;
   onModeChange?: (mode: ChatMode) => void;
   isModeLocked?: boolean;
+  userMessageCount?: number;
+  onNewChat?: (mode?: ChatMode) => void;
 }
 
 export function ChatInput({ 
@@ -61,7 +63,9 @@ export function ChatInput({
   mode = "explore",
   isClarifyingActive = false,
   onModeChange,
-  isModeLocked = false
+  isModeLocked = false,
+  userMessageCount = 0,
+  onNewChat,
 }: ChatInputProps) {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -181,6 +185,29 @@ export function ChatInput({
               <span className="font-sans font-medium">{dailyLimitMessage ?? "You've reached your daily limit of 25 messages. Please come back tomorrow!"}</span>
             </div>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  if (userMessageCount >= 50) {
+    return (
+      <div className="shrink-0 bg-bg-main border-t border-border-light px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-6 z-20 transition-opacity duration-300">
+        <div className="w-full max-w-md mx-auto flex flex-col items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <button
+            onClick={() => onNewChat && onNewChat(mode || "explore")}
+            className="
+              relative w-full py-4 px-6 rounded-2xl font-bold text-lg tracking-wide
+              text-ink-deeper bg-gradient-to-b from-marigold to-[#e5a00d]
+              active:translate-y-1 active:shadow-[0_0px_0_0_#b37b00]
+              shadow-[0_6px_0_0_#b37b00,0_12px_24px_-4px_rgba(252,176,14,0.4)]
+              transition-all duration-100 ease-out flex items-center justify-center gap-3
+              cursor-pointer hover:brightness-110
+            "
+          >
+            <Plus className="size-6 stroke-[3]" />
+            START NEW CHAT
+          </button>
         </div>
       </div>
     );

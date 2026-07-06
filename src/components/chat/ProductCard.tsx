@@ -115,47 +115,55 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
       onClick={handleCardClick}
       className={`
         group flex flex-col w-full h-full cursor-pointer
-        bg-zinc-900/85 border rounded-2xl overflow-hidden backdrop-blur-md
-        transition-all duration-200 hover:scale-[1.02]
+        bg-zinc-900/90 border rounded-[20px] overflow-hidden backdrop-blur-xl
+        transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl
         ${inCart 
-          ? "border-marigold/45 shadow-[0_0_20px_rgba(232,163,61,0.06)]" 
-          : "border-white/5 hover:border-zinc-800 shadow-xl"
+          ? "border-marigold/60 shadow-[0_0_24px_rgba(232,163,61,0.15)]" 
+          : "border-white/10 hover:border-white/20 shadow-lg"
         }
       `}
     >
-      {/* Image container */}
-      <div className="relative aspect-square w-full bg-white/5 overflow-hidden border-b border-white/5">
+      {/* --- Image Panel (Top) --- */}
+      <div className="relative w-full pb-[100%] bg-black/40 overflow-hidden border-b border-white/5">
         
         {/* Shimmer skeleton */}
         <div className={`absolute inset-0 bg-white/5 animate-pulse transition-opacity duration-500 ${imageLoaded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} />
         
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {/* Image */}
         <img
           src={product.image}
           alt={product.name}
+          decoding="async"
           onLoad={() => setImageLoaded(true)}
-          className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-105 ${imageLoaded ? 'opacity-100' : 'opacity-0 scale-95'}`}
+          className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           loading="lazy"
         />
         
-        {/* Platform badge */}
+        {/* Inner shadow for premium feel */}
+        <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.3)] pointer-events-none" />
+        
+        {/* Retailer Badge */}
         <div className={`
-          absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider backdrop-blur-md shadow-sm
-          ${isAmazon ? "bg-amber-400/90 text-amber-950" : "bg-blue-500/90 text-white"}
+          absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-[0.15em] 
+          backdrop-blur-md shadow-md border
+          ${isAmazon 
+            ? "bg-amber-400/80 text-amber-950 border-amber-400/50" 
+            : "bg-blue-500/80 text-white border-blue-400/50"
+          }
         `}>
           {product.platform}
         </div>
 
         {/* Add to Cart Checkbox overlay top-right */}
-        <div className="absolute top-2.5 right-2.5 z-10">
+        <div className="absolute top-3 right-3 z-10">
           <button
             type="button"
             onClick={handleCartToggle}
             className={`
-              size-8 rounded-lg flex items-center justify-center backdrop-blur-md transition-all duration-200 cursor-pointer
+              size-8 rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 cursor-pointer border
               ${inCart 
-                ? "bg-marigold text-zinc-950 shadow-[0_0_12px_rgba(232,163,61,0.4)]" 
-                : "bg-black/50 border border-white/10 text-white/80 hover:text-white hover:bg-black/75 hover:scale-105"
+                ? "bg-marigold text-zinc-950 border-marigold shadow-[0_0_12px_rgba(232,163,61,0.5)] scale-105" 
+                : "bg-black/40 border-white/20 text-white/90 hover:text-white hover:bg-black/60 hover:scale-110"
               }
             `}
             aria-label={inCart ? "Remove from cart" : "Add to cart"}
@@ -169,49 +177,51 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex flex-col flex-1 p-3.5 sm:p-4 bg-gradient-to-b from-transparent to-black/20">
-        <h3 className="font-heading font-medium text-zinc-100 text-[14px] sm:text-[15px] leading-tight line-clamp-2 mb-2 group-hover:text-marigold transition-colors">
+      {/* --- Details Segment (Middle) --- */}
+      <div className="flex flex-col flex-1 px-4 py-3 bg-gradient-to-b from-white/[0.02] to-transparent">
+        <h3 className="font-heading font-semibold text-zinc-100 text-[14px] sm:text-[15px] leading-[1.3] line-clamp-2 group-hover:text-marigold transition-colors">
           {product.name}
         </h3>
+        
+        <div className="flex items-center gap-1.5 mt-2 opacity-90">
+          <span className="text-marigold text-[12px] tracking-widest leading-none drop-shadow-[0_0_2px_rgba(232,163,61,0.3)]">{renderStars(product.rating)}</span>
+          <span className="text-zinc-400 text-[11px] font-medium leading-none">
+            {product.rating.toFixed(1)}
+          </span>
+        </div>
+      </div>
+      
+      {/* --- Results / Action Module (Bottom) --- */}
+      <div className="mt-auto px-4 py-3 bg-black/40 border-t border-white/5 flex items-center justify-between">
+        <div className="flex flex-col">
+          <span className="text-zinc-400 text-[10px] font-semibold uppercase tracking-wider mb-0.5">Price</span>
+          <span className="font-heading font-black text-marigold text-[18px] sm:text-[20px] leading-none tracking-tight">
+            {product.price}
+          </span>
+        </div>
 
-        {/* Rating and price metadata at the bottom */}
-        <div className="mt-auto pt-2 flex items-center justify-between">
-          <div className="flex flex-col gap-0.5">
-            <span className="font-heading font-bold text-marigold text-[17px] sm:text-[19px] leading-none">
-              {product.price}
-            </span>
-            <div className="flex items-center gap-1 mt-1">
-              <span className="text-marigold text-[11px] tracking-widest leading-none">{renderStars(product.rating)}</span>
-              <span className="text-zinc-500 text-[10px] font-mono leading-none">
-                ({product.rating.toFixed(1)})
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <a
-              href={product.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center size-8 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-colors text-zinc-300"
-              aria-label="View Product"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ExternalLink className="size-3.5" />
-            </a>
-            
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onBuyCallback) onBuyCallback(product);
-                setIsCheckoutOpen(true);
-              }}
-              className="flex items-center justify-center h-8 px-3 rounded-lg bg-marigold hover:bg-marigold/95 transition-colors text-zinc-950 font-bold text-xs gap-1"
-            >
-              Buy
-            </button>
-          </div>
+        <div className="flex items-center gap-2">
+          <a
+            href={product.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center size-9 rounded-xl bg-white/5 border border-white/10 hover:bg-white/15 transition-all text-zinc-300 hover:text-white hover:scale-105"
+            aria-label="View Product"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExternalLink className="size-4" />
+          </a>
+          
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onBuyCallback) onBuyCallback(product);
+              setIsCheckoutOpen(true);
+            }}
+            className="flex items-center justify-center h-9 px-4 rounded-xl bg-marigold hover:bg-[#ffb700] hover:scale-105 transition-all text-zinc-950 font-bold text-[13px] tracking-wide shadow-[0_4px_12px_rgba(232,163,61,0.25)]"
+          >
+            BUY
+          </button>
         </div>
       </div>
       

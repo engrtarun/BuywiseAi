@@ -24,11 +24,11 @@ interface ChatHeaderProps {
   isGuest: boolean;
   isTemporaryChat: boolean;
   onNewTemporaryChat?: () => void;
-  onQuickBuyClick: () => void;
-  onFoodQuickBuyClick: () => void;
+  onOpenQuickBuy: () => void;
+  onOpenFoodQuickBuy: () => void;
 }
 
-function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onNewTemporaryChat, onQuickBuyClick, onFoodQuickBuyClick }: ChatHeaderProps) {
+function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onNewTemporaryChat, onOpenQuickBuy, onOpenFoodQuickBuy }: ChatHeaderProps) {
   return (
     <header className="shrink-0 z-20 flex items-center bg-bg-main border-b border-border-light h-14 transition-colors duration-500">
       <div className="w-full flex items-center justify-between">
@@ -48,8 +48,8 @@ function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onN
           {!isGuest && onNewTemporaryChat && (
             <TemporaryChatButton onClick={onNewTemporaryChat} isTemporaryChat={isTemporaryChat} />
           )}
-          <QuickBuyButton onClick={onQuickBuyClick} />
-          <FoodQuickBuyButton onClick={onFoodQuickBuyClick} />
+          <QuickBuyButton onClick={onOpenQuickBuy} />
+          <FoodQuickBuyButton onClick={onOpenFoodQuickBuy} />
         </div>
       </div>
     </header>
@@ -84,6 +84,12 @@ interface ChatWindowProps {
   onModeChange: (mode: ChatMode) => void;
   activeMode: ChatMode | null;
   onProductBuy?: (product: any) => void;
+  showQuickBuy: boolean;
+  showFoodQuickBuy: boolean;
+  onOpenQuickBuy: () => void;
+  onCloseQuickBuy: () => void;
+  onOpenFoodQuickBuy: () => void;
+  onCloseFoodQuickBuy: () => void;
 }
 
 export function ChatWindow({
@@ -112,9 +118,13 @@ export function ChatWindow({
   onModeChange,
   activeMode,
   onProductBuy,
+  showQuickBuy,
+  showFoodQuickBuy,
+  onOpenQuickBuy,
+  onCloseQuickBuy,
+  onOpenFoodQuickBuy,
+  onCloseFoodQuickBuy,
 }: ChatWindowProps) {
-  const [showQuickBuy, setShowQuickBuy] = React.useState(false);
-  const [showFoodQuickBuy, setShowFoodQuickBuy] = React.useState(false);
   const [inputText, setInputText] = React.useState("");
   
   const showWelcome = messages.length === 0 && !isTyping;
@@ -125,6 +135,10 @@ export function ChatWindow({
     if (last.role !== "assistant") return false;
     // Fast check for clarifying_question or questionnaire in the raw JSON payload
     return !!last.clarifyingQuestion || last.content.includes('"ui_type":"clarifying_question"') || last.content.includes('"ui_type": "clarifying_question"') || last.content.includes('"ui_type":"questionnaire"') || last.content.includes('"ui_type": "questionnaire"');
+  }, [messages]);
+
+  const userMessageCount = React.useMemo(() => {
+    return messages.filter(m => m.role === "user").length;
   }, [messages]);
 
   return (
@@ -143,8 +157,8 @@ export function ChatWindow({
         isGuest={isGuest} 
         isTemporaryChat={isTemporaryChat} 
         onNewTemporaryChat={onNewTemporaryChat} 
-        onQuickBuyClick={() => setShowQuickBuy(true)}
-        onFoodQuickBuyClick={() => setShowFoodQuickBuy(true)}
+        onOpenQuickBuy={onOpenQuickBuy}
+        onOpenFoodQuickBuy={onOpenFoodQuickBuy}
       />
       <OfflineBanner />
       {showWelcome ? (
@@ -202,13 +216,15 @@ export function ChatWindow({
         isClarifyingActive={isClarifyingActive}
         onModeChange={onModeChange}
         isModeLocked={!!activeMode}
+        userMessageCount={userMessageCount}
+        onNewChat={onNewChat}
       />
 
       {/* Quick Buy Overlay */}
-      {showQuickBuy && <QuickBuyScreen onClose={() => setShowQuickBuy(false)} />}
+      {showQuickBuy && <QuickBuyScreen onClose={onCloseQuickBuy} />}
       
       {/* Food Quick Buy Overlay */}
-      {showFoodQuickBuy && <FoodQuickBuyScreen onClose={() => setShowFoodQuickBuy(false)} />}
+      {showFoodQuickBuy && <FoodQuickBuyScreen onClose={onCloseFoodQuickBuy} />}
     </div>
   );
 }

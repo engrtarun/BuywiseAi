@@ -6,7 +6,7 @@ import { quickBuyMockFoodData } from "@/lib/quickBuyMockFoodData";
 import { motion, AnimatePresence } from "framer-motion";
 import { UtensilsCrossed } from "lucide-react";
 
-export function FoodSwipeCardDeck({ customizations, onOrder, minBudget, maxBudget }: { customizations: string[], onOrder?: () => void, minBudget?: number | "", maxBudget?: number | "" }) {
+export function FoodSwipeCardDeck({ customizations, onOrder, minBudget, maxBudget }: { customizations: string[], onOrder?: (item?: any) => void, minBudget?: number | "", maxBudget?: number | "" }) {
   const [items, setItems] = useState(() => {
     return quickBuyMockFoodData.filter((item) => {
       if (minBudget !== "" && minBudget !== undefined && item.price < minBudget) return false;
@@ -15,21 +15,21 @@ export function FoodSwipeCardDeck({ customizations, onOrder, minBudget, maxBudge
     });
   });
 
-  const handleSwipeLeft = (id: string) => {
+  const handleSwipeLeft = (product: any) => {
     setItems((prev) => {
-      const item = prev.find(i => i.id === id);
-      const rest = prev.filter((i) => i.id !== id);
+      const item = prev.find(i => i.id === product.id);
+      const rest = prev.filter((i) => i.id !== product.id);
       return item ? [...rest, item] : rest;
     });
   };
 
-  const handleSwipeRight = (id: string) => {
+  const handleSwipeRight = (product: any) => {
     setItems((prev) => {
-      const item = prev.find(i => i.id === id);
-      const rest = prev.filter((i) => i.id !== id);
+      const item = prev.find(i => i.id === product.id);
+      const rest = prev.filter((i) => i.id !== product.id);
       return item ? [...rest, item] : rest;
     });
-    if (onOrder) onOrder();
+    if (onOrder) onOrder(product);
   };
 
   useEffect(() => {
@@ -37,9 +37,9 @@ export function FoodSwipeCardDeck({ customizations, onOrder, minBudget, maxBudge
       if (items.length === 0) return;
       const topItem = items[0];
       if (e.key === "ArrowLeft") {
-        handleSwipeLeft(topItem.id);
+        handleSwipeLeft(topItem);
       } else if (e.key === "ArrowRight") {
-        handleSwipeRight(topItem.id);
+        handleSwipeRight(topItem);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
