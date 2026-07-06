@@ -202,52 +202,58 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   try {
     const rawContent = message.content || "";
     const cleaned = rawContent.replace(/```(?:json)?/gi, "").replace(/```/g, "").trim();
-    if (cleaned.startsWith("{") && cleaned.endsWith("}")) {
-      const parsed = JSON.parse(cleaned);
-      if (parsed && typeof parsed === "object") {
-        if (parsed.ui_type === "clarifying_question" || parsed.ui_type === "questionnaire" || parsed.ui_type === "intake_questionnaire") {
-          isQuestionnaire = true;
-          questionnaireThought = parsed.thought || "";
-          
-          if (Array.isArray(parsed.questions)) {
-            questionnaireQuestions = parsed.questions;
-          } else if (Array.isArray(parsed.key_attributes)) {
-            // Map DEEP_RESEARCH intake_questionnaire format to expected questions array
-            questionnaireQuestions = parsed.key_attributes.map((attr: any) => ({
-              id: attr.name,
-              question: attr.question,
-              options: []
+    if (cleaned.startsWith("{")) {
+      if (cleaned.endsWith("}")) {
+        const parsed = JSON.parse(cleaned);
+        if (parsed && typeof parsed === "object") {
+          if (parsed.ui_type === "clarifying_question" || parsed.ui_type === "questionnaire" || parsed.ui_type === "intake_questionnaire") {
+            isQuestionnaire = true;
+            questionnaireThought = parsed.thought || "";
+            
+            if (Array.isArray(parsed.questions)) {
+              questionnaireQuestions = parsed.questions;
+            } else if (Array.isArray(parsed.key_attributes)) {
+              // Map DEEP_RESEARCH intake_questionnaire format to expected questions array
+              questionnaireQuestions = parsed.key_attributes.map((attr: any) => ({
+                id: attr.name,
+                question: attr.question,
+                options: []
+              }));
+            } else {
+              questionnaireQuestion = parsed.question || "";
+              questionnaireOptions = parsed.options || [];
+              questionnaireAllowSkip = parsed.allow_skip !== false;
+              questionnaireAllowCustom = parsed.allow_custom !== false;
+            }
+          } else if (parsed.ui_type === "explore_carousel") {
+            isExploreCarousel = true;
+            exploreHeadline = parsed.headline || "";
+            exploreDeepDiveText = parsed.deep_dive || "";
+            const items = Array.isArray(parsed.products) ? parsed.products : [];
+            exploreProductsList = items.map((p: any) => ({
+              id: String(p.id || Math.random()),
+              name: String(p.name || "Unknown Product"),
+              price: String(p.price || "₹0"),
+              rating: typeof p.rating === "number" ? p.rating : 4.0,
+              reviewCount: String(p.reviewCount || "42"),
+              description: String(p.description || "Recommended product matching your request."),
+              platform: p.platform === "Flipkart" ? "Flipkart" : "Amazon",
+              image: p.image && !p.image.includes("placeholder.png") ? String(p.image) : getCuratedProductImage(p.name || ""),
+              link: String(p.link || "https://amazon.in"),
             }));
-          } else {
-            questionnaireQuestion = parsed.question || "";
-            questionnaireOptions = parsed.options || [];
-            questionnaireAllowSkip = parsed.allow_skip !== false;
-            questionnaireAllowCustom = parsed.allow_custom !== false;
+          } else if (parsed.ui_type === "text_response") {
+            textResponseContent = parsed.text || "";
           }
-        } else if (parsed.ui_type === "explore_carousel") {
-          isExploreCarousel = true;
-          exploreHeadline = parsed.headline || "";
-          exploreDeepDiveText = parsed.deep_dive || "";
-          const items = Array.isArray(parsed.products) ? parsed.products : [];
-          exploreProductsList = items.map((p: any) => ({
-            id: String(p.id || Math.random()),
-            name: String(p.name || "Unknown Product"),
-            price: String(p.price || "₹0"),
-            rating: typeof p.rating === "number" ? p.rating : 4.0,
-            reviewCount: String(p.reviewCount || "42"),
-            description: String(p.description || "Recommended product matching your request."),
-            platform: p.platform === "Flipkart" ? "Flipkart" : "Amazon",
-            image: p.image && !p.image.includes("placeholder.png") ? String(p.image) : getCuratedProductImage(p.name || ""),
-            link: String(p.link || "https://amazon.in"),
-          }));
-        } else if (parsed.ui_type === "text_response") {
-          textResponseContent = parsed.text || "";
+        }
+      } else {
+        // Starts with '{' but doesn't end with '}' - likely still streaming JSON
+        if (mode === "deep_research" || mode === "explore") {
+           parseError = true;
         }
       }
     } else {
-      if (mode === "deep_research" || mode === "explore") {
-         parseError = true;
-      }
+      // Doesn't start with '{' - it's plain text fallback from Groq or Gemini hallucination
+      // Treat as plain text, do not show JSON parse error skeleton
     }
   } catch (e) {
     if (mode === "deep_research" || mode === "explore") {
@@ -273,6 +279,11 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
       ...p,
       image: p.image && !p.image.includes("placeholder.png") ? p.image : getCuratedProductImage(p.name || "")
     }));
+  }
+
+  // Ensure parseError is cleared if we successfully fallback to a known layout
+  if (isQuestionnaire || isExploreCarousel || message.deepResearchResults) {
+    parseError = false;
   }
 
   // Determine Explore layout variables
