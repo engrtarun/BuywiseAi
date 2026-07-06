@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 /* ── Constants ──────────────────────────────────────── */
 const GUEST_MODE_KEY = "buywise_guest_mode";
 const GUEST_COUNT_KEY = "buywise_guest_message_count";
-const FREE_MESSAGE_LIMIT = 3;
+const FREE_MESSAGE_LIMIT = 25;
 
 /* ──────────────────────────────────────────────────────
    useGuestAccess
