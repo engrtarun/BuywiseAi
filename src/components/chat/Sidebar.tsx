@@ -517,16 +517,20 @@ function ChatHistoryItem({ session, isActive, onSelect, onDelete, onRename, onTo
       ) : (
         <span className="flex-1 min-w-0 text-[13px] truncate font-sans leading-tight">
           {session.title}
-          {session.pinned && (
-            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-brand-accent/15 px-2 py-0.5 text-[10px] font-semibold text-brand-accent">
-              <Pin className="size-3" /> Pinned
-            </span>
-          )}
         </span>
       )}
       
       {!isEditing && (
-        <div className="shrink-0 flex items-center gap-0.5 ml-2">
+        <div className="shrink-0 flex items-center gap-1 ml-2">
+          {session.pinned && (
+            <Pin
+              className={`size-3.5 drop-shadow-sm animate-in zoom-in duration-200 transition-colors ${
+                isActive
+                  ? "text-brand-accent"
+                  : "text-text-primary-dark/40 group-hover:text-brand-accent/80"
+              }`}
+            />
+          )}
           {isActive && (
             <button
               type="button"
