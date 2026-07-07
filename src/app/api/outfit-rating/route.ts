@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEYS[0]);
 const GUEST_MODE_KEY = "buywise_guest_mode";
 const GUEST_COUNT_KEY = "buywise_guest_message_count";
-const FREE_MESSAGE_LIMIT = 3;
+const FREE_MESSAGE_LIMIT = 999999;
 const guestRequestCounts = new Map<string, number>();
 
 export async function POST(req: NextRequest) {

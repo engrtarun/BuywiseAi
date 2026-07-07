@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 /* ── Constants ──────────────────────────────────────── */
 const GUEST_MODE_KEY = "buywise_guest_mode";
 const GUEST_COUNT_KEY = "buywise_guest_message_count";
-const FREE_MESSAGE_LIMIT = 25;
+const FREE_MESSAGE_LIMIT = 999999;
 
 /* ──────────────────────────────────────────────────────
    useGuestAccess
@@ -66,8 +66,8 @@ export function useGuestAccess() {
   }, []);
 
   /* Derived */
-  const canSendMessage = !isGuest || guestMessageCount < FREE_MESSAGE_LIMIT;
-  const messagesRemaining = Math.max(0, FREE_MESSAGE_LIMIT - guestMessageCount);
+  const canSendMessage = true;
+  const messagesRemaining = 999999;
 
   /* ── Actions ─────────────────────────────────────── */
 
