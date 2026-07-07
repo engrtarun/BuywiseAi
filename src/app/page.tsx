@@ -202,7 +202,7 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
 /* ── Helpers ──────────────────────────────────────────── */
 
 function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  return crypto.randomUUID();
 }
 
 function generateTitle(firstMessage: string): string {
