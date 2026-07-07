@@ -2,12 +2,12 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import TextareaAutosize from "react-textarea-autosize";
-import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye, Plus, Compass, Brain } from "lucide-react";
+import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye, Plus, Compass, Brain, Sparkles, Shirt } from "lucide-react";
 import { QuickAccessMenu } from "./QuickAccessMenu";
 import { SoundMuteToggle } from "@/components/shared/SoundMuteToggle";
 import { UsageRing } from "@/components/ui/usage-ring";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { ChatMode } from "@/types/chat";
+import { ChatMode, Message } from "@/types/chat";
 import { usePremium } from "@/contexts/PremiumContext";
 
 const placeholders = [
@@ -42,6 +42,7 @@ interface ChatInputProps {
   isModeLocked?: boolean;
   userMessageCount?: number;
   onNewChat?: (mode?: ChatMode) => void;
+  messages?: Message[];
 }
 
 export function ChatInput({
@@ -67,6 +68,7 @@ export function ChatInput({
   isModeLocked = false,
   userMessageCount = 0,
   onNewChat,
+  messages = [],
 }: ChatInputProps) {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -76,6 +78,12 @@ export function ChatInput({
   const { openPremium } = usePremium();
   const [showUpgradeToast, setShowUpgradeToast] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
+  // Slash command state
+  const [showSlashCommands, setShowSlashCommands] = useState(false);
+  const [slashFilter, setSlashFilter] = useState("");
+  const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
+  const router = require("next/navigation").useRouter(); // For Quick Buy navigation
 
   const isDisabled = disabled || dailyLimitReached || isAnalyzing;
 
@@ -135,9 +143,92 @@ export function ChatInput({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // 1. History Recall: Up Arrow on empty input
+    if (e.key === "ArrowUp" && inputText.length === 0) {
+      e.preventDefault();
+      const userMsgs = messages.filter((m) => m.role === "user");
+      if (userMsgs.length > 0) {
+        const lastMsg = userMsgs[userMsgs.length - 1];
+        setInputText(lastMsg.content);
+        // Move cursor to end
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.selectionStart = inputRef.current.value.length;
+            inputRef.current.selectionEnd = inputRef.current.value.length;
+          }
+        }, 0);
+      }
+      return;
+    }
+
+    // 2. Slash Commands Navigation
+    if (showSlashCommands) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setShowSlashCommands(false);
+        return;
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSlashSelectedIndex((prev) => (prev + 1) % availableCommands.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSlashSelectedIndex((prev) => (prev - 1 + availableCommands.length) % availableCommands.length);
+        return;
+      }
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        if (availableCommands[slashSelectedIndex]) {
+          executeSlashCommand(availableCommands[slashSelectedIndex]);
+        }
+        return;
+      }
+    }
+
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setInputText(val);
+
+    if (val === "/") {
+      setShowSlashCommands(true);
+      setSlashFilter("");
+      setSlashSelectedIndex(0);
+    } else if (val.startsWith("/") && showSlashCommands) {
+      setSlashFilter(val.slice(1).toLowerCase());
+      setSlashSelectedIndex(0);
+    } else {
+      setShowSlashCommands(false);
+    }
+  };
+
+  const slashCommandsList = [
+    { id: "explore", label: "Explore Mode", icon: Compass, description: "Discover and browse" },
+    { id: "deep_research", label: "Deep Research Mode", icon: Brain, description: "In-depth analysis" },
+    { id: "quick_buy", label: "Quick Buy", icon: Sparkles, description: "Fast checkout" },
+    { id: "virtual_wardrobe", label: "Virtual Wardrobe", icon: Shirt, description: "Mix & match" }
+  ];
+
+  const availableCommands = slashCommandsList.filter(cmd => 
+    cmd.label.toLowerCase().includes(slashFilter) || cmd.id.includes(slashFilter)
+  );
+
+  const executeSlashCommand = (cmd: typeof slashCommandsList[0]) => {
+    setShowSlashCommands(false);
+    setInputText("");
+    if (cmd.id === "explore" || cmd.id === "deep_research") {
+      if (onModeChange) onModeChange(cmd.id as ChatMode);
+    } else if (cmd.id === "quick_buy") {
+      router.push("/quick-buy");
+    } else if (cmd.id === "virtual_wardrobe") {
+      router.push("/virtual-wardrobe");
     }
   };
 
@@ -334,6 +425,33 @@ export function ChatInput({
             />
 
             <div className="relative flex-1 flex min-h-[44px] sm:min-h-[48px]" data-tour-id="tour-chat-input">
+              {/* Slash Commands Popover */}
+              {showSlashCommands && availableCommands.length > 0 && (
+                <div className="absolute bottom-full left-0 mb-2 w-64 bg-[#1a1b26]/95 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+                  <div className="px-3 py-2 border-b border-white/10 bg-black/20">
+                    <span className="text-[10px] font-sans font-bold text-text-secondary uppercase tracking-wider">Quick Actions</span>
+                  </div>
+                  <div className="flex flex-col py-1">
+                    {availableCommands.map((cmd, idx) => {
+                      const Icon = cmd.icon;
+                      return (
+                        <button
+                          key={cmd.id}
+                          onClick={() => executeSlashCommand(cmd)}
+                          className={`flex items-center gap-3 px-3 py-2 text-left w-full transition-colors ${idx === slashSelectedIndex ? "bg-white/10" : "hover:bg-white/5"}`}
+                        >
+                          <Icon className={`size-4 ${idx === slashSelectedIndex ? "text-marigold" : "text-text-secondary"}`} />
+                          <div className="flex flex-col">
+                            <span className={`text-[13px] font-sans font-medium ${idx === slashSelectedIndex ? "text-text-primary-light" : "text-text-primary-light/80"}`}>{cmd.label}</span>
+                            <span className="text-[10px] text-text-secondary">{cmd.description}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Custom Animated Placeholder */}
               {!inputText && (
                 <div className="absolute inset-0 pointer-events-none px-4 flex items-center overflow-hidden">
@@ -380,7 +498,7 @@ export function ChatInput({
                 ref={inputRef}
                 dir="auto"
                 value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
+                onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 placeholder={dailyLimitReached ? (dailyLimitMessage ?? "Daily limit reached — resets at 12:00 AM") : ""}
                 minRows={1}

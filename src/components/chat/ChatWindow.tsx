@@ -218,6 +218,7 @@ export function ChatWindow({
         isModeLocked={!!activeMode}
         userMessageCount={userMessageCount}
         onNewChat={onNewChat}
+        messages={messages}
       />
 
       {/* Quick Buy Overlay */}

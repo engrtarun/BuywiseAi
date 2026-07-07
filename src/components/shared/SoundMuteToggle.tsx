@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 export function SoundMuteToggle({ showTooltip = false }: { showTooltip?: boolean }) {
   const [isMuted, setIsMuted] = useState(true);
@@ -52,6 +53,8 @@ export function SoundMuteToggle({ showTooltip = false }: { showTooltip?: boolean
       localStorage.setItem("buywise_muted", String(newState));
     }
   };
+
+  useKeyboardShortcuts({ toggleMute });
 
   useEffect(() => {
     if (tooltipVisible) {

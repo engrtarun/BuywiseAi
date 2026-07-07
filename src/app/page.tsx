@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/chat/Sidebar";
 import { useGuestAccess } from "@/hooks/useGuestAccess";
 import { useDailyMessageLimit } from "@/hooks/useDailyMessageLimit";
 import { useTheme } from "@/hooks/useTheme";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { createClient } from "@/lib/supabase/client";
 
 import {
@@ -622,6 +623,8 @@ export default function Page() {
       setChatSessions((prev) => prev.filter((s) => !s.isTemporary));
     }
   }, [isTemporaryChat, chatSessions]);
+
+  useKeyboardShortcuts({ toggleTemporaryChat: handleNewTemporaryChat });
 
   const handleSelectChat = useCallback((id: string) => {
     setActiveChatId(id);

@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Menu, Camera, Palette, Check, MoreVertical, Pencil, Ghost, LogOut, Shirt, Sparkles, UserCog, Pin } from "lucide-react";
+import { Search, Menu, Camera, Palette, Check, MoreVertical, Pencil, Ghost, LogOut, Shirt, Sparkles, UserCog, Pin, Keyboard } from "lucide-react";
 import { ChatSession, ChatMode } from "@/types/chat";
 import { useSidebarResize } from "./useSidebarResize";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useTheme } from "@/hooks/useTheme";
 import { THEME_PRESETS, generateCustomTheme } from "@/lib/themes";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -297,6 +298,98 @@ function ProfileModal({
           >
             Save Changes
           </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+/* ── Keyboard Shortcuts Modal ────────────── */
+function KeyboardShortcutsModal({ 
+  isOpen, 
+  onClose 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+}) {
+  const [isMac, setIsMac] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsMac(navigator.platform.toUpperCase().indexOf("MAC") >= 0);
+    }
+  }, []);
+
+  if (!isOpen || typeof document === "undefined") return null;
+
+  const Kbd = ({ children }: { children: React.ReactNode }) => (
+    <kbd className="inline-flex items-center justify-center px-2 py-1 text-xs font-mono font-semibold text-text-ondark bg-white/10 border border-white/20 rounded-md shadow-[0_2px_0_rgba(255,255,255,0.1)] mx-0.5">
+      {children}
+    </kbd>
+  );
+
+  return createPortal(
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-sidebar-bg border border-line-ondark w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between p-4 border-b border-line-ondark bg-white/[0.02]">
+          <div className="flex items-center gap-2">
+            <Keyboard className="size-5 text-marigold" />
+            <h2 className="font-heading font-bold text-lg text-text-ondark">Keyboard Shortcuts</h2>
+          </div>
+          <button 
+            onClick={onClose}
+            className="p-1 rounded-md text-text-dim-ondark hover:text-text-ondark hover:bg-white/[0.08] transition-all"
+          >
+            <XIcon />
+          </button>
+        </div>
+        
+        <div className="p-6 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
+          {/* Navigation */}
+          <div className="flex flex-col gap-3">
+            <h3 className="text-[11px] font-sans font-bold text-text-dim-ondark uppercase tracking-wider">Navigation</h3>
+            <div className="flex items-center justify-between py-2 border-b border-white/[0.05]">
+              <span className="text-sm font-medium text-text-ondark">Toggle Sidebar</span>
+              <div className="flex items-center">
+                <Kbd>{isMac ? "Cmd" : "Ctrl"}</Kbd> + <Kbd>.</Kbd>
+              </div>
+            </div>
+          </div>
+
+          {/* Chat Productivity */}
+          <div className="flex flex-col gap-3">
+            <h3 className="text-[11px] font-sans font-bold text-text-dim-ondark uppercase tracking-wider">Chat Productivity</h3>
+            <div className="flex items-center justify-between py-2 border-b border-white/[0.05]">
+              <span className="text-sm font-medium text-text-ondark">Load Last Prompt</span>
+              <div className="flex items-center">
+                <Kbd>↑</Kbd> <span className="text-xs text-text-dim-ondark ml-2">(in empty input)</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-white/[0.05]">
+              <span className="text-sm font-medium text-text-ondark">Slash Commands</span>
+              <div className="flex items-center">
+                <Kbd>/</Kbd> <span className="text-xs text-text-dim-ondark ml-2">(in empty input)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Privacy & Preferences */}
+          <div className="flex flex-col gap-3">
+            <h3 className="text-[11px] font-sans font-bold text-text-dim-ondark uppercase tracking-wider">Privacy & Preferences</h3>
+            <div className="flex items-center justify-between py-2 border-b border-white/[0.05]">
+              <span className="text-sm font-medium text-text-ondark">Temporary Chat</span>
+              <div className="flex items-center">
+                <Kbd>Alt</Kbd> + <Kbd>T</Kbd>
+              </div>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-white/[0.05]">
+              <span className="text-sm font-medium text-text-ondark">Mute Sounds</span>
+              <div className="flex items-center">
+                <Kbd>Alt</Kbd> + <Kbd>M</Kbd>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>,
@@ -638,6 +731,7 @@ function SidebarContent({
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [showProfileModal, setShowProfileModal] = React.useState(false);
   const [showSettingsModal, setShowSettingsModal] = React.useState(false);
+  const [showShortcutsModal, setShowShortcutsModal] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const [menuRect, setMenuRect] = React.useState<DOMRect | null>(null);
@@ -928,6 +1022,18 @@ function SidebarContent({
               <span>Settings</span>
             </button>
             
+            <button 
+              type="button"
+              onClick={() => {
+                setMenuOpen(false);
+                setShowShortcutsModal(true);
+              }}
+              className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
+            >
+              <Keyboard className="size-4 text-text-secondary group-hover:text-marigold group-hover:scale-110 transition-all duration-300" />
+              <span>Keyboard Shortcuts</span>
+            </button>
+            
             <div className="h-px bg-border-dark my-1 mx-2" />
 
             {/* Help with flyout */}
@@ -1011,6 +1117,11 @@ function SidebarContent({
             setShowSettingsModal(false);
             setShowProfileModal(true);
           }}
+        />
+
+        <KeyboardShortcutsModal
+          isOpen={showShortcutsModal}
+          onClose={() => setShowShortcutsModal(false)}
         />
 
         <Popover>
@@ -1264,6 +1375,8 @@ export function Sidebar({
       document.body.style.overflow = "";
     };
   }, [isOpen]);
+
+  useKeyboardShortcuts({ toggleSidebar: toggleCollapse });
 
   const contentProps = { chatHistory, activeChatId, onNewChat, onSelectChat, onDeleteChat, onRenameChat, onTogglePin, onClose, onNewTemporaryChat, isGuest };
 
