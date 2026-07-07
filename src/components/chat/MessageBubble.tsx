@@ -196,6 +196,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   let questionnaireQuestions: ClarifyingQuestion[] = [];
 
   let isExploreCarousel = false;
+  let exploreThought = "";
   let exploreHeadline = "";
   let exploreProductsList: Product[] = [];
   let exploreDeepDiveText = "";
@@ -241,6 +242,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
           ];
           
           isExploreCarousel = parsed.ui_type === "explore_carousel";
+          exploreThought = parsed.thought || "";
           exploreHeadline = parsed.headline || "";
           exploreDeepDiveText = parsed.deep_dive || "";
           const items = parsed.products || parsed.items || [];
@@ -601,7 +603,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
           )}
 
           {/* Thought process block (as a normal chat bubble just above the card) */}
-          {isQuestionnaire && questionnaireThought && (
+          {(isQuestionnaire && questionnaireThought) || (isExploreCarousel && exploreThought) ? (
             <div
               dir="auto"
               style={{
@@ -618,10 +620,10 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
                 <Brain className="size-3.5 text-brand-accent animate-pulse" /> Thought Process
               </div>
               <p className="whitespace-pre-wrap leading-relaxed">
-                {questionnaireThought}
+                {isQuestionnaire ? questionnaireThought : exploreThought}
               </p>
             </div>
-          )}
+          ) : null}
 
           {/* Native Clarifying Question Card */}
           {isQuestionnaire && onSend && (
