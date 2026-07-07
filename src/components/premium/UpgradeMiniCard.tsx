@@ -1,4 +1,5 @@
 import React from "react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface UpgradeMiniCardProps {
   onClick: () => void;
@@ -8,15 +9,20 @@ interface UpgradeMiniCardProps {
 export function UpgradeMiniCard({ onClick, isCollapsed }: UpgradeMiniCardProps) {
   if (isCollapsed) {
     return (
-      <button
-        onClick={onClick}
-        className="w-8 h-8 mx-auto rounded-xl flex items-center justify-center bg-gradient-to-br from-purple-500 to-fuchsia-600 text-white hover:brightness-110 transition-all shadow-[0_0_10px_rgba(168,85,247,0.4)]"
-        title="Upgrade to Pro"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-        </svg>
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={onClick}
+            className="w-8 h-8 mx-auto rounded-xl flex items-center justify-center bg-gradient-to-br from-purple-500 to-fuchsia-600 text-white hover:brightness-110 transition-all shadow-[0_0_10px_rgba(168,85,247,0.4)]"
+            aria-label="Upgrade to Pro"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right">Upgrade to Pro</TooltipContent>
+      </Tooltip>
     );
   }
 

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Message, Feedback } from "@/types/chat";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 /* ── Inline SVG Icons ─────────────────────────────────── */
 
@@ -98,22 +99,14 @@ function RegenerateIcon({ className }: { className?: string }) {
   );
 }
 
-/* ── Tooltip ─────────────────────────────────────────── */
-
 function ActionTooltip({ text, children }: { text: string; children: React.ReactNode }) {
   return (
-    <div className="relative group/tip">
-      {children}
-      <div className="
-        absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 rounded-md
-        bg-foreground border border-border text-background text-[11px] font-sans whitespace-nowrap
-        opacity-0 translate-y-1 pointer-events-none z-50
-        group-hover/tip:opacity-100 group-hover/tip:translate-y-0
-        transition-all duration-200 ease-out
-      ">
-        {text}
-      </div>
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {children}
+      </TooltipTrigger>
+      <TooltipContent side="top">{text}</TooltipContent>
+    </Tooltip>
   );
 }
 

@@ -6,6 +6,7 @@ import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye, Plus, Compass, Brain 
 import { QuickAccessMenu } from "./QuickAccessMenu";
 import { SoundMuteToggle } from "@/components/shared/SoundMuteToggle";
 import { UsageRing } from "@/components/ui/usage-ring";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { ChatMode } from "@/types/chat";
 import { usePremium } from "@/contexts/PremiumContext";
 
@@ -277,22 +278,32 @@ export function ChatInput({
             </div>
 
             <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => applyFormatting("**")}
-                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95 cursor-pointer"
-                title="Bold (Ctrl+B)"
-              >
-                <Bold className="size-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => applyFormatting("*")}
-                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95 cursor-pointer"
-                title="Italic (Ctrl+I)"
-              >
-                <Italic className="size-4" />
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => applyFormatting("**")}
+                    className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95 cursor-pointer"
+                    aria-label="Bold (Ctrl+B)"
+                  >
+                    <Bold className="size-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Bold (Ctrl+B)</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => applyFormatting("*")}
+                    className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95 cursor-pointer"
+                    aria-label="Italic (Ctrl+I)"
+                  >
+                    <Italic className="size-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Italic (Ctrl+I)</TooltipContent>
+              </Tooltip>
             </div>
           </div>
 

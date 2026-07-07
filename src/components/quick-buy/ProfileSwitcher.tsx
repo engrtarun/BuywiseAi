@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { QuickBuyProfile } from "@/types/quickBuyProfile";
 import { Plus, Trash2, ChevronDown, Settings2 } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface ProfileSwitcherProps {
   profiles: QuickBuyProfile[];
@@ -95,31 +96,41 @@ export function ProfileSwitcher({
                 </div>
 
                 <div className="flex items-center gap-0.5">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (!isActive) switchProfile(p.id);
-                      onEditProfile();
-                      setOpen(false);
-                    }}
-                    className="p-1.5 rounded-lg text-text-secondary hover:text-brand-accent hover:bg-white/5 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 active:scale-90"
-                    title="Edit Profile Settings"
-                  >
-                    <Settings2 className="size-3.5" />
-                  </button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!isActive) switchProfile(p.id);
+                          onEditProfile();
+                          setOpen(false);
+                        }}
+                        className="p-1.5 rounded-lg text-text-secondary hover:text-brand-accent hover:bg-white/5 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 active:scale-90"
+                        aria-label="Edit Profile Settings"
+                      >
+                        <Settings2 className="size-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">Edit Profile Settings</TooltipContent>
+                  </Tooltip>
                   {!p.isDefault && (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        deleteProfile(p.id);
-                      }}
-                      className="p-1.5 rounded-lg text-text-secondary hover:text-red-400 hover:bg-white/5 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 active:scale-90"
-                      title="Delete Profile"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            deleteProfile(p.id);
+                          }}
+                          className="p-1.5 rounded-lg text-text-secondary hover:text-red-400 hover:bg-white/5 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 active:scale-90"
+                          aria-label="Delete Profile"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">Delete Profile</TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
               </div>

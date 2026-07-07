@@ -9,6 +9,7 @@ import { CanvasOnboardingTour } from "@/components/onboarding/CanvasOnboardingTo
 import { PremiumProvider } from "@/contexts/PremiumContext";
 import { UserProvider } from "@/contexts/UserContext";
 import { PremiumModal } from "@/components/premium/PremiumModal";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 const inter = Inter({
@@ -65,10 +66,12 @@ export default function RootLayout({
             <OnboardingProvider>
               <PremiumProvider>
                 <AppModeProvider>
-                {children}
-                <CanvasOnboardingTour />
-                <PremiumModal />
-              </AppModeProvider>
+                  <TooltipProvider delayDuration={300}>
+                    {children}
+                    <CanvasOnboardingTour />
+                    <PremiumModal />
+                  </TooltipProvider>
+                </AppModeProvider>
             </PremiumProvider>
           </OnboardingProvider>
         </UserProvider>

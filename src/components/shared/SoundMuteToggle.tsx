@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 export function SoundMuteToggle({ showTooltip = false }: { showTooltip?: boolean }) {
   const [isMuted, setIsMuted] = useState(true);
@@ -72,14 +73,20 @@ export function SoundMuteToggle({ showTooltip = false }: { showTooltip?: boolean
 
   return (
     <div className="relative inline-flex items-center justify-center">
-      <button
-        onClick={toggleMute}
-        className="flex items-center justify-center p-2 rounded-lg bg-white/5 border border-white/10 text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-all z-10 relative"
-        aria-label={isMuted ? "Unmute sounds" : "Mute sounds"}
-        title={isMuted ? "Unmute sounds" : "Mute sounds"}
-      >
-        {isMuted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={toggleMute}
+            className="flex items-center justify-center p-2 rounded-lg bg-white/5 border border-white/10 text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-all z-10 relative"
+            aria-label={isMuted ? "Unmute sounds" : "Mute sounds"}
+          >
+            {isMuted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          {isMuted ? "Unmute sounds" : "Mute sounds"}
+        </TooltipContent>
+      </Tooltip>
 
       {showTooltip && tooltipVisible && (
         <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-max z-50 animate-in fade-in zoom-in-95 duration-500">

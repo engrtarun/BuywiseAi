@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { QuickBuyProduct } from "@/lib/quickBuyMockData";
 import { ArrowLeft, Trash2, ShoppingBag, Zap, Plus, Minus, Bookmark, BookmarkCheck, Grid, Layers, X, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { VirtualWardrobe } from "./VirtualWardrobe";
 import { CheckoutFlow, CheckoutItem } from "../checkout/CheckoutFlow";
@@ -106,31 +107,46 @@ export function SavedItemsList({
         {/* View Toggle */}
         {items.length > 0 && (
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setTourStep(0);
-                setShowTour(true);
-              }}
-              className="p-1.5 rounded-full hover:bg-white/10 text-brand-accent transition-colors"
-              title="Show Guide"
-            >
-              <HelpCircle className="size-5" />
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => {
+                    setTourStep(0);
+                    setShowTour(true);
+                  }}
+                  className="p-1.5 rounded-full hover:bg-white/10 text-brand-accent transition-colors"
+                  aria-label="Show Guide"
+                >
+                  <HelpCircle className="size-5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Show Guide</TooltipContent>
+            </Tooltip>
             <div className="flex items-center bg-black/40 border border-white/10 rounded-lg p-0.5">
-              <button
-                onClick={() => setViewMode("GRID")}
-                className={`p-1.5 rounded-md transition-all ${viewMode === "GRID" ? "bg-white/10 text-white" : "text-text-secondary hover:text-white"}`}
-                title="Grid View"
-              >
-                <Grid className="size-4" />
-              </button>
-              <button
-                onClick={() => setViewMode("WARDROBE")}
-                className={`p-1.5 rounded-md transition-all ${viewMode === "WARDROBE" ? "bg-brand-accent text-bg-main" : "text-text-secondary hover:text-white"}`}
-                title="Mix & Match"
-              >
-                <Layers className="size-4" />
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setViewMode("GRID")}
+                    className={`p-1.5 rounded-md transition-all ${viewMode === "GRID" ? "bg-white/10 text-white" : "text-text-secondary hover:text-white"}`}
+                    aria-label="Grid View"
+                  >
+                    <Grid className="size-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Grid View</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setViewMode("WARDROBE")}
+                    className={`p-1.5 rounded-md transition-all ${viewMode === "WARDROBE" ? "bg-brand-accent text-bg-main" : "text-text-secondary hover:text-white"}`}
+                    aria-label="Mix & Match"
+                  >
+                    <Layers className="size-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Mix & Match</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         )}
@@ -194,13 +210,18 @@ export function SavedItemsList({
                                 <h3 className="text-[14px] font-medium text-text-primary-light leading-tight line-clamp-2">
                                   {item.name}
                                 </h3>
-                                <button
-                                  onClick={() => onRemove(item.id)}
-                                  className="p-1 -mt-1 -mr-1 rounded-full text-text-secondary hover:text-red-400 hover:bg-white/5 transition-colors"
-                                  title="Remove item"
-                                >
-                                  <Trash2 className="size-4" />
-                                </button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      onClick={() => onRemove(item.id)}
+                                      className="p-1 -mt-1 -mr-1 rounded-full text-text-secondary hover:text-red-400 hover:bg-white/5 transition-colors"
+                                      aria-label="Remove item"
+                                    >
+                                      <Trash2 className="size-4" />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">Remove item</TooltipContent>
+                                </Tooltip>
                               </div>
                               <div className="text-brand-accent font-black text-lg mt-1 tracking-tight">
                                 ₹{item.price.toLocaleString('en-IN')}

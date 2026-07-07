@@ -12,6 +12,7 @@ import { useSidebarResize } from "./useSidebarResize";
 import { useTheme } from "@/hooks/useTheme";
 import { THEME_PRESETS, generateCustomTheme } from "@/lib/themes";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip as ShadcnTooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SettingsModal } from "./SettingsModal";
 import { FoodModeToggle } from "@/components/shared/FoodModeToggle";
 import { usePremium } from "@/contexts/PremiumContext";
@@ -305,45 +306,19 @@ function ProfileModal({
 
 /* ── Tooltip Helper ───────────── */
 function Tooltip({ text, children, isCollapsed }: { text: string; children: React.ReactNode; isCollapsed: boolean }) {
-  const [isHovered, setIsHovered] = React.useState(false);
-  const [rect, setRect] = React.useState<DOMRect | null>(null);
-  const ref = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    if (isHovered && ref.current) {
-      setRect(ref.current.getBoundingClientRect());
-    }
-  }, [isHovered]);
-
   if (!isCollapsed) return <>{children}</>;
 
   return (
-    <div 
-      ref={ref}
-      className="relative flex justify-center w-full"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {children}
-      {isHovered && typeof window !== 'undefined' && createPortal(
-        <div 
-          style={{
-            position: 'fixed',
-            left: (rect?.right ?? 0) + 12,
-            top: (rect?.top ?? 0) + (rect?.height ?? 0) / 2,
-            transform: 'translateY(-50%)'
-          }}
-          className="
-            px-2.5 py-1.5 rounded-lg
-            bg-ink-deep border border-line-ondark text-text-ondark text-xs font-sans whitespace-nowrap
-            z-[100] shadow-md animate-in fade-in slide-in-from-left-1 duration-200 pointer-events-none
-          "
-        >
-          {text}
-        </div>,
-        document.body
-      )}
-    </div>
+    <ShadcnTooltip>
+      <TooltipTrigger asChild>
+        <div className="flex justify-center w-full">
+          {children}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="right" sideOffset={12}>
+        {text}
+      </TooltipContent>
+    </ShadcnTooltip>
   );
 }
 
@@ -1223,16 +1198,20 @@ function SidebarContent({
                 )}
 
                 {!loadingProfile && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation(); // prevent opening dropdown menu
-                      router.push("/profile");
-                    }}
-                    className="p-1.5 rounded-lg hover:bg-white/10 text-text-secondary hover:text-marigold transition-colors shrink-0"
-                    title="Edit Profile"
-                  >
-                    <UserCog className="size-4" />
-                  </button>
+                  <ShadcnTooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // prevent opening dropdown menu
+                          router.push("/profile");
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-white/10 text-text-secondary hover:text-marigold transition-colors shrink-0"
+                      >
+                        <UserCog className="size-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">Edit Profile</TooltipContent>
+                  </ShadcnTooltip>
                 )}
               </div>
             )}

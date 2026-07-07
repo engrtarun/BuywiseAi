@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { createClient } from "@/lib/supabase/client";
 import { useGuestAccess } from "@/hooks/useGuestAccess";
 
@@ -285,25 +286,29 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
       >
         {/* Close / Skip Login (X) button — top-right of card */}
         {viewState === "login" && (
-          <button
-            type="button"
-            onClick={handleGuestSkip}
-            aria-label="Skip login and continue as guest"
-            title="Continue as guest"
-            className="
-              absolute top-4 right-4 sm:top-5 sm:right-5 z-10
-              size-8 rounded-full
-              bg-white/10 backdrop-blur-sm
-              flex items-center justify-center
-              text-zinc-400
-              hover:bg-white/20 hover:text-white hover:scale-110
-              active:scale-95
-              transition-all duration-200
-              cursor-pointer
-            "
-          >
-            <X className="size-4" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={handleGuestSkip}
+                aria-label="Skip login and continue as guest"
+                className="
+                  absolute top-4 right-4 sm:top-5 sm:right-5 z-10
+                  size-8 rounded-full
+                  bg-white/10 backdrop-blur-sm
+                  flex items-center justify-center
+                  text-zinc-400
+                  hover:bg-white/20 hover:text-white hover:scale-110
+                  active:scale-95
+                  transition-all duration-200
+                  cursor-pointer
+                "
+              >
+                <X className="size-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left">Continue as guest</TooltipContent>
+          </Tooltip>
         )}
         {/* Back navigation inside reset password or OTP flow */}
         {viewState !== "login" && (
