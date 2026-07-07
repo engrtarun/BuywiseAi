@@ -4,6 +4,7 @@ import React from "react";
 import { Sparkles, Search, Gift, Smartphone, Laptop, Scale, Compass, Brain, User } from "lucide-react";
 import { LoginRequiredScreen } from "./LoginRequiredScreen";
 import { DailyLimitReachedCard } from "./DailyLimitReachedCard";
+import Logo from "@/components/ui/logo";
 import { motion } from "framer-motion";
 import { ChatMode } from "@/types/chat";
 
@@ -61,14 +62,10 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
 
         {/* Logo */}
         <div className="flex flex-col items-center justify-center pt-12 pb-4 overflow-visible">
-          <div className="relative w-24 h-24 md:w-32 md:h-32 flex items-center justify-center overflow-visible">
-            {/* Clean, unclipped rendering image block */}
-            <img 
-              src="/logo.png" 
-              alt="BuyWise AI Logo" 
-              className="w-full h-full object-contain filter drop-shadow-[0_4px_20px_rgba(212,175,55,0.15)] select-none"
-            />
-          </div>
+          <Logo 
+            showText={false}
+            iconClassName="w-24 h-24 md:w-32 md:h-32 text-marigold drop-shadow-[0_4px_20px_rgba(232,163,61,0.25)]"
+          />
         </div>
 
         {/* Welcome text */}

@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tooltip as ShadcnTooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SettingsModal } from "./SettingsModal";
 import { FoodModeToggle } from "@/components/shared/FoodModeToggle";
+import Logo from "@/components/ui/logo";
 import { usePremium } from "@/contexts/PremiumContext";
 import { UpgradeMiniCard } from "@/components/premium/UpgradeMiniCard";
 
@@ -234,10 +235,8 @@ function ProfileModal({
                   referrerPolicy="no-referrer"
                 />
               ) : (
-                <div className="size-20 rounded-full bg-marigold/20 border-2 border-marigold/30 flex items-center justify-center group-hover:bg-marigold/30 transition-colors">
-                  <span className="text-marigold font-bold text-2xl">
-                    {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : "U"}
-                  </span>
+                <div className="size-20 rounded-full bg-marigold/10 border-2 border-marigold/20 flex items-center justify-center group-hover:bg-marigold/20 transition-colors">
+                  <Logo showText={false} iconClassName="w-10 h-10 text-marigold" />
                 </div>
               )}
               {/* Camera Icon Overlay */}
@@ -1286,8 +1285,8 @@ function SidebarContent({
                       className="size-full object-cover"
                     />
                   ) : (
-                    <div className="size-full bg-marigold/20 text-marigold text-[10px] font-bold flex items-center justify-center font-sans">
-                      {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : "U"}
+                    <div className="size-full bg-marigold/10 flex items-center justify-center">
+                      <Logo showText={false} iconClassName="size-4 text-marigold" />
                     </div>
                   )}
                 </div>
