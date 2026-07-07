@@ -240,6 +240,7 @@ export default function Page() {
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
   const [isTemporaryChat, setIsTemporaryChat] = useState(false);
   const [showQuickBuy, setShowQuickBuy] = useState(false);
+  const [showFoodQuickBuy, setShowFoodQuickBuy] = useState(false);
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
 
   // Guest access hook
@@ -1083,6 +1084,15 @@ export default function Page() {
             setShowQuickBuy(true);
           }}
           onCloseQuickBuy={() => setShowQuickBuy(false)}
+          showFoodQuickBuy={showFoodQuickBuy}
+          onOpenFoodQuickBuy={() => {
+            if (isGuest && MODES_CONFIG.quick_buy.requiresAuth) {
+              setShowLoginRequiredModal(true);
+              return;
+            }
+            setShowFoodQuickBuy(true);
+          }}
+          onCloseFoodQuickBuy={() => setShowFoodQuickBuy(false)}
         />
       </div>
 
