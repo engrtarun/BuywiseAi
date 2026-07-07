@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
+  const redirectOrigin = process.env.NEXT_PUBLIC_SITE_URL || origin;
   const code = searchParams.get("code");
   // Default to "/chat" if no specific redirect page was provided
   const next = searchParams.get("next") ?? "/chat";
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
 
   if (!code) {
     console.error("[Auth Callback] No code parameter found in the request URL.");
-    return NextResponse.redirect(`${origin}/login?error=no-code`);
+    return NextResponse.redirect(`${redirectOrigin}/login?error=no-code`);
   }
 
   try {
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
     
     if (error) {
       console.error("[Auth Callback] Code exchange failed:", error.message, error);
-      return NextResponse.redirect(`${origin}/login?error=auth-code-error`);
+      return NextResponse.redirect(`${redirectOrigin}/login?error=auth-code-error`);
     }
 
     console.log("[Auth Callback] Fetching authenticated user...");
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
     
     if (userError || !user) {
       console.error("[Auth Callback] Failed to fetch authenticated user:", userError?.message || "User is null");
-      return NextResponse.redirect(`${origin}/login?error=user-fetch-error`);
+      return NextResponse.redirect(`${redirectOrigin}/login?error=user-fetch-error`);
     }
 
     console.log("[Auth Callback] Authenticated user fetched:", user.email);
@@ -51,14 +52,14 @@ export async function GET(request: Request) {
     // If full_name is already set (returning Google user), redirect to /chat
     if (profile && profile.full_name) {
       console.log("[Auth Callback] Profile has name. Redirecting to /chat...");
-      return NextResponse.redirect(`${origin}/chat`);
+      return NextResponse.redirect(`${redirectOrigin}/chat`);
     } else {
       // If full_name is empty/null (first-time Google signup), redirect to /welcome
       console.log("[Auth Callback] Profile name missing. Redirecting to /welcome...");
-      return NextResponse.redirect(`${origin}/welcome`);
+      return NextResponse.redirect(`${redirectOrigin}/welcome`);
     }
   } catch (err: any) {
     console.error("[Auth Callback] Unexpected error during authentication callback:", err);
-    return NextResponse.redirect(`${origin}/login?error=unexpected-error`);
+    return NextResponse.redirect(`${redirectOrigin}/login?error=unexpected-error`);
   }
 }

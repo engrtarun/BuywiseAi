@@ -40,8 +40,8 @@ const quicksand = Quicksand({
 });
 
 export const metadata: Metadata = {
-  title: "BuyWise AI",
-  description: "AI-powered smart shopping assistant",
+  title: "BuyWise AI – Smart AI Shopping Assistant",
+  description: "Experience premium smart shopping assistant. Find, compare and make intelligent purchase decisions instantly with BuyWise AI.",
 };
 
 import { ThemeProvider } from "@/hooks/useTheme";
