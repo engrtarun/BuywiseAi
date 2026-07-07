@@ -515,7 +515,7 @@ CORE CONSTRAINT 3: DYNAMIC MODE RULES
 import { executeStreamingOrchestration } from "@/lib/guardrails/apiOrchestrator";
 
 export async function* runStreamingWriter(input: WriterInput): AsyncGenerator<string, void, unknown> {
-  const { mode, userMessage, history, products = [], sessionContext, isRegenerate } = input;
+  let { mode, userMessage, history, products = [], sessionContext, isRegenerate } = input;
 
   const isDeepResearch = mode === "deep_research";
   let systemInstruction = isDeepResearch ? DEEP_RESEARCH_SYSTEM_PROMPT : EXPLORE_SYSTEM_PROMPT;
@@ -528,7 +528,46 @@ export async function* runStreamingWriter(input: WriterInput): AsyncGenerator<st
   if (isRegenerate) {
     effectiveUserMessage += `\n\n[SYSTEM NOTE: The user has requested to REGENERATE the response. Please rethink and provide a different, higher-quality answer.]`;
   }
-  if (products.length > 0) {
+
+  // ── 2-Turn Inline Search for Explore Mode (Streaming Fix) ──
+  // If we are in explore mode and haven't fetched products yet, run a quick non-streaming 
+  // turn to check if the LLM wants to search. If it returns search_intent, fetch products 
+  // and inject them before streaming the final carousel.
+  if (!isDeepResearch && products.length === 0) {
+    try {
+      const genAI = getNextGeminiClient();
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        systemInstruction,
+        generationConfig: { responseMimeType: "application/json" }
+      });
+      const formattedHistory = history.map((msg) => ({
+        role: msg.role === "assistant" ? "model" : "user",
+        parts: [{ text: msg.content || "" }],
+      }));
+      const chat = model.startChat({ history: formattedHistory });
+      const result = await chat.sendMessage(effectiveUserMessage);
+      const text = result.response.text();
+      const parsed = tryParse(text);
+
+      if (parsed?.ui_type === "search_intent") {
+        const { searchForProducts } = await import("@/lib/agents/search");
+        const query = typeof parsed.query === "string" ? parsed.query : userMessage;
+        products = await searchForProducts(query, 6);
+        
+        // Let the streaming turn know that it needs to output the carousel now
+        effectiveUserMessage = `Here are product listings for your search: ${JSON.stringify(products)}. Please output the explore_carousel JSON now with the best options. Make sure to provide a valid headline, products array, and deep_dive markdown string.`;
+      } else if (parsed?.ui_type) {
+        // If it decided to output text_response or clarifying_question right away, 
+        // we can technically just yield that JSON and skip streaming, but to keep it simple,
+        // we'll just let the orchestrator stream it.
+      }
+    } catch (e) {
+      console.warn("[writer] Inline search pre-check for stream failed:", e);
+    }
+  }
+
+  if (products.length > 0 && !effectiveUserMessage.includes("Here are product listings")) {
     effectiveUserMessage += `\n\n[INJECTED PRODUCT DATA — use these real listings in your response]:\n${JSON.stringify(products, null, 2)}`;
   }
 
