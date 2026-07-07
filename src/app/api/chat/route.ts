@@ -90,35 +90,86 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Backend JSON file logic (Msg Quality Improvement)
+    // Backend JSON file logic (Msg Quality Improvement & History Tracking like Gemini Ecosystem)
     const chatDataDir = path.join(process.cwd(), "chat_data");
     if (!fs.existsSync(chatDataDir)) {
       fs.mkdirSync(chatDataDir);
     }
     const contextFilePath = path.join(chatDataDir, `${chatId}.json`);
 
-    let backendContext = {
+    let backendContext: {
+      chatId: string;
+      messageCount: number;
+      lastActive: string;
+      history: ChatHistoryMessage[];
+      context: Record<string, any>;
+      memory: {
+        userLanguagePreference?: string;
+        generalProfileSummary?: string;
+        preferredCategories?: string[];
+      };
+    } = {
+      chatId,
       messageCount: history.length,
       lastActive: new Date().toISOString(),
-      context: requirements
+      history: history || [],
+      context: requirements || {},
+      memory: {}
     };
 
     if (fs.existsSync(contextFilePath)) {
       try {
-        backendContext = JSON.parse(fs.readFileSync(contextFilePath, "utf8"));
+        const fileContent = fs.readFileSync(contextFilePath, "utf8");
+        const parsed = JSON.parse(fileContent);
+        backendContext = {
+          chatId: parsed.chatId || chatId,
+          messageCount: parsed.messageCount ?? history.length,
+          lastActive: parsed.lastActive || new Date().toISOString(),
+          history: parsed.history || history || [],
+          context: { ...parsed.context, ...requirements },
+          memory: parsed.memory || {}
+        };
       } catch (e) {
         console.warn("Failed to parse backend JSON file:", e);
       }
     }
 
-    // Update and write back
-    backendContext.messageCount = history.length;
+    // Append current user message to backend history if not present
+    const lastMsg = backendContext.history[backendContext.history.length - 1];
+    if (!lastMsg || lastMsg.content !== userMessage || lastMsg.role !== "user") {
+      backendContext.history.push({ role: "user", content: userMessage });
+    }
+
+    // Use full history from the JSON file to feed the agent
+    userHistory = backendContext.history;
+    backendContext.messageCount = userHistory.length;
     backendContext.lastActive = new Date().toISOString();
-    backendContext.context = { ...backendContext.context, ...requirements };
+
+    // Dynamically detect language from the user's prompt to store in memory
+    const userPromptLower = userMessage.toLowerCase();
+    if (
+      userPromptLower.includes("kya") ||
+      userPromptLower.includes("hai") ||
+      userPromptLower.includes("chahiye") ||
+      userPromptLower.includes("batao") ||
+      userPromptLower.includes("krde") ||
+      userPromptLower.includes("thik")
+    ) {
+      backendContext.memory.userLanguagePreference = "Hinglish/Hindi";
+    }
+
+    // Update memory summary based on categories or items searched
+    if (requirements.category) {
+      if (!backendContext.memory.preferredCategories) {
+        backendContext.memory.preferredCategories = [];
+      }
+      if (!backendContext.memory.preferredCategories.includes(String(requirements.category))) {
+        backendContext.memory.preferredCategories.push(String(requirements.category));
+      }
+    }
+    
+    // Save current state before LLM call
     fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
-
-
-    userHistory = history;
 
     const access = await enforceChatAccess(req);
     if (access.response) {
@@ -225,6 +276,7 @@ export async function POST(req: NextRequest) {
       sessionContext: {
         ...backendContext.context,
         ...requirements,
+        chatMemory: backendContext.memory, // Pass session memory to personalize answers
         reranked_context: rerankedContext 
           ? {
               primary: rerankedContext.primary.map(c => c.text),
@@ -234,6 +286,27 @@ export async function POST(req: NextRequest) {
       },
       isRegenerate,
     });
+
+    // Append the assistant's reply to the JSON file's history
+    if (responseTexts && responseTexts.length > 0) {
+      let assistantText = responseTexts[0];
+      try {
+        const parsedRes = JSON.parse(assistantText.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
+        if (parsedRes.fingerprint && parsedRes.fingerprint.language) {
+          backendContext.memory.userLanguagePreference = parsedRes.fingerprint.language;
+        }
+        if (parsedRes.headline || parsedRes.text || parsedRes.summary) {
+          assistantText = parsedRes.headline || parsedRes.text || parsedRes.summary;
+        }
+      } catch (err) {
+        // Fallback to storing raw response text if parsing fails
+      }
+      
+      backendContext.history.push({ role: "assistant", content: assistantText });
+      backendContext.messageCount = backendContext.history.length;
+      backendContext.lastActive = new Date().toISOString();
+      fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
+    }
 
     // ── Step 5: Extract confirmed_category and store in cache ─────────────────
     // Parse the first response to pull out confirmed_category if the AI set it.
