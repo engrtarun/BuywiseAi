@@ -205,7 +205,7 @@ export async function POST(req: NextRequest) {
 
     if (mode === "buy_explanation") {
       try {
-        let product = JSON.parse(userMessage);
+        const product = JSON.parse(userMessage);
         const explanationPrompt = `The user selected the product "${product.name}" priced at ${product.price}. Their stated need was their previous conversation context. Write a short, genuine 2-3 sentence explanation of why this specific product is a good fit for their stated need, referencing whatever real specs/features are available from the product title/description. Be honest — if the product isn't a perfect fit, say so briefly rather than oversell it. Output your response as a valid JSON object in this format: { "ui_type": "text_response", "text": "Your explanation here" }`;
 
         const text = await executeGenerativeOrchestration({

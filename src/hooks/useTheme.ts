@@ -120,7 +120,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): Reac
         if (profile) {
           let updatedTheme = savedTheme;
           let updatedMode = savedMode;
-          let updatedSeed = savedSeed;
+          const updatedSeed = savedSeed;
           let needsUpdateLocal = false;
 
           if (profile.theme_preference && profile.theme_preference !== savedTheme) {

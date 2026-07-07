@@ -150,7 +150,7 @@ export async function checkAndIncrementMessageLimit(): Promise<MessageLimitResul
     throw new Error(`Failed to check daily message limit: ${selectError.message}`)
   }
 
-  let tokensUsed = profile?.tokens_used ?? 0
+  const tokensUsed = profile?.tokens_used ?? 0
   const lastResetAt = profile?.last_reset_at
   let isNewDay = false
 
