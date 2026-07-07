@@ -5,10 +5,7 @@ import { useQuickBuy } from "@/hooks/useQuickBuy";
 import { SizeBudgetForm } from "./SizeBudgetForm";
 import { SwipeCardDeck } from "./SwipeCardDeck";
 import { SavedItemsList } from "./SavedItemsList";
-import { FoodSwipeCardDeck } from "./FoodSwipeCardDeck";
 import { X, Settings2, Heart, Mic, ShoppingCart } from "lucide-react";
-import { useAppMode } from "@/contexts/AppModeContext";
-import { useVoiceCustomizationExtraction } from "@/hooks/useVoiceCustomizationExtraction";
 import { ProfileSwitcher } from "./ProfileSwitcher";
 import { QuickBuyLockedState } from "./QuickBuyLockedState";
 
@@ -46,9 +43,6 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
     updateProfile,
     deleteProfile
   } = useQuickBuy();
-
-  const { mode } = useAppMode();
-  const { extractCustomizations } = useVoiceCustomizationExtraction();
   
   const [showSettings, setShowSettings] = useState(false);
   const previousGhostRef = React.useRef<string | null>(null);
@@ -70,7 +64,6 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
   const [showAddProfileForm, setShowAddProfileForm] = useState(false);
   const [showOnboardingForm, setShowOnboardingForm] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
-  const [voiceInput, setVoiceInput] = useState("");
 
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean>(false);
 
@@ -79,8 +72,6 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
       setHasSeenOnboarding(localStorage.getItem("buywise_quickbuy_has_seen_onboarding") === "true");
     }
   }, []);
-
-  const customizations = extractCustomizations(voiceInput);
 
   // Still loading profiles or local storage
   if (isInitializing) {
@@ -298,28 +289,8 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
         </div>
       </div>
 
-      {/* Mock Voice Input (Food Mode Only) */}
-      {mode === "food" && (
-        <div className="absolute top-16 left-4 right-4 z-50">
-          <div className="relative">
-            <Mic className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-brand-accent animate-pulse" />
-            <input 
-              type="text" 
-              placeholder="e.g. 'Make it spicy with extra raita'"
-              value={voiceInput}
-              onChange={(e) => setVoiceInput(e.target.value)}
-              className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-full py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/40 outline-none focus:border-brand-accent/50 shadow-lg"
-            />
-          </div>
-        </div>
-      )}
-
       {/* Swipe Deck */}
-      {mode === "food" ? (
-        <div className="flex-1 mt-6 z-10 relative">
-          <FoodSwipeCardDeck customizations={customizations} />
-        </div>
-      ) : isLoadingProducts ? (
+      {isLoadingProducts ? (
         <div className="flex-1 flex flex-col items-center justify-center">
           <div className="size-8 rounded-full border-4 border-brand-accent/20 border-t-brand-accent animate-spin mb-4" />
           <p className="text-text-secondary font-medium animate-pulse">Loading live collection...</p>
