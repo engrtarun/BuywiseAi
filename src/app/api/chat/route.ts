@@ -323,6 +323,7 @@ export async function POST(req: NextRequest) {
         try {
           let dataTagFound = false;
           let jsonBuffer = "";
+          let enqueuedTextLength = 0;
           
           for await (const chunk of writerStream) {
             const chunkText = chunk || "";
@@ -330,23 +331,17 @@ export async function POST(req: NextRequest) {
 
             if (fullResponse.includes("|||PRODUCT_DATA_START|||")) {
               dataTagFound = true;
-              // Split out what belongs to the chat text vs what belongs to the raw JSON string
-              const parts = chunkText.split("|||PRODUCT_DATA_START|||");
-              
-              if (parts[0] && !fullResponse.split("|||PRODUCT_DATA_START|||")[0].includes("[")) {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: parts[0] })}\n\n`));
+              const [allText, allJson] = fullResponse.split("|||PRODUCT_DATA_START|||");
+              const textToEnqueue = allText.slice(enqueuedTextLength);
+              if (textToEnqueue && !allText.includes("[")) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: textToEnqueue })}\n\n`));
               }
-              if (parts[1]) {
-                jsonBuffer += parts[1];
-              } else if (parts.length === 1 && dataTagFound) {
-                 // If the tag was already found in a previous chunk, the whole chunk belongs to JSON
-                 if (!chunkText.includes("|||PRODUCT_DATA_START|||")) {
-                    jsonBuffer += chunkText;
-                 }
-              }
+              enqueuedTextLength = allText.length;
+              jsonBuffer = allJson || "";
             } else {
               if (!dataTagFound && !fullResponse.includes("[")) {
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: chunkText })}\n\n`));
+                enqueuedTextLength = fullResponse.length;
               }
             }
           }
@@ -448,6 +443,7 @@ export async function POST(req: NextRequest) {
 
             let fallbackDataTagFound = false;
             let fallbackJsonBuffer = "";
+            let fallbackEnqueuedLength = 0;
 
             while (true) {
               const { done, value } = await reader.read();
@@ -466,19 +462,17 @@ export async function POST(req: NextRequest) {
                     
                     if (fullResponse.includes("|||PRODUCT_DATA_START|||")) {
                       fallbackDataTagFound = true;
-                      const parts = textDelta.split("|||PRODUCT_DATA_START|||");
-                      
-                      if (parts[0] && !fullResponse.split("|||PRODUCT_DATA_START|||")[0].includes("[")) {
-                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: parts[0] })}\n\n`));
+                      const [allText, allJson] = fullResponse.split("|||PRODUCT_DATA_START|||");
+                      const textToEnqueue = allText.slice(fallbackEnqueuedLength);
+                      if (textToEnqueue && !allText.includes("[")) {
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: textToEnqueue })}\n\n`));
                       }
-                      if (parts[1]) {
-                        fallbackJsonBuffer += parts[1];
-                      } else if (parts.length === 1 && fallbackDataTagFound) {
-                        if (!textDelta.includes("|||PRODUCT_DATA_START|||")) fallbackJsonBuffer += textDelta;
-                      }
+                      fallbackEnqueuedLength = allText.length;
+                      fallbackJsonBuffer = allJson || "";
                     } else {
                       if (!fallbackDataTagFound && !fullResponse.includes("[")) {
                         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: textDelta })}\n\n`));
+                        fallbackEnqueuedLength = fullResponse.length;
                       }
                     }
                   } catch (e) {}
