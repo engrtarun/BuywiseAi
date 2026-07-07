@@ -76,6 +76,12 @@ export function DeepResearchClarifyingCard({
 
   const isInteractionDisabled = disabled || hasAnswered;
 
+  const handleOptionClick = (label: string) => {
+    if (isInteractionDisabled) return;
+    setHasAnswered(true);
+    onSelect(label);
+  };
+
   // Reset highlight and custom input when question changes
   useEffect(() => {
     setHighlightedIndex(0);
@@ -117,12 +123,6 @@ export function DeepResearchClarifyingCard({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isInteractionDisabled, currentQ, showCustomInput, highlightedIndex, normalizedOptions, onDismiss]);
-
-  const handleOptionClick = (label: string) => {
-    if (isInteractionDisabled) return;
-    setHasAnswered(true);
-    onSelect(label);
-  };
 
   const handleCustomSubmit = (e: React.FormEvent) => {
     e.preventDefault();

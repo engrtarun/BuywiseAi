@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import TextareaAutosize from "react-textarea-autosize";
 import { ArrowUp, Square, LogIn, Clock, Bold, Italic, Eye, Plus, Compass, Brain, Sparkles, Shirt } from "lucide-react";
 import { QuickAccessMenu } from "./QuickAccessMenu";
@@ -83,7 +84,7 @@ export function ChatInput({
   const [showSlashCommands, setShowSlashCommands] = useState(false);
   const [slashFilter, setSlashFilter] = useState("");
   const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
-  const router = require("next/navigation").useRouter(); // For Quick Buy navigation
+  const router = useRouter(); // For Quick Buy navigation
 
   const isDisabled = disabled || dailyLimitReached || isAnalyzing;
 

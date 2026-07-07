@@ -305,6 +305,12 @@ function ProfileModal({
   );
 }
 
+const Kbd = ({ children }: { children: React.ReactNode }) => (
+  <kbd className="inline-flex items-center justify-center px-2 py-1 text-xs font-mono font-semibold text-text-ondark bg-white/10 border border-white/20 rounded-md shadow-[0_2px_0_rgba(255,255,255,0.1)] mx-0.5">
+    {children}
+  </kbd>
+);
+
 /* ── Keyboard Shortcuts Modal ────────────── */
 function KeyboardShortcutsModal({ 
   isOpen, 
@@ -322,12 +328,6 @@ function KeyboardShortcutsModal({
   }, []);
 
   if (!isOpen || typeof document === "undefined") return null;
-
-  const Kbd = ({ children }: { children: React.ReactNode }) => (
-    <kbd className="inline-flex items-center justify-center px-2 py-1 text-xs font-mono font-semibold text-text-ondark bg-white/10 border border-white/20 rounded-md shadow-[0_2px_0_rgba(255,255,255,0.1)] mx-0.5">
-      {children}
-    </kbd>
-  );
 
   return createPortal(
     <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
