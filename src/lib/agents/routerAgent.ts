@@ -49,3 +49,19 @@ Contract schema:
     console.log(`[routerAgent] Execution completed in ${(endTime - startTime).toFixed(2)}ms`);
   }
 }
+
+// Insert inside your intent scoring matrix evaluation block inside routerAgent.ts
+export function classifyExploreModeIntent(userPrompt: string): { mode: 'food' | 'apparel' | null } {
+  const text = userPrompt.toLowerCase().trim();
+  
+  // Explicit vector token keywords for mode triggering
+  const foodKeywords = ["khana", "pina", "food", "pizza", "burger", "order", "swiggy", "zomato", "restaurant"];
+  
+  const matchesFood = foodKeywords.some(keyword => text.includes(keyword));
+  
+  if (matchesFood) {
+    return { mode: 'food' };
+  }
+  
+  return { mode: null };
+}
