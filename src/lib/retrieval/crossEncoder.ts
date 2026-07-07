@@ -42,7 +42,7 @@ export async function scoreChunks(query: string, chunks: TextChunk[]): Promise<S
   if (hfToken && chunks.length > 0) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000); // GUARD-RANK-GAMMA fast cutoff
+      const timeoutId = setTimeout(() => controller.abort(), 800); // GUARD-RANK-GAMMA fast cutoff (800ms)
 
       const response = await fetch(
         "https://api-inference.huggingface.co/models/cross-encoder/ms-marco-MiniLM-L-6-v2",

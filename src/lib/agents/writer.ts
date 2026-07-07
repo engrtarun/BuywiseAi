@@ -16,6 +16,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "@/lib/env";
 import type { SearchedProduct } from "@/lib/agents/search";
 import { getNextGeminiClient, getNextGroqKey } from "./keyManager";
+import { runWriterCriticValidationLoop } from "./writerCriticLoop";
 
 // ─── System Prompts ───────────────────────────────────────────────────────────
 
@@ -438,14 +439,12 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
 
   // ── Deep-research retry on invalid JSON ────────────────────────────────────
   if (isDeepResearch) {
-    const parsed = tryParse(text);
-    const validTypes = ["intake_questionnaire", "deep_research_results", "clarifying_question", "unrecognized"];
-    const isValid = parsed && validTypes.includes(parsed.ui_type as string);
+    const validationReport = await runWriterCriticValidationLoop(text, "deep_research");
 
-    if (!isValid) {
-      console.warn("[writer] Deep research produced invalid JSON, retrying...");
+    if (!validationReport.is_valid) {
+      console.warn("[writer] Critic validation failed, retrying...", validationReport.error_diagnostic_trace);
       try {
-        const retryResult = await chat.sendMessage("Your last response was not valid JSON or was missing required fields. Please return strictly the JSON payload.");
+        const retryResult = await chat.sendMessage(`Critic validation failed: ${validationReport.error_diagnostic_trace}. Please return strictly a valid JSON payload matching the contract.`);
         text = retryResult.response.text();
         responseTexts = [text];
       } catch {
@@ -457,6 +456,9 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
           recommended_products: [],
         })];
       }
+    } else {
+      text = validationReport.sanitized_payload;
+      responseTexts = [text];
     }
   }
 
