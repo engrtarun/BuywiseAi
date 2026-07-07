@@ -35,7 +35,7 @@ import { getFallbackChatResponse } from "@/lib/fallbackResponses";
 import { enforceChatAccess } from "@/lib/chatAccess";
 import fs from "fs";
 import path from "path";
-import { executeRouterRouting } from "@/lib/agents/routerAgent";
+// removed routerAgent import
 import { searchForProducts, type SearchedProduct } from "@/lib/agents/search";
 import { runWriter } from "@/lib/agents/writer";
 import { executeRerankedSearch } from "@/lib/providers/test-serper";
@@ -85,15 +85,8 @@ export async function POST(req: NextRequest) {
     mode = bodyMode;
     userMessage = message;
 
-    if (mode !== "buy_explanation") {
-      try {
-        const routerOutput = await executeRouterRouting(userMessage, JSON.stringify(history));
-        mode = routerOutput.target_mode;
-      } catch (err) {
-        console.warn("Router agent failed, falling back to deep_research", err);
-        mode = "deep_research";
-      }
-    }
+    // We respect the mode passed from the frontend (bodyMode) because the user explicitly toggled it.
+    // Do NOT override it with the router agent, otherwise Deep Research mode gets hijacked into Explore mode.
 
     // Backend JSON file logic (Msg Quality Improvement & History Tracking like Gemini Ecosystem)
     const chatDataDir = path.join(process.cwd(), "chat_data");
