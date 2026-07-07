@@ -10,6 +10,7 @@ import { useDailyMessageLimit } from "@/hooks/useDailyMessageLimit";
 import { useTheme } from "@/hooks/useTheme";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { createClient } from "@/lib/supabase/client";
+import { CartLoadingSpinner } from "@/components/ui/CartLoadingSpinner";
 
 import {
   getOrCreateActiveSession,
@@ -1026,14 +1027,7 @@ export default function Page() {
   }, []);
 
   if (isLoading || isDailyLimitInitializing) {
-    return (
-      <div className="flex h-dvh w-full items-center justify-center bg-bg-main text-text-primary-light">
-        <div className="flex flex-col items-center gap-3">
-          <div className="size-8 rounded-full border-4 border-brand-accent/20 border-t-brand-accent animate-spin" />
-          <p className="text-[13px] font-sans text-text-secondary animate-pulse">Loading BuyWise AI...</p>
-        </div>
-      </div>
-    );
+    return <CartLoadingSpinner />;
   }
 
   return (

@@ -765,3 +765,62 @@ body, .transition-theme-all * {
   --sidebar-border: var(--line-ondark);
   --sidebar-ring: var(--marigold);
 }
+
+@keyframes dynamic-morph {
+  0% { transform: scale(1) rotate(0deg); border-radius: 40% 60% 60% 40% / 40% 40% 60% 60%; }
+  34% { transform: scale(1.1) rotate(120deg); border-radius: 60% 40% 40% 60% / 50% 60% 40% 50%; }
+  66% { transform: scale(0.95) rotate(240deg); border-radius: 40% 60% 50% 50% / 60% 40% 60% 40%; }
+  100% { transform: scale(1) rotate(360deg); border-radius: 40% 60% 60% 40% / 40% 40% 60% 60%; }
+}
+
+@keyframes pulse-depth {
+  0%, 100% { transform: translateZ(0px) scale(1); filter: blur(8px); opacity: 0.4; }
+  50% { transform: translateZ(20px) scale(1.15); filter: blur(14px); opacity: 0.6; }
+}
+
+.animate-morph {
+  animation: dynamic-morph 7s infinite linear;
+}
+
+.animate-depth-glow {
+  animation: pulse-depth 4s infinite ease-in-out;
+}
+
+@keyframes cart-bounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(3px) rotate(-1deg); }
+}
+
+@keyframes item-into-cart-1 {
+  0% { transform: translateY(-40px) scale(0) rotate(0deg); opacity: 0; }
+  20% { opacity: 1; }
+  70%, 100% { transform: translateY(65px) scale(0.8) rotate(180deg); opacity: 0; }
+}
+
+@keyframes item-into-cart-2 {
+  0%, 25% { transform: translateY(-40px) scale(0) rotate(0deg); opacity: 0; }
+  45% { opacity: 1; }
+  85%, 100% { transform: translateY(68px) scale(0.7) rotate(-120deg); opacity: 0; }
+}
+
+@keyframes item-into-cart-3 {
+  0%, 50% { transform: translateY(-40px) scale(0) rotate(0deg); opacity: 0; }
+  65% { opacity: 1; }
+  95%, 100% { transform: translateY(72px) scale(0.7) rotate(240deg); opacity: 0; }
+}
+
+.animate-cart-bounce {
+  animation: cart-bounce 2s infinite ease-in-out;
+}
+
+.animate-into-1 {
+  animation: item-into-cart-1 2.2s infinite cubic-bezier(0.47, 0, 0.745, 0.715);
+}
+
+.animate-into-2 {
+  animation: item-into-cart-2 2.2s infinite cubic-bezier(0.47, 0, 0.745, 0.715);
+}
+
+.animate-into-3 {
+  animation: item-into-cart-3 2.2s infinite cubic-bezier(0.47, 0, 0.745, 0.715);
+}
