@@ -41,89 +41,9 @@ import { runWriter } from "@/lib/agents/writer";
 import { executeRerankedSearch } from "@/lib/providers/test-serper";
 import type { RerankedContext } from "@/lib/retrieval/index";
 import { executeGenerativeOrchestration } from "@/lib/guardrails/apiOrchestrator";
+import { checkSemanticCache, storeInSemanticCache } from "@/lib/caching/semanticCache";
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEYS[0]);
-
-// ─── In-Memory Response Cache ─────────────────────────────────────────────────
-// Keyed by chatId → Map<normalizedMessage, cachedResponsePayload>.
-// Resets on server restart — intentional for a hackathon app.
-// Not shared across sessions; never persisted to any DB or file.
-
-interface CachedEntry {
-  responseTexts: string[];
-  products: SearchedProduct[] | null;
-}
-
-const responseCache = new Map<string, Map<string, CachedEntry>>();
-
-/** Normalize a message for cache key comparison. */
-function normalizeMessage(msg: string): string {
-  return msg.toLowerCase().trim().replace(/[^\w\s]/g, "").replace(/\s+/g, " ");
-}
-
-/**
- * Levenshtein distance between two strings.
- * Pure in-memory, no deps. O(m*n) — fine for short chat messages.
- */
-function levenshtein(a: string, b: string): number {
-  const m = a.length;
-  const n = b.length;
-  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) =>
-    Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
-  );
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      dp[i][j] =
-        a[i - 1] === b[j - 1]
-          ? dp[i - 1][j - 1]
-          : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
-    }
-  }
-  return dp[m][n];
-}
-
-/** Similarity ratio in [0,1]. 1 = identical. */
-function similarity(a: string, b: string): number {
-  if (a === b) return 1;
-  const maxLen = Math.max(a.length, b.length);
-  if (maxLen === 0) return 1;
-  return 1 - levenshtein(a, b) / maxLen;
-}
-
-/** 92% similarity threshold for a hard cache hit per spec. */
-const CACHE_SIMILARITY_THRESHOLD_HARD = 0.92;
-/** 82% similarity threshold for a soft cache hit per spec. */
-const CACHE_SIMILARITY_THRESHOLD_SOFT = 0.82;
-
-/** Look up a session's cache for a near-identical message. */
-function getCachedResponse(chatId: string, normalizedMsg: string): CachedEntry | null {
-  const sessionCache = responseCache.get(chatId);
-  if (!sessionCache) return null;
-
-  // Exact key match first (fast path)
-  if (sessionCache.has(normalizedMsg)) return sessionCache.get(normalizedMsg)!;
-
-  // Similarity scan (short-circuit on first hit above threshold)
-  for (const [cachedKey, entry] of sessionCache.entries()) {
-    const simScore = similarity(normalizedMsg, cachedKey);
-    if (simScore >= CACHE_SIMILARITY_THRESHOLD_HARD) {
-      return entry; // Hard Cache Hit
-    } else if (simScore >= CACHE_SIMILARITY_THRESHOLD_SOFT) {
-      console.log(`[cache] SOFT HIT (${simScore}) for session "${chatId}" — routing to intermediate LLM eval.`);
-      // Treated as a miss to ensure the generative layer evaluates the subtle differences.
-      return null;
-    }
-  }
-  return null;
-}
-
-/** Store a response in the session cache. */
-function setCachedResponse(chatId: string, normalizedMsg: string, entry: CachedEntry): void {
-  if (!responseCache.has(chatId)) {
-    responseCache.set(chatId, new Map());
-  }
-  responseCache.get(chatId)!.set(normalizedMsg, entry);
-}
 
 
 export async function POST(req: NextRequest) {
@@ -253,14 +173,12 @@ export async function POST(req: NextRequest) {
 
     // ── Step 2: Cache check ───────────────────────────────────────────────────
     // Skip cache for regenerate requests and buy_explanation (handled above).
-    const normalizedMsg = normalizeMessage(userMessage);
     if (!isRegenerate) {
-      const cached = getCachedResponse(chatId, normalizedMsg);
-      if (cached) {
-        console.log(`[cache] HIT for session "${chatId}" — skipping Gemini call.`);
+      const cacheResult = await checkSemanticCache(userMessage, chatId);
+      if (cacheResult.type === "HARD_HIT" && cacheResult.payload) {
         return NextResponse.json({
-          text: cached.responseTexts,
-          products: cached.products,
+          text: cacheResult.payload.responseTexts,
+          products: cacheResult.payload.products,
           cached: true,
         });
       }
@@ -334,10 +252,11 @@ export async function POST(req: NextRequest) {
       // Non-critical — ignore parse failures
     }
 
-    setCachedResponse(chatId, normalizedMsg, {
+    // Store in Redis VSS asynchronously
+    storeInSemanticCache(userMessage, {
       responseTexts,
       products: serperProducts.length > 0 ? serperProducts : null,
-    });
+    }, chatId);
 
     return NextResponse.json({
       text: responseTexts,
