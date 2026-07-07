@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X, Moon, Sun, Bell, User as UserIcon, Lock, Trash2, ArrowRight } from "lucide-react";
+import { X, Moon, Sun, Bell, User as UserIcon, Lock, Trash2, ArrowRight, HelpCircle, PlayCircle } from "lucide-react";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -11,8 +11,11 @@ interface SettingsModalProps {
   onEditProfile?: () => void;
 }
 
+import { useOnboarding } from "@/contexts/OnboardingContext";
+
 export function SettingsModal({ isOpen, onClose, profile, onEditProfile }: SettingsModalProps) {
-  const [activeTab, setActiveTab] = useState<"THEME" | "NOTIFICATIONS" | "ACCOUNT">("THEME");
+  const [activeTab, setActiveTab] = useState<"THEME" | "NOTIFICATIONS" | "ACCOUNT" | "HELP">("THEME");
+  const { startTour } = useOnboarding();
 
   // Notifications state with localStorage persistence
   const [emailNotifs, setEmailNotifs] = useState(true);
@@ -66,6 +69,13 @@ export function SettingsModal({ isOpen, onClose, profile, onEditProfile }: Setti
           >
             <UserIcon className="size-4" /> Account
           </button>
+          
+          <button 
+            onClick={() => setActiveTab("HELP")}
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-sans transition-colors ${activeTab === "HELP" ? "bg-white/10 text-white font-bold" : "text-text-dim-ondark hover:bg-white/5 hover:text-white"}`}
+          >
+            <HelpCircle className="size-4" /> Help & Tour
+          </button>
         </div>
 
         {/* Content Area */}
@@ -75,6 +85,7 @@ export function SettingsModal({ isOpen, onClose, profile, onEditProfile }: Setti
               {activeTab === "THEME" && "Appearance"}
               {activeTab === "NOTIFICATIONS" && "Notifications"}
               {activeTab === "ACCOUNT" && "Account Settings"}
+              {activeTab === "HELP" && "Help & Onboarding"}
             </h3>
             <button 
               onClick={onClose}
@@ -197,6 +208,32 @@ export function SettingsModal({ isOpen, onClose, profile, onEditProfile }: Setti
                     </div>
                   </button>
                   <p className="text-xs text-text-dim-ondark text-center italic mt-2">* Note: Account actions require backend wiring.</p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "HELP" && (
+              <div className="space-y-6">
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm font-bold">Welcome Tour</span>
+                  <p className="text-xs text-text-dim-ondark mb-2">Want a refresher on how to use BuyWise AI?</p>
+                  
+                  <button 
+                    onClick={() => {
+                      onClose();
+                      startTour();
+                    }}
+                    className="flex items-center justify-between p-4 rounded-xl bg-brand-accent/10 border border-brand-accent/30 hover:bg-brand-accent/20 transition-colors text-left group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <PlayCircle className="size-5 text-brand-accent" />
+                      <div className="flex flex-col">
+                        <span className="font-bold text-sm text-brand-accent">Replay Welcome Tour</span>
+                        <span className="text-xs text-brand-accent/70">Re-run the 6-step intro guide.</span>
+                      </div>
+                    </div>
+                    <ArrowRight className="size-4 text-brand-accent group-hover:translate-x-1 transition-transform" />
+                  </button>
                 </div>
               </div>
             )}

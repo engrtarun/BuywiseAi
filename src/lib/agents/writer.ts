@@ -12,9 +12,10 @@
  * says to the user.
  */
 
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "@/lib/env";
 import type { SearchedProduct } from "@/lib/agents/search";
-import { executeGenerativeOrchestration } from "@/lib/guardrails/apiOrchestrator";
+import { getNextGeminiClient, getNextGroqKey } from "./keyManager";
 
 // ─── System Prompts ───────────────────────────────────────────────────────────
 
@@ -207,8 +208,6 @@ export interface WriterInput {
   products?: SearchedProduct[];         // injected search results (may be empty)
   sessionContext?: Record<string, unknown>; // accumulated requirements / fingerprint
   isRegenerate?: boolean;
-  /** Groq fallback key — used when Gemini fails */
-  groqApiKey?: string;
 }
 
 export interface WriterOutput {
@@ -226,7 +225,7 @@ function cleanJson(raw: string): string {
 
 function tryParse(text: string): Record<string, unknown> | null {
   try {
-    return JSON.parse(text); // Already cleaned and validated by apiOrchestrator
+    return JSON.parse(cleanJson(text));
   } catch {
     return null;
   }
@@ -242,7 +241,7 @@ function tryParse(text: string): Record<string, unknown> | null {
  * intake / results flow internally so the caller (`route.ts`) stays clean.
  */
 export async function runWriter(input: WriterInput): Promise<WriterOutput> {
-  const { mode, userMessage, history, products = [], sessionContext, isRegenerate, groqApiKey } = input;
+  const { mode, userMessage, history, products = [], sessionContext, isRegenerate } = input;
 
   const isDeepResearch = mode === "deep_research";
   let systemInstruction = isDeepResearch ? DEEP_RESEARCH_SYSTEM_PROMPT : EXPLORE_SYSTEM_PROMPT;
@@ -268,24 +267,136 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
     parts: [{ text: msg.content || "" }],
   }));
 
+  const genAI = getNextGeminiClient();
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.5-flash",
+    systemInstruction,
+  });
+
+  const chat = model.startChat({
+    history: formattedHistory,
+    generationConfig: {
+      maxOutputTokens: 1500,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "object" as any,
+        properties: {
+          ui_type: { type: "string" as any },
+          text: { type: "string" as any },
+          query: { type: "string" as any },
+          headline: { type: "string" as any },
+          deep_dive: { type: "string" as any },
+          products: {
+            type: "array" as any,
+            items: {
+              type: "object" as any,
+              properties: {
+                id: { type: "string" as any },
+                name: { type: "string" as any },
+                price: { type: "string" as any },
+                rating: { type: "number" as any },
+                image: { type: "string" as any },
+                reason: { type: "string" as any },
+                stretch: { type: "boolean" as any }
+              }
+            }
+          },
+          thought: { type: "string" as any },
+          question: { type: "string" as any },
+          options: {
+            type: "array" as any,
+            items: {
+              type: "object" as any,
+              properties: {
+                id: { type: "string" as any },
+                label: { type: "string" as any },
+                value: { type: "string" as any }
+              }
+            }
+          },
+          allow_skip: { type: "boolean" as any },
+          allow_custom: { type: "boolean" as any },
+          confirmed_category: { type: "string" as any },
+          category: { type: "string" as any },
+          key_attributes: {
+            type: "array" as any,
+            items: {
+              type: "object" as any,
+              properties: {
+                name: { type: "string" as any },
+                question: { type: "string" as any }
+              }
+            }
+          },
+          summary: { type: "string" as any },
+          final_verdict: { type: "string" as any },
+          recommended_products: {
+            type: "array" as any,
+            items: {
+              type: "object" as any,
+              properties: {
+                id: { type: "string" as any },
+                name: { type: "string" as any },
+                price: { type: "string" as any },
+                rating: { type: "number" as any },
+                reviewCount: { type: "string" as any },
+                description: { type: "string" as any },
+                platform: { type: "string" as any },
+                image: { type: "string" as any },
+                link: { type: "string" as any },
+                badge: { type: "string" as any }
+              }
+            }
+          },
+          fingerprint: {
+            type: "object" as any,
+            properties: {
+              language: { type: "string" as any },
+              tone: { type: "string" as any },
+              verbosity: { type: "string" as any }
+            }
+          }
+        },
+        required: ["ui_type"]
+      }
+    },
+  });
+
   // ── First LLM call ──────────────────────────────────────────────────────────
   let text = "";
   try {
-    text = await executeGenerativeOrchestration({
-      systemInstruction,
-      formattedHistory,
-      effectiveUserMessage,
-      groqApiKey,
-      historyForGroq: history
+    const result = await chat.sendMessage(effectiveUserMessage);
+    text = result.response.text();
+  } catch (geminiErr) {
+    console.warn("[writer] Gemini failed, trying Groq fallback...", geminiErr);
+    const currentGroqApiKey = getNextGroqKey();
+    if (!currentGroqApiKey) throw geminiErr;
+
+    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${currentGroqApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-8b-instant",
+        messages: [
+          { role: "system", content: systemInstruction },
+          ...history.map((m) => ({
+            role: m.role === "assistant" ? "assistant" : "user",
+            content: m.content || "",
+          })),
+          { role: "user", content: effectiveUserMessage },
+        ],
+        response_format: { type: "json_object" },
+      }),
     });
-  } catch (err) {
-    console.warn("[writer] Orchestrator completely failed:", err);
-    // Hard fallback if all layers fail
-    text = JSON.stringify({
-      ui_type: "text_response",
-      text: "System is experiencing a high volume of requests. Please try again in a moment."
-    });
+
+    if (!groqRes.ok) throw new Error(`[writer] Groq fallback failed: ${groqRes.statusText}`);
+    const groqData = await groqRes.json();
+    text = groqData.choices[0].message.content;
   }
+
   let responseTexts: string[] = [text];
   let serperProducts: SearchedProduct[] = products;
 
@@ -309,22 +420,8 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
 
       const searchContextMessage = `Here are product listings for your search: ${JSON.stringify(serperProducts)}. Please output the explore_carousel JSON now with the best options. Make sure to provide a valid headline, products array, and deep_dive markdown string.`;
       try {
-        const carouselText = await executeGenerativeOrchestration({
-          systemInstruction,
-          formattedHistory: [
-            ...formattedHistory, 
-            { role: "user", parts: [{ text: effectiveUserMessage }] },
-            { role: "model", parts: [{ text }]}
-          ],
-          effectiveUserMessage: searchContextMessage,
-          groqApiKey,
-          historyForGroq: [
-            ...history,
-            { role: "user", content: effectiveUserMessage },
-            { role: "assistant", content: text }
-          ]
-        });
-        
+        const secondResult = await chat.sendMessage(searchContextMessage);
+        const carouselText = secondResult.response.text();
         responseTexts = [carouselText];
         text = carouselText;
       } catch (secondErr) {
@@ -348,23 +445,8 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
     if (!isValid) {
       console.warn("[writer] Deep research produced invalid JSON, retrying...");
       try {
-        const retryText = await executeGenerativeOrchestration({
-          systemInstruction,
-          formattedHistory: [
-            ...formattedHistory, 
-            { role: "user", parts: [{ text: effectiveUserMessage }] },
-            { role: "model", parts: [{ text }]}
-          ],
-          effectiveUserMessage: "Your last response was not valid JSON or was missing required fields. Please return strictly the JSON payload.",
-          groqApiKey,
-          historyForGroq: [
-             ...history,
-             { role: "user", content: effectiveUserMessage },
-             { role: "assistant", content: text }
-          ]
-        });
-        
-        text = retryText;
+        const retryResult = await chat.sendMessage("Your last response was not valid JSON or was missing required fields. Please return strictly the JSON payload.");
+        text = retryResult.response.text();
         responseTexts = [text];
       } catch {
         // Emit a safe fallback

@@ -37,8 +37,8 @@ export function IntakeQuestionnaireCard({ category, keyAttributes, onSubmit, dis
     if (answerEntries.length === 0) return;
 
     const formattedMessage = answerEntries
-      .map(([name, val]) => `For ${name}, my answer is: ${val}`)
-      .join("\n");
+      .map(([name, val]) => `${name.replace(/_/g, ' ')}: ${val}`)
+      .join(", ");
 
     setHasSubmitted(true);
     onSubmit(formattedMessage);

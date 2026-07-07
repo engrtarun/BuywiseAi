@@ -74,8 +74,9 @@ export function ChatInput({
   const [plusButtonRect, setPlusButtonRect] = useState<DOMRect | null>(null);
   const { openPremium } = usePremium();
   const [showUpgradeToast, setShowUpgradeToast] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const isDisabled = disabled || dailyLimitReached;
+  const isDisabled = disabled || dailyLimitReached || isAnalyzing;
 
   // Rotate placeholder every 5 seconds
   useEffect(() => {
@@ -114,7 +115,7 @@ export function ChatInput({
   }, [cooldownUntil]);
 
   const handleSend = () => {
-    if (guestLimitReached || dailyLimitReached) return;
+    if (guestLimitReached || dailyLimitReached || isAnalyzing) return;
     if (timeLeft > 0) {
       setShowUpgradeToast(true);
       setTimeout(() => setShowUpgradeToast(false), 5000);
@@ -126,6 +127,10 @@ export function ChatInput({
     onSend(content);
     setInputText("");
     setShowUpgradeToast(false);
+    setIsAnalyzing(true);
+    setTimeout(() => {
+      setIsAnalyzing(false);
+    }, 6000);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -342,6 +347,21 @@ export function ChatInput({
                       {text}
                     </span>
                   ))}
+                </div>
+              )}
+
+              {/* AI Deep Analysis Loader Overlay */}
+              {isAnalyzing && (
+                <div className="absolute inset-0 z-20 flex items-center px-4 bg-bg-input/90 backdrop-blur-sm rounded-lg overflow-hidden animate-in fade-in duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex items-center justify-center size-6">
+                      <div className="absolute inset-0 rounded-full border-2 border-brand-accent/20 border-t-brand-accent animate-spin" />
+                      <Brain className="size-3.5 text-brand-accent animate-pulse" />
+                    </div>
+                    <span className="text-[14px] font-medium font-sans text-brand-accent tracking-wide animate-pulse">
+                      AI deep analysis in progress...
+                    </span>
+                  </div>
                 </div>
               )}
 

@@ -7,6 +7,7 @@
 // ============================================================================
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { TOUR_STEPS } from "@/config/tourSteps";
 
 const STORAGE_KEY = "buywise_v3_tour_done";
@@ -40,6 +41,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const [isActive, setIsActive] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const autoStartFired = useRef(false);
+  const pathname = usePathname();
 
   // ─── Hydration Safety Gate ───────────────────────────────────────────
   // Only read localStorage AFTER the client mounts to avoid SSR mismatch.
@@ -59,13 +61,17 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   // Wait 1.5s after mount to let the UI settle (lazy components, etc.)
   useEffect(() => {
     if (!isMounted || isDone || autoStartFired.current) return;
+    
+    // Scoped strictly to the home/chat route
+    if (pathname !== "/") return;
+
     autoStartFired.current = true;
     const timer = setTimeout(() => {
       setIsActive(true);
       setCurrentStep(0);
     }, 1500);
     return () => clearTimeout(timer);
-  }, [isMounted, isDone]);
+  }, [isMounted, isDone, pathname]);
 
   // ─── Persistence helper ──────────────────────────────────────────────
   const markDone = useCallback(() => {
