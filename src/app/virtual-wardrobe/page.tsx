@@ -9,6 +9,7 @@ import { ChevronLeft, ShoppingBag, X } from 'lucide-react';
 import { mockQuickBuyProducts } from '@/lib/quickBuyMockData';
 import { useQuickBuy } from '@/hooks/useQuickBuy';
 import { SavedItemsList } from '@/components/quick-buy/SavedItemsList';
+import { QuickBuyLockedState } from '@/components/quick-buy/QuickBuyLockedState';
 
 export default function VirtualWardrobePage() {
   const router = useRouter();
@@ -21,8 +22,27 @@ export default function VirtualWardrobePage() {
     updateQuantity,
     clearCart,
     moveToSavedForLater,
-    moveToCart
+    moveToCart,
+    profiles,
+    isInitializing
   } = useQuickBuy();
+
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="size-8 rounded-full border-4 border-brand-accent/20 border-t-brand-accent animate-spin" />
+      </div>
+    );
+  }
+
+  if (profiles.length === 0) {
+    return (
+      <QuickBuyLockedState
+        onCreateProfile={() => router.push('/quick-buy')}
+        onClose={() => router.push('/chat')}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 relative">

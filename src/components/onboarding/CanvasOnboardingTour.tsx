@@ -268,7 +268,7 @@ export function CanvasOnboardingTour() {
           {spotlight && (
             <>
               <div
-                className="absolute rounded-xl border-2 border-blue-400/60 animate-pulse"
+                className="absolute rounded-xl border-2 border-brand-accent/60 animate-pulse"
                 style={{
                   top: spotlight.y,
                   left: spotlight.x,
@@ -277,7 +277,7 @@ export function CanvasOnboardingTour() {
                 }}
               />
               <div
-                className="absolute rounded-full bg-blue-500 animate-ping"
+                className="absolute rounded-full bg-brand-accent animate-ping"
                 style={{
                   top: spotlight.y + spotlight.h / 2 - 6,
                   left: spotlight.x + spotlight.w / 2 - 6,

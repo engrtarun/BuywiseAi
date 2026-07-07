@@ -11,7 +11,9 @@ import {
   User, 
   Check, 
   Loader2, 
-  ShieldAlert 
+  ShieldAlert,
+  ArrowRight,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -621,8 +623,8 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
                   We've sent a verification email to <span className="text-white font-semibold">{email}</span>.
                 </p>
                 <div className="text-sm font-sans text-white bg-white/5 p-4 rounded-2xl border border-white/10 space-y-2 mt-2 shadow-inner">
-                  <p>👉 <strong className="text-marigold">Option 1:</strong> Click the <strong className="text-marigold">Confirm email address</strong> link in the email to log in directly.</p>
-                  <p>👉 <strong className="text-marigold">Option 2:</strong> Enter the 6-digit OTP code below (if your Supabase email template is configured to send the code).</p>
+                  <p className="flex items-center gap-1.5"><ArrowRight className="size-4 text-marigold" /> <strong className="text-marigold">Option 1:</strong> Click the <strong className="text-marigold">Confirm email address</strong> link in the email to log in directly.</p>
+                  <p className="flex items-center gap-1.5"><ArrowRight className="size-4 text-marigold" /> <strong className="text-marigold">Option 2:</strong> Enter the 6-digit OTP code below (if your Supabase email template is configured to send the code).</p>
                 </div>
               </div>
 
@@ -696,7 +698,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
               onClick={() => setInlineError(null)}
               className="text-chili hover:text-chili/80 font-bold ml-1 text-sm leading-none"
             >
-              ✕
+              <X className="size-3.5" />
             </button>
           </div>
         )}
@@ -712,7 +714,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
               onClick={() => setSuccessMessage(null)}
               className="text-[#2E7E6A] hover:text-[#2E7E6A]/80 font-bold ml-1 text-sm leading-none"
             >
-              ✕
+              <X className="size-3.5" />
             </button>
           </div>
         )}

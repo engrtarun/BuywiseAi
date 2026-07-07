@@ -188,13 +188,13 @@ If you have gathered enough details (or the user insists on results), return ONL
       "platform": "Amazon",
       "image": "/placeholder.png",
       "link": "https://amazon.in",
-      "badge": "🏆 Best Overall"
+      "badge": "Best Overall"
     }
   ],
   "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
 }
 
-Provide 2-3 products in the recommended_products array, sorted by rank. Assign appropriate badges like "🏆 Best Overall", "💰 Best Value", "⭐ Alternative Choice", etc.
+Provide 2-3 products in the recommended_products array, sorted by rank. Assign appropriate badges like "Best Overall", "Best Value", "Alternative Choice", etc.
 
 When real product data is injected below the user message, use those products in your recommended_products array rather than hallucinating product details.
 

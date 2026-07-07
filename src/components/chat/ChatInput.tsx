@@ -232,29 +232,26 @@ export function ChatInput({
     }
   };
 
-  const applyFormatting = (prefix: string, suffix: string = prefix) => {
-    if (!inputRef.current) return;
-    const el = inputRef.current;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const text = el.value;
-
-    const before = text.substring(0, start);
-    const selected = text.substring(start, end);
-    const after = text.substring(end);
-
-    const newText = before + prefix + selected + suffix + after;
-    setInputText(newText);
-
-    // Set cursor position after React re-renders
-    setTimeout(() => {
-      el.focus();
-      if (selected.length > 0) {
-        el.setSelectionRange(start, start + prefix.length + selected.length + suffix.length);
-      } else {
-        el.setSelectionRange(start + prefix.length, start + prefix.length);
+  const handleEnhancePrompt = async () => {
+    if (!inputText.trim() || isAnalyzing) return;
+    setIsAnalyzing(true);
+    try {
+      const res = await fetch("/api/enhance-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: inputText.trim() })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.enhancedPrompt) {
+          setInputText(data.enhancedPrompt);
+        }
       }
-    }, 0);
+    } catch (err) {
+      console.error("Failed to enhance prompt:", err);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   if (guestLimitReached || dailyLimitReached) {
@@ -373,27 +370,16 @@ export function ChatInput({
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    onClick={() => applyFormatting("**")}
-                    className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95 cursor-pointer"
-                    aria-label="Bold (Ctrl+B)"
+                    onClick={handleEnhancePrompt}
+                    disabled={!inputText.trim() || isAnalyzing}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-brand-accent bg-brand-accent/10 hover:bg-brand-accent/20 transition-colors active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border border-brand-accent/20"
+                    aria-label="Enhance Prompt"
                   >
-                    <Bold className="size-4" />
+                    <Sparkles className="size-4" />
+                    <span className="text-xs font-bold font-sans">Enhance</span>
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="top">Bold (Ctrl+B)</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={() => applyFormatting("*")}
-                    className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary-light hover:bg-white/10 transition-colors active:scale-95 cursor-pointer"
-                    aria-label="Italic (Ctrl+I)"
-                  >
-                    <Italic className="size-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top">Italic (Ctrl+I)</TooltipContent>
+                <TooltipContent side="top">Make prompt more descriptive</TooltipContent>
               </Tooltip>
             </div>
           </div>

@@ -1,50 +1,249 @@
-buywise-ai/
-├── .next/
-├── node_modules/
-├── public/
-├── src/
-│   ├── app/
-│   │   ├── actions/                  # Server actions (e.g. chat.ts)
-│   │   ├── api/                      # API routing layer
-│   │   │   ├── chat/                 # Gemini Chat route handler
-│   │   │   ├── outfit-rating/        # Outfit rating API route handler
-│   │   │   └── quick-buy/            # Quick Buy API route handler
-│   │   │       └── actions/          # Quick Buy actions API route handler
-│   │   ├── auth/                     # Auth flow routing
-│   │   ├── chat/                     # Main Chat page interface
-│   │   ├── login/                    # Login page interface
-│   │   ├── profile/                  # User profile and preference form page
-│   │   ├── quick-buy/                # Quick Buy swiping deck interface
-│   │   ├── signup/                   # Signup registration page
-│   │   ├── virtual-wardrobe/         # Virtual Outfit Canvas and wardrobe page
-│   │   ├── welcome/                  # Onboarding page
-│   │   ├── favicon.ico
-│   │   ├── globals.css               # Global tailwind styles
-│   │   ├── layout.tsx                # Base HTML Shell and providers
-│   │   └── page.tsx                  # Home route redirect landing
-│   ├── components/
-│   │   ├── chat/                     # Chat UI components (Sidebar, Input, list, settings, etc.)
-│   │   ├── checkout/                 # Order checkout flow modals
-│   │   ├── quick-buy/                # Outfit canvases, swiping cards, preferences
-│   │   ├── shared/                   # Shared reusable layout pieces (e.g. FloatingChatBubble)
-│   │   ├── ui/                       # Atomic shadcn UI atoms (buttons, inputs, cards)
-│   │   └── ThemeInitializer.tsx      # Dark mode/theme synchronizer
-│   ├── hooks/
-│   │   ├── useDailyMessageLimit.ts
-│   │   ├── useGuestAccess.ts
-│   │   ├── useQuickBuy.ts
-│   │   └── useTheme.ts
-│   ├── lib/
-│   │   ├── supabase/                 # supabase client, server, and middleware logic
-│   │   ├── env.ts                    # strict environment variable schema validation
-│   │   ├── fallbackResponses.ts      # fallback chat AI messages
-│   │   ├── quickBuyMockData.ts       # mock products list
-│   │   ├── themes.ts                 # theme presets data
-│   │   └── utils.ts                  # helper utilities (e.g. cn classes merger)
-│   ├── types/
-│   │   ├── chat.ts
-│   │   └── product.ts
-│   └── proxy.ts                      # custom middleware routing interceptor
-├── components.json
-├── package.json
-└── tsconfig.json
+BuywiseAi
+    ├── chat_data
+    │   ├── 1a3e21a3-98a7-4371-90ff-e57a360a41a7.json
+    │   ├── 323335b1-39a5-4b77-8003-6bec7459818f.json
+    │   ├── 36fd3ce1-a710-436b-95e7-e68120baa709.json
+    │   ├── 422658d7-1c93-4096-973a-c79c801a88ce.json
+    │   ├── 47ccb9c9-ff7f-42bd-90fb-59838a2ecbb8.json
+    │   ├── 5737a270-31d6-4a8b-80ca-250d7e33ff50.json
+    │   ├── 7f28523c-3f26-403e-b481-bd462d54d728.json
+    │   ├── a19b12d8-1bcc-45a8-8158-a46f4ac65ae3.json
+    │   ├── e54afa2a-30b5-4b91-b7d5-af037f7a7e68.json
+    │   ├── mr9n82qxdf52n.json
+    │   └── mr9nafhub3bo8.json
+    ├── public
+    │   ├── sounds
+    │   │   ├── accept.wav
+    │   │   └── reject.wav
+    │   ├── file.svg
+    │   ├── globe.svg
+    │   ├── next.svg
+    │   ├── vercel.svg
+    │   └── window.svg
+    ├── src
+    │   ├── app
+    │   │   ├── actions
+    │   │   │   └── chat.ts
+    │   │   ├── api
+    │   │   │   ├── chat
+    │   │   │   │   └── route.ts
+    │   │   │   ├── enhance-prompt
+    │   │   │   │   └── route.ts
+    │   │   │   ├── outfit-rating
+    │   │   │   │   └── route.ts
+    │   │   │   └── quick-buy
+    │   │   │       ├── actions
+    │   │   │       │   └── route.ts
+    │   │   │       └── route.ts
+    │   │   ├── auth
+    │   │   │   └── callback
+    │   │   │       └── route.ts
+    │   │   ├── chat
+    │   │   │   └── page.tsx
+    │   │   ├── login
+    │   │   │   └── page.tsx
+    │   │   ├── profile
+    │   │   │   └── page.tsx
+    │   │   ├── quick-buy
+    │   │   │   └── page.tsx
+    │   │   ├── signup
+    │   │   │   └── page.tsx
+    │   │   ├── virtual-wardrobe
+    │   │   │   └── page.tsx
+    │   │   ├── welcome
+    │   │   │   └── page.tsx
+    │   │   ├── favicon.ico
+    │   │   ├── globals.css
+    │   │   ├── layout.tsx
+    │   │   └── page.tsx
+    │   ├── components
+    │   │   ├── auth
+    │   │   │   └── LoginRequiredModal.tsx
+    │   │   ├── chat
+    │   │   │   ├── __tests__
+    │   │   │   │   └── ExploreMode.test.tsx
+    │   │   │   ├── ChatInput.tsx
+    │   │   │   ├── ChatWindow.tsx
+    │   │   │   ├── ClarifyingQuestionCard.tsx
+    │   │   │   ├── DailyLimitReachedCard.tsx
+    │   │   │   ├── DeepResearchClarifyingCard.tsx
+    │   │   │   ├── ErrorMessageCard.tsx
+    │   │   │   ├── HamburgerButton.tsx
+    │   │   │   ├── IntakeQuestionnaireCard.tsx
+    │   │   │   ├── LoginRequiredScreen.tsx
+    │   │   │   ├── MessageActions.tsx
+    │   │   │   ├── MessageBubble.tsx
+    │   │   │   ├── MessageList.tsx
+    │   │   │   ├── ModeToggle.tsx
+    │   │   │   ├── OfflineBanner.tsx
+    │   │   │   ├── OfflineIllustration.tsx
+    │   │   │   ├── ProductBottomSheet.tsx
+    │   │   │   ├── ProductCard.tsx
+    │   │   │   ├── ProductCarousel.tsx
+    │   │   │   ├── QuickAccessMenu.tsx
+    │   │   │   ├── SettingsModal.tsx
+    │   │   │   ├── Sidebar.tsx
+    │   │   │   ├── SpoilerText.tsx
+    │   │   │   ├── TemporaryChatBadge.tsx
+    │   │   │   ├── TemporaryChatButton.tsx
+    │   │   │   ├── ThinkingIndicator.tsx
+    │   │   │   ├── TypingIndicator.tsx
+    │   │   │   ├── useSidebarResize.ts
+    │   │   │   └── WelcomeScreen.tsx
+    │   │   ├── checkout
+    │   │   │   └── CheckoutFlow.tsx
+    │   │   ├── onboarding
+    │   │   │   ├── CanvasOnboardingTour.tsx
+    │   │   │   └── CoachMarkTooltip.tsx
+    │   │   ├── premium
+    │   │   │   ├── PremiumModal.tsx
+    │   │   │   ├── PremiumPricingGrid.tsx
+    │   │   │   └── UpgradeMiniCard.tsx
+    │   │   ├── quick-buy
+    │   │   │   ├── CanvasThinkingWave.tsx
+    │   │   │   ├── CategorySearchInput.tsx
+    │   │   │   ├── DraggableWardrobeItem.tsx
+    │   │   │   ├── FoodQuickBuyButton.tsx
+    │   │   │   ├── FoodQuickBuyScreen.tsx
+    │   │   │   ├── FoodSwipeCard.tsx
+    │   │   │   ├── FoodSwipeCardDeck.tsx
+    │   │   │   ├── LiveOutfitSummary.tsx
+    │   │   │   ├── MatchMeter.tsx
+    │   │   │   ├── MatchMeterBottomSheet.tsx
+    │   │   │   ├── OutfitCanvas.tsx
+    │   │   │   ├── ProfileSwitcher.tsx
+    │   │   │   ├── QuickBuyButton.tsx
+    │   │   │   ├── QuickBuyLockedState.tsx
+    │   │   │   ├── QuickBuyScreen.tsx
+    │   │   │   ├── SavedItemsList.tsx
+    │   │   │   ├── SizeBudgetForm.tsx
+    │   │   │   ├── SwipeableProductCard.tsx
+    │   │   │   ├── SwipeCardDeck.tsx
+    │   │   │   └── VirtualWardrobe.tsx
+    │   │   ├── shared
+    │   │   │   ├── CanvasOnboardingTour.tsx
+    │   │   │   ├── CoachMarkTooltip.tsx
+    │   │   │   ├── FloatingChatBubble.tsx
+    │   │   │   ├── FoodModeToggle.tsx
+    │   │   │   ├── ModeToggle.tsx
+    │   │   │   ├── SoundMuteToggle.tsx
+    │   │   │   └── SpotlightOverlay.tsx
+    │   │   ├── ui
+    │   │   │   ├── avatar.tsx
+    │   │   │   ├── badge.tsx
+    │   │   │   ├── button.tsx
+    │   │   │   ├── card.tsx
+    │   │   │   ├── input.tsx
+    │   │   │   ├── popover.tsx
+    │   │   │   ├── scroll-area.tsx
+    │   │   │   ├── skeleton.tsx
+    │   │   │   ├── tooltip.tsx
+    │   │   │   └── usage-ring.tsx
+    │   │   └── ThemeInitializer.tsx
+    │   ├── config
+    │   │   ├── modesConfig.ts
+    │   │   └── tourSteps.ts
+    │   ├── contexts
+    │   │   ├── AppModeContext.tsx
+    │   │   ├── OnboardingContext.tsx
+    │   │   ├── PremiumContext.tsx
+    │   │   └── UserContext.tsx
+    │   ├── hooks
+    │   │   ├── useDailyMessageLimit.ts
+    │   │   ├── useGuestAccess.ts
+    │   │   ├── useKeyboardShortcuts.ts
+    │   │   ├── useOnboardingStatus.ts
+    │   │   ├── useQuickBuy.ts
+    │   │   ├── useQuickBuyProfiles.ts
+    │   │   ├── useSwipeFeedback.ts
+    │   │   ├── useTheme.ts
+    │   │   └── useVoiceCustomizationExtraction.ts
+    │   ├── lib
+    │   │   ├── agents
+    │   │   │   ├── keyManager.ts
+    │   │   │   ├── regressionPipeline.ts
+    │   │   │   ├── router.ts
+    │   │   │   ├── routerAgent.ts
+    │   │   │   ├── search.ts
+    │   │   │   ├── searchAgent.ts
+    │   │   │   ├── writer.ts
+    │   │   │   └── writerCriticLoop.ts
+    │   │   ├── guardrails
+    │   │   │   ├── apiOrchestrator.ts
+    │   │   │   └── schemaGuardrails.ts
+    │   │   ├── providers
+    │   │   │   ├── serper.ts
+    │   │   │   └── test-serper.ts
+    │   │   ├── retrieval
+    │   │   │   ├── chunker.ts
+    │   │   │   ├── crossEncoder.ts
+    │   │   │   ├── index.ts
+    │   │   │   └── scraper.ts
+    │   │   ├── supabase
+    │   │   │   ├── client.ts
+    │   │   │   ├── middleware.ts
+    │   │   │   └── server.ts
+    │   │   ├── chatAccess.ts
+    │   │   ├── colors.ts
+    │   │   ├── env.ts
+    │   │   ├── fallbackResponses.ts
+    │   │   ├── productSearch.ts
+    │   │   ├── quickBuyMockData.ts
+    │   │   ├── quickBuyMockFoodData.ts
+    │   │   ├── themes.ts
+    │   │   └── utils.ts
+    │   ├── types
+    │   │   ├── chat.ts
+    │   │   ├── onboarding.ts
+    │   │   ├── product.ts
+    │   │   └── quickBuyProfile.ts
+    │   └── proxy.ts
+    ├── supabase
+    │   ├── .temp
+    │   │   ├── gotrue-version
+    │   │   ├── linked-project.json
+    │   │   ├── pooler-url
+    │   │   ├── postgres-version
+    │   │   ├── project-ref
+    │   │   ├── rest-version
+    │   │   ├── storage-migration
+    │   │   └── storage-version
+    │   └── migrations
+    │       ├── 20260705193720_quickbuy_profiles.sql
+    │       ├── 20260705203000_backend_hardening_schema.sql
+    │       ├── 20260705210000_chat_modes.sql
+    │       ├── 20260705223000_add_token_limit_columns.sql
+    │       ├── 20260705230000_add_theme_preferences.sql
+    │       ├── 20260706000000_chat_messages_cascade.sql
+    │       ├── 20260706010000_add_requirements.sql
+    │       ├── 20260706020000_add_pinned_to_chat_sessions.sql
+    │       ├── 20260707000000_add_custom_primary_hsl.sql
+    │       └── 20260707000000_add_custom_seed_color.sql
+    ├── .dockerignore
+    ├── .env.local
+    ├── .gitignore
+    ├── AGENTS.md
+    ├── BRANCH_NOTES.md
+    ├── caching_spec.txt
+    ├── CLAUDE.md
+    ├── components.json
+    ├── docker-compose.yml
+    ├── Dockerfile
+    ├── eslint.config.mjs
+    ├── EXPLORE_MODE_ARCHITECTURE.md
+    ├── folder_structure.txt
+    ├── guardrails_spec.txt
+    ├── netlify.toml
+    ├── next-env.d.ts
+    ├── next.config.ts
+    ├── output.html
+    ├── package-lock.json
+    ├── package.json
+    ├── postcss.config.mjs
+    ├── README.md
+    ├── reranking_spec.txt
+    ├── routing_spec.txt
+    ├── test_gemini.mjs
+    ├── tsconfig.json
+    ├── tsconfig.tsbuildinfo
+    └── VIRTUAL_WARDROBE_CASE_STUDY.txt

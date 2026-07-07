@@ -62,6 +62,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# ── Healthcheck ──────────────────────────────────────────────────────────
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:3000/ || exit 1
+
 # ── Non-Root Security Guardrail ─────────────────────────────────────────
 # Create a limited-privilege system user "nextjs" so that even if the app
 # is compromised, the attacker cannot escalate to root on the host.

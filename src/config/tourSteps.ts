@@ -11,7 +11,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: "welcome",
     targetId: null, // No target — renders as a centered modal
-    title: "Welcome to BuyWise AI! 🚀",
+    title: "Welcome to BuyWise AI!",
     content:
       "Your ultimate, all-in-one smart shopping assistant. Let's take a quick 30-second tour to show you how to get the best out of your shopping experience.",
     placement: "bottom",

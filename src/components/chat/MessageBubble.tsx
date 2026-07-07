@@ -16,7 +16,7 @@ import { ClarifyingQuestionCard } from "./ClarifyingQuestionCard";
 import { DeepResearchClarifyingCard, ClarifyingQuestion } from "./DeepResearchClarifyingCard";
 import { IntakeQuestionnaireCard } from "./IntakeQuestionnaireCard";
 import { ChatMode } from "@/types/chat";
-import { Brain, Pencil, ArrowRight, ChevronRight, CheckCircle } from "lucide-react";
+import { Brain, Pencil, ArrowRight, ChevronRight, CheckCircle, Microscope, Compass } from "lucide-react";
 import { getExploreLayoutParts } from "@/app/page";
 import { useUser } from "@/contexts/UserContext";
 
@@ -674,7 +674,11 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
                 onClick={() => onNewChat?.(message.suggestedMode)}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-accent/10 border border-brand-accent/20 text-brand-accent hover:bg-brand-accent/20 transition-all font-semibold text-xs sm:text-sm cursor-pointer shadow-sm active:scale-[0.98]"
               >
-                Start fresh chat in {message.suggestedMode === "deep_research" ? "Deep Research 🔬" : "Explore Mode 🧭"}
+                Start fresh chat in {message.suggestedMode === "deep_research" ? (
+                  <span className="flex items-center gap-1.5">Deep Research <Microscope className="size-4" /></span>
+                ) : (
+                  <span className="flex items-center gap-1.5">Explore Mode <Compass className="size-4" /></span>
+                )}
               </button>
             </div>
           )}

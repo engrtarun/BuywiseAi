@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform, useAnimation, PanInfo, AnimatePresence } from "framer-motion";
 import { QuickBuyProduct } from "@/lib/quickBuyMockData";
 import { useSwipeFeedback } from "@/hooks/useSwipeFeedback";
-import { Star, Check, ShoppingCart, Zap, Heart, ArrowRight, Package } from "lucide-react";
+import { Star, Check, ShoppingCart, Zap, Heart, ArrowRight, Package, PartyPopper } from "lucide-react";
 import { CheckoutFlow, CheckoutItem } from "../checkout/CheckoutFlow";
 
 interface SwipeableProductCardProps {
@@ -123,7 +123,7 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
     if (onBuy) onBuy(product);
     
     // Show toast & auto-swipe
-    setShowToast(`🎉 Order Placed! ₹${product.price}`);
+    setShowToast(`Order Placed! ₹${product.price}`);
     setShowFlyingBox(true);
     
     setTimeout(() => {
@@ -280,8 +280,9 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
                 initial={{ opacity: 0, scale: 0.8, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-5 py-3 rounded-2xl font-black text-base backdrop-blur-md border border-white/20 z-50 shadow-2xl flex items-center justify-center whitespace-nowrap"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-5 py-3 rounded-2xl font-black text-base backdrop-blur-md border border-white/20 z-50 shadow-2xl flex items-center justify-center whitespace-nowrap gap-2"
               >
+                <PartyPopper className="size-5 text-brand-accent" />
                 {showToast}
               </motion.div>
             )}

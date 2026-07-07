@@ -120,16 +120,16 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
       // Recommendation Recovery: if LLM failed to output the array but gave us the verdict
       if (items.length === 0) {
          if (parsedJson.primary_query) {
-             items.push({ name: parsedJson.primary_query, badge: "🏆 Best Overall" });
+             items.push({ name: parsedJson.primary_query, badge: "Best Overall" });
          }
          if (Array.isArray(parsedJson.backup_queries)) {
-             parsedJson.backup_queries.forEach((q: string) => items.push({ name: q, badge: "⭐ Alternative Option" }));
+             parsedJson.backup_queries.forEach((q: string) => items.push({ name: q, badge: "Alternative Option" }));
          }
          if (items.length === 0 && (parsedJson.final_verdict || parsedJson.summary)) {
             items.push({
               name: "Recommended Choice",
               description: String(parsedJson.final_verdict || parsedJson.summary).substring(0, 100) + "...",
-              badge: "💡 Top Pick",
+              badge: "Top Pick",
               price: "See Retailer"
             });
          }
@@ -145,7 +145,7 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
         platform: String(p.platform || "Amazon"),
         image: String(p.image || "/placeholder.png"),
         link: String(p.link || "https://amazon.in"),
-        badge: String(p.badge || "⭐ Recommended")
+        badge: String(p.badge || "Recommended")
       }));
     } else if (parsedJson.ui_type === "unrecognized") {
       // Gibberish / unrecognized input — render as a plain clarification prompt
