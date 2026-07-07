@@ -327,8 +327,13 @@ export async function POST(req: NextRequest) {
         try {
           for await (const chunk of writerStream) {
             fullResponse += chunk;
-            // Send chunk to client via SSE
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: chunk })}\n\n`));
+            // Hide processing tags from visible frontend chunks while building the buffer
+            if (!fullResponse.includes("[")) {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: chunk })}\n\n`));
+            } else {
+              const cleanVisibleChunk = chunk.replace(/\[TRACK_PREFERENCE:.*?\]/g, "");
+              if (cleanVisibleChunk) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: cleanVisibleChunk })}\n\n`));
+            }
           }
 
           // Once the stream finishes, save the full response to context
@@ -359,6 +364,17 @@ export async function POST(req: NextRequest) {
           backendContext.history.push({ role: "assistant", content: assistantCleanText });
           backendContext.messageCount = backendContext.history.length;
           backendContext.lastActive = new Date().toISOString();
+
+          // Execute preference extraction pipeline
+          const preferenceRegex = /\[TRACK_PREFERENCE:\s*(.*?)\]/;
+          const match = fullResponse.match(preferenceRegex);
+          if (match && match[1]) {
+            if (!backendContext.memory.preferredCategories) backendContext.memory.preferredCategories = [];
+            if (!backendContext.memory.preferredCategories.includes(match[1].trim())) {
+              backendContext.memory.preferredCategories.push(match[1].trim());
+            }
+          }
+
           fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
 
           if (confirmedCategory) {
@@ -413,6 +429,9 @@ export async function POST(req: NextRequest) {
                     
                     if (!fullResponse.includes("[")) {
                       controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: textDelta })}\n\n`));
+                    } else {
+                      const cleanVisibleChunk = textDelta.replace(/\[TRACK_PREFERENCE:.*?\]/g, "");
+                      if (cleanVisibleChunk) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: cleanVisibleChunk })}\n\n`));
                     }
                   } catch (e) {}
                 }
