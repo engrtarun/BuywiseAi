@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import { getExploreLayoutParts } from "@/app/page";
+import { getExploreLayoutParts } from "@/app/chat/page";
 import { MessageBubble } from "../MessageBubble";
 import { ProductCarousel } from "../ProductCarousel";
 import { ProductCard } from "../ProductCard";

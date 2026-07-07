@@ -17,7 +17,7 @@ import { DeepResearchClarifyingCard, ClarifyingQuestion } from "./DeepResearchCl
 import { IntakeQuestionnaireCard } from "./IntakeQuestionnaireCard";
 import { ChatMode } from "@/types/chat";
 import { Brain, Pencil, ArrowRight, ChevronRight, CheckCircle, Microscope, Compass } from "lucide-react";
-import { getExploreLayoutParts } from "@/app/page";
+import { getExploreLayoutParts } from "@/app/chat/page";
 import { useUser } from "@/contexts/UserContext";
 
 function getCuratedProductImage(productName: string): string {

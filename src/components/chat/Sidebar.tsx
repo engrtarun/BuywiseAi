@@ -231,6 +231,7 @@ function ProfileModal({
                   src={currentAvatar} 
                   alt="Avatar" 
                   className="size-20 rounded-full object-cover border-2 border-white/[0.1] group-hover:opacity-80 transition-opacity"
+                  referrerPolicy="no-referrer"
                 />
               ) : (
                 <div className="size-20 rounded-full bg-marigold/20 border-2 border-marigold/30 flex items-center justify-center group-hover:bg-marigold/30 transition-colors">

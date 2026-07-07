@@ -31,7 +31,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
   /** Skip login → enter as guest */
   const handleGuestSkip = () => {
     enterGuestMode();
-    router.push("/");
+    router.push("/chat");
   };
 
   // Loading and Error States

@@ -41,6 +41,14 @@ export function useGuestAccess() {
   const [guestMessageCount, setGuestMessageCount] = useState(0);
 
   /* Hydrate from localStorage on mount (client only), then verify actual auth */
+  const resetGuestAccess = useCallback(() => {
+    setIsGuest(false);
+    setGuestMessageCount(0);
+    localStorage.removeItem(GUEST_MODE_KEY);
+    localStorage.removeItem(GUEST_COUNT_KEY);
+    document.cookie = `${GUEST_MODE_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  }, []);
+
   useEffect(() => {
     setIsGuest(readLocalBool(GUEST_MODE_KEY, false));
     setGuestMessageCount(readLocalInt(GUEST_COUNT_KEY, 0));
@@ -54,16 +62,29 @@ export function useGuestAccess() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         console.log("[useGuestAccess] User is authenticated. Resetting guest state.");
-        setIsGuest(false);
-        setGuestMessageCount(0);
-        localStorage.removeItem(GUEST_MODE_KEY);
-        localStorage.removeItem(GUEST_COUNT_KEY);
-        document.cookie = `${GUEST_MODE_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+        resetGuestAccess();
       }
     };
 
     checkAuthAndClearIfLoggedin();
-  }, []);
+
+    const supabase = createClient();
+    if (supabase) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' || session) {
+          console.log("[useGuestAccess] Auth state changed to signed in. Resetting guest state.");
+          resetGuestAccess();
+        } else if (event === 'SIGNED_OUT') {
+           // On sign out, they become a guest again, but we don't necessarily want to enter guest mode with the modal automatically.
+           // Setting isGuest to true might be desired if we want strict guest limits immediately.
+        }
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [resetGuestAccess]);
 
   /* Derived */
   const canSendMessage = !isGuest || guestMessageCount < FREE_MESSAGE_LIMIT;
@@ -89,14 +110,7 @@ export function useGuestAccess() {
     });
   }, []);
 
-  /** Clear guest state entirely (call on successful login) */
-  const resetGuestAccess = useCallback(() => {
-    setIsGuest(false);
-    setGuestMessageCount(0);
-    localStorage.removeItem(GUEST_MODE_KEY);
-    localStorage.removeItem(GUEST_COUNT_KEY);
-    document.cookie = `${GUEST_MODE_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-  }, []);
+
 
   return {
     isGuest,
