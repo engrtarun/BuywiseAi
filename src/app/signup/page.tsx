@@ -403,7 +403,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
                 animate="center"
                 exit="exit"
                 transition={{ duration: 0.3 }}
-                className={`w-full flex flex-col gap-4 absolute ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
+                className={`w-full flex flex-col gap-4 ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
               >
               <div className="flex flex-col gap-2">
                 <h1 className="font-heading font-extrabold text-2xl tracking-tight">
@@ -439,7 +439,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
               animate="center"
               exit="exit"
               transition={{ duration: 0.3 }}
-              className={`w-full flex flex-col gap-4 absolute ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
+              className={`w-full flex flex-col gap-4 ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
             >
               <div className="flex flex-col gap-2">
                 <h1 className="font-heading font-extrabold text-2xl tracking-tight">
@@ -510,7 +510,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
               animate="center"
               exit="exit"
               transition={{ duration: 0.3 }}
-              className={`w-full flex flex-col gap-4 absolute ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
+              className={`w-full flex flex-col gap-4 ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
             >
               <div className="flex flex-col gap-2">
                 <h1 className="font-heading font-extrabold text-2xl tracking-tight">
@@ -611,7 +611,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
               animate="center"
               exit="exit"
               transition={{ duration: 0.3 }}
-              className={`w-full flex flex-col gap-4 absolute ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
+              className={`w-full flex flex-col gap-4 ${shake ? 'animate-[shake_0.4s_ease-in-out]' : ''}`}
             >
               <div className="flex flex-col gap-2">
                 <h1 className="font-heading font-extrabold text-2xl tracking-tight">

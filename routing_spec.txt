@@ -1,0 +1,386 @@
+BUYWISE-AI INTEL-AGENT SPECIFICATION CORE-v3.0                              Page 1 of 16
+LANGUAGE VECTOR:        Technical Latin Hindi (Hinglish) Specification Protocol
+COMPLIANCE CODE:       ANTIGRAVITY-AUTONOMOUS-REFACTORING-ENG-v3.0
+DOCUMENT WEIGHT:       Exhaustive Hyper-Detailed Deep Dive (Production-Ready)
+ENGINEERING MODEL:          Multi-Agent Split API Orchestration Blueprint
+TARGET REF SYSTEM:         buywise-ai / Core Refactoring Specification Docs
+and Self-Correcting Execution Loops. 
+Batwaara") for High-Performance Intent Classification, Context Extraction,
+Decentralized Autonomous Multi-Agent Framework Matrix ("Dimaag ka
+DESIGN SPECIFICATION & INDUSTRIAL ARCHITECTURE BLUEPRINT
+ROUTING ENGINE
+BUYWISE AI - MULTI-AGENT
+----------------Page (0) Break----------------
+BUYWISE-AI INTEL-AGENT SPECIFICATION CORE-v3.0                              Page 2 of 16
+bottlenecks capture hote hain: 
+Monolithic route configuration me dynamic structural operations run karte waqt niche diye gaye critical systemic
+1.2 Production System Failure Analysis Matrix
+crash breakdown experience karte hain. 
+constraints balance variable loose ho jaye, toh client application viewport components trace parameters
+model same runtime thread me intent check aur response generation dono execute karta hai. Agar token
+Vulnerability Statement: Monolithic architecture structural tokens boundaries ko fail karti hai kyunki
+execution overload ki wajah se cognitive state drift trigger ho jata hai. 
+runtime structural requirements extract karna, aur zero-error deterministic validation payloads yield karna. Is
+dynamic e-commerce data catalogs schema rules apply karna, mock files context arrays process karna,
+abstract operations execute karne padte hain: user intent ko classification parameters me divide karna,
+operations ke dauran confuse ho jata hai. Single network runtime pipeline ko simultaneous layers par multiple
+Bhai, jab ek hi monolithic LLM hosh sambhal raha hota hai, toh system high-concurrency and deep analytical
+(gemini-2.5-flash) ko saare high-compute tasks akele handle karne padte hain. 
+interface se koi dynamic prompt payload input transaction hit hoti hai, toh ek single model instance
+monolithic model instantiation lifecycle par rely karta tha. Is design approach me, jab client application window
+BuyWise AI ke operational framework ka core execution route src/app/api/chat/route.ts ab tak ek
+1.1 The Single-Model Cognitive Overload Crisis
+SYSTEM FAILURE VECTORS
+CHAPTER 1: MONOLITHIC ARCHITECTURE CONSTRAINTS &
+----------------Page (1) Break----------------
+BUYWISE-AI INTEL-AGENT SPECIFICATION CORE-v3.0                              Page 3 of 16
+kar dete hain.
+logic variables parameters. trigger karke deep research operations mix
+structured isolated boundary trackingunintentional multi-turn loops state loops
+ERR-MONO-03      State classification rules lackExplore mode browse operations
+structures read karti hai.  jate hain.
+parameters hardcoded constants filecatalog data structures pipeline inputs ban
+baseline implementation context rulestimeouts experience karte hain jab large
+ERR-MONO-02      Data source querying parameters logicUpstream API generation processes massive
+hai.                 kar deta hai.
+hone se semantic alignment lose hoticonversational raw markdown output trigger
+complex raw text patterns strings mixinstructions bypass karke loose
+ERR-MONO-01      System Prompt rules logic context meModel JSON schemas objects format
+FAILURE VECTOR ID  OPERATIONAL ROOT CAUSE     SYSTEM FAILURE MODE IMPACT
+----------------Page (2) Break----------------
+BUYWISE-AI INTEL-AGENT SPECIFICATION CORE-v3.0                              Page 4 of 16
+arrays mappings.
+Deliverable Target: Relational structural content collection context string metrics data extraction variables
+optimize range pulls execute karta hai.
+calculations perform karta hai aur e-commerce catalog storage mock models file systems arrays query
+handles karta hai. Router agent se signals validation pass milne par, yeh target keywords parsing criteria
+System Profile & Operational Scope:  Yeh engine business data schemas interface logic context
+AGENT_02: CATALOG DATA AGGREGATION & SEARCH AGENT
+"explore" | "deep_research" }).
+Deliverable Target: Static routing token parameter extraction payload object (e.g., { "target_mode":
+properties analyze karke optimal mode state determine karta hai.
+operations execute kiye. Yeh user behavior tracking loops, preferences patterns aur chat history
+Iska kaam incoming request inputs messages tokens ko analyze karna hai bina kisi data lookup
+System Profile & Operational Scope: Yeh agent entry point check point gateway interface engine hai.
+AGENT_01: INTENT INTERCEPTION ROUTER AGENT
+structural process parameters maps me decompose kiya gaya hai: 
+Is multi-agent loop routing design setup architecture execution sequence pipelines ko absolute clarity ke saath
+functional deliverables execute karte hain. 
+computing blocks (Agents) introduce karegi, jo custom sub-prompts instructions run karke specialized
+prompts directly generic system pipelines target nahi karenge. Iske bajay, architecture layers specific isolated
+rahe hain. Is decoupled agentic paradigm design specification ke mutabik, dynamic incoming streaming
+routing layer ka Decentralized Multi-Agent Decentralization ("Dimaag ka Batwaara") setup implement kar
+Systemic cognitive overload issues ko permanent structural level par wrapup karne ke liye hum pure monolithic
+2.1 Core Architectural Decentralization Blueprint
+("DIMAAG KA BATWAARA")
+CHAPTER 2: THE MULTI-AGENT ORCHESTRATION ARCHITECTURE
+----------------Page (3) Break----------------
+BUYWISE-AI INTEL-AGENT SPECIFICATION CORE-v3.0                              Page 5 of 16
+Deliverable Target: Production hardened valid schema deterministic dynamic response target arrays.
+passes validation ensure karta hai.
+checking rules loop initiate karta hai. Structural critic loop JSON parameters validation parsing tests
+Generative content assets synthesis generation task apply hone par validation logic components structure
+System Profile & Operational Scope: Yeh dual-component microservice runtime segment layer hai.
+AGENT_04: WRITER/CRITIC DETERMINISTIC SYNTHESIS ENGINE LOOP
+Deliverable Target: Clean contextual persona context profiles matrix properties payload string models.
+maps read karke personalized parameter blocks compose karta hai.
+extraction logic execute karna hai. Supabase tables schemas, user preferences, active context criteria
+System Profile & Operational Scope:  Is agent ka responsibility bounds client user profiles data
+AGENT_03: USER TELEMETRY CONTEXT SCRAPER & ENRICHMENT AGENT
+----------------Page (4) Break----------------
+BUYWISE-AI INTEL-AGENT SPECIFICATION CORE-v3.0                              Page 6 of 16
+kar dega. 
+baseline score drop state cross karegi, router engine execution default pipeline fallback trigger targets register
+check variables pull handle karta hai. Agar classification response parameter value explicit confidence limit
+hain, aur \Theta_{session\_depth} parameter internal historical communication turns validation context matrices
+Where  lpha,  eta, \gamma weights representation optimization scaling limits metrics configurations define karte
+(W_{research} \cdot I_{research}) + \gamma \cdot \Theta_{session\_depth}
+S_{Router}(\lambda_{message}) =  lpha \cdot \sum (W_{explore} \cdot I_{explore}) +  eta \cdot \sum
+calculations mathematically formulate criteria balance metrics maintain karti hain: 
+execute karne ke liye continuous scoring algorithm sequence map targets run karta hai. State transitions logic
+Router agent raw semantic instructions evaluation functions text criteria data boundaries checking steps
+3.1 Mathematical Logic Formulation for Mode Categorization
+INTERCEPTION ROUTER AGENT
+CHAPTER 3: TECHNICAL BLUEPRINT FOR THE INTENT
+----------------Page (5) Break----------------
+BUYWISE-AI INTEL-AGENT SPECIFICATION CORE-v3.0                              Page 7 of 16
+}
+  return JSON.parse(targetText) as RouterOutput;
+  const targetText = payloadResponse.text().trim();
+  const payloadResponse = await communicationResult.response;
+{contextHistory} \n Message: ${userMessage}`);
+  const communicationResult = await sessionExecution.sendMessage(`History context: $
+  });
+    systemInstruction: routerPrompt,
+  const sessionExecution = model.startChat({
+  });
+    generationConfig: { responseMimeType: "application/json" }
+    model: "gemini-2.5-flash",
+  const model = genAI.getGenerativeModel({
+}`;
+  "reasoning_trace": "short analytical comment"
+  "confidence_score": 0.0 to 1.0,
+  "target_mode": "explore" | "deep_research",
+{
+Contract schema:
+code blocks.
+Return ONLY a valid JSON string structure format matching contract. No markdown formatting 
+guides, interactive choices.
+2. 'deep_research': User asks deep questions, provides metrics, specs, wants comparison 
+1. 'explore': User wants quick browsing, casual viewing, broad list of options.
+operational mode:
+Analyze the user incoming message and previous history trace. Categorize into exact 
+  const routerPrompt = `You are the Intent Interception Router Agent for BuyWise AI.
+Promise {
+export async function executeRouterRouting(userMessage: string, contextHistory: string): 
+}
+  reasoning_trace: string;
+  confidence_score: number;
+  target_mode: "explore" | "deep_research";
+interface RouterOutput {
+const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
+import { env } from "@/lib/env";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+setups engine criteria trace logic parameters setup criteria fulfill karte hain: 
+Niche diye gaye production-ready isolated code block layout structure component matrix instructions model
+3.2 Router Production Script Implementation
+----------------Page (6) Break----------------
+BUYWISE-AI INTEL-AGENT SPECIFICATION CORE-v3.0                              Page 8 of 16
+}
+  };
+protection ceiling matching bounds rules
+    extracted_catalog_slices: filteredOutputSlices.slice(0, 5) // Context boundary limit 
+    query_keywords: extractedKeywordsPayload,
+  return {
+  });
+    );
+      item.category?.toLowerCase().includes(keyword.toLowerCase())
+      item.name.toLowerCase().includes(keyword.toLowerCase()) || 
+    return extractedKeywordsPayload.some(keyword => 
+  const filteredOutputSlices = localCatalogRef.filter(item => {
+  const localCatalogRef = quickBuyMockData;
+systems
+  // Simulating precise high-speed token keyword parsing across structured mock array 
+Promise {
+export async function executeCatalogSearchExtraction(extractedKeywordsPayload: string[]): 
+}
+  extracted_catalog_slices: typeof quickBuyMockData;
+  query_keywords: string[];
+interface SearchAgentOutput {
+import { quickBuyMockData } from "@/lib/quickBuyMockData";
+baseline setup checks implement ho rha h: 
+trace logic run karein. Is configuration rules flow schema pattern parsing step layout models parameter setups
+or target catalog relational models datastores) directly search keywords constraints mappings filter metrics
+processing loops core application datasets directories context tools (jaise src/lib/quickBuyMockData.ts
+Decentralized multi-agent workflow runtime integration architecture structure ensure karta hai ki model
+trigger ho jati thi. 
+injection process follow karte the, jisse context memory limit leaks and tokens truncation constraints problems
+karta hai. Monolithic setups me model systems core mock catalogs databases files direct payload context
+Data Aggregation & Search Agent data integrity extraction context maintain karne ka critical function perform
+4.1 Catalog Query Optimization & Structural Vector Interfacing
+AGGREGATION & SEARCH AGENT
+CHAPTER 4: TECHNICAL BLUEPRINT FOR THE CATALOG DATA
+----------------Page (7) Break----------------
+BUYWISE-AI INTEL-AGENT SPECIFICATION CORE-v3.0                              Page 9 of 16
+settings.
+metrics configurations rules layers
+metrics values variables.  numeric(12,2) schema compliance
+Global Base Scale     Numerical float scaling tracking arrayDatabase column constraints enforce 
+parameters.
+variables pipelines strings entries logs
+string masks patterns.     numbers inside runtime validation
+Indian Rupee (INR)     ₹##,##,###.00 or ₹14,999 standard Regex parsing patterns validate
+STRUCTURE             CONSTRAINTS
+TARGET CURRENCY TARGET  DYNAMIC FORMATTING MASK   PARSING RULES CONVERSION
+patterns strings structures standard validation entries reflect karein: 
+system properties ensure karti hain ki items listing pricing properties direct localized currency formatting masks
+rules context loose execution modes control anomalies check variables avoid hone chahiye. Aggregation
+Bhai, dynamic system formatting setups me currency parameters conversion drift calculations precision failure
+4.2 Real-World E-Commerce Pricing Formatting Specifications
+----------------Page (8) Break----------------
+BUYWISE-AI INTEL-AGENT SPECIFICATION CORE-v3.0                             Page 10 of 16
+logic ensure krta h: 
+Niche diya gaya refactoring source segment pipeline optimization loops standard properties trace processing
+5.2 Isolated Implementation for Self-Correcting Execution Loops
+guidelines.
+intercept validation apply krta hai runtime exceptions control arrays tracking standard schema
+2. The Deterministic Critic Node: Execution sequence parameters monitoring block layer interface
+configurations parameters layout execute krta hai, target specifications arrays construct krta hai.
+1. The Generation Writer Node: Core content creation engine logic units mappings, variables
+implementations me ek strict dual-node system architecture matrix deploy ho rhi hai: 
+karna production architecture ka major goal hai. Is multi-agent generation module pipeline stage context loop
+E-commerce interactive assistant pipelines execution lifecycle me zero-drift UI component coordination achieve
+5.1 Deterministic JSON Generation & Critical Guardrails Architecture
+VALIDATION ENGINE LOOP
+CHAPTER 5: TECHNICAL BLUEPRINT FOR THE WRITER/CRITIC
+----------------Page (9) Break----------------
+BUYWISE-AI INTEL-AGENT SPECIFICATION CORE-v3.0                             Page 11 of 16
+}
+  }
+    };
+evaluation break criteria logic sets."
+      error_diagnostic_trace: parseException.message || "Unknown schema processing 
+      sanitized_payload: "",
+      is_valid: false,
+    return {
+intercept validation.");
+    console.warn("Critic validation failure triggered self-correction loop routing 
+configurations
+    // Self-correcting feedback mechanism logic pipeline execution re-firing step variables 
+  } catch (parseException: any) {
+parameters.");
+    throw new Error("Target Schema UI-Type mismatch or structure fields broken properties 
+    }
+      }
+        return { is_valid: true, sanitized_payload: inspectionText };
+"results") {
+      if (verifiedObject.ui_type === "clarifying_question" || verifiedObject.ui_type === 
+    } else if (schemaTargetMode === "deep_research") {
+      }
+        return { is_valid: true, sanitized_payload: inspectionText };
+Array.isArray(verifiedObject.products)) {
+      if (verifiedObject.ui_type === "explore_carousel" && 
+    if (schemaTargetMode === "explore") {
+    // Validate strict structural field interfaces bounds checking criteria
+    const verifiedObject = JSON.parse(inspectionText);
+  try {
+  let inspectionText = rawWriterOutput.replace(/```json|```/g, "").trim();
+): Promise {
+  schemaTargetMode: "explore" | "deep_research"
+  rawWriterOutput: string, 
+export async function runWriterCriticValidationLoop(
+}
+  error_diagnostic_trace?: string;
+  sanitized_payload: string;
+  is_valid: boolean;
+interface ValidationReport {
+----------------Page (10) Break----------------
+BUYWISE-AI INTEL-AGENT SPECIFICATION CORE-v3.0                             Page 12 of 16
+  on public.agent_execution_telemetry_logs (session_id, created_at desc);
+create index if not exists agent_telemetry_session_created_idx 
+configurations parameters rules
+-- Optimize analytics query scans compound indexing optimization paths setups 
+  );
+    )
+        and chat_sessions.user_id = auth.uid()
+      where chat_sessions.id = agent_execution_telemetry_logs.session_id
+      select 1 from public.chat_sessions
+    exists (
+  using (
+  on public.agent_execution_telemetry_logs for select
+create policy "Users can view telemetry logs of their own active session contexts"
+alter table public.agent_execution_telemetry_logs enable row level security;
+data systems
+-- Enable Row Level Security Policies tracking multi-agent structural diagnostics paths 
+);
+  created_at timestamptz not null default now()
+  system_compute_duration_ms integer not null check (system_compute_duration_ms >= 0),
+  critic_loops_count integer not null default 0 check (critic_loops_count >= 0),
+execution step tracking variables arrays logs
+  agent_execution_chain jsonb not null default '[]'::jsonb, -- Captures detailed pipeline 
+router_confidence <= 1.0),
+  router_confidence numeric(4,2) not null check (router_confidence >= 0.0 and 
+  routing_intent_mode text not null,
+  session_id uuid not null references public.chat_sessions(id) on delete cascade,
+  id uuid primary key default gen_random_uuid(),
+create table if not exists public.agent_execution_telemetry_logs (
+-- TARGET: public.agent_execution_telemetry_logs
+-- Multi-Agent Telemetry Logging Tracking Migrations Script 
+optimization setup systems command scripts update tables schemas definitions: 
+create krti hain. Multi-agent processing logs database traces data parameters execution steps sequence layers
+extensive persistent database telemetry metrics recording capabilities setup requirements essential parameters
+Bhai, multi-agent decentralized systems tracking loops manage karne ke liye production operational levels par
+6.1 System Migration Blueprint Script Configurations
+MULTI-AGENT ACTIONS
+CHAPTER 6: DATABASE TELEMETRY SCHEMA EXTENSIONS FOR
+----------------Page (11) Break----------------
+BUYWISE-AI INTEL-AGENT SPECIFICATION CORE-v3.0                             Page 13 of 16
+]
+"duration": 110 }
+  { "agent": "writer_critic_loop", "status": "re_fired_repaired", "iterations": 1, 
+  { "agent": "catalog_search", "status": "success", "hits_found": 4, "duration": 12 },
+  { "agent": "router", "status": "success", "duration": 45 },
+[
+objects records matching the execution parameters parameters map format arrays layout data: 
+The agent_execution_chain JSONB column matrix captures highly granular tracking states validation
+6.2 Metadata Structural Storage Mapping Schema Parameters
+----------------Page (12) Break----------------
+BUYWISE-AI INTEL-AGENT SPECIFICATION CORE-v3.0                             Page 14 of 16
+process requirements map execute krna highly mandated system requirement ہےDz: 
+absolute safety criteria assurance setup run checks automation targets execution scripts standard models
+production servers deployment loops pipeline deployments standard configurations push karne se pehle
+Bhai, multi-agent structural components routing engine integration code base systems transformations ko
+7.1 Complete End-to-End Regression Validation Pipeline Script
+PRODUCTION VERIFICATION LOOP
+CHAPTER 7: COMPREHENSIVE CONTINUOUS INTEGRATION &
+----------------Page (13) Break----------------
+BUYWISE-AI INTEL-AGENT SPECIFICATION CORE-v3.0                             Page 15 of 16
+allowed non-deterministic broken payload patterns pass tracking bounds.");
+      throw new Error("REGRESSION_FAIL: Critic loop structural safety checking algorithm 
+    if (faultContainmentReport.is_valid === true) {
+runWriterCriticValidationLoop(mockCorruptJsonPayload, "explore");
+    const faultContainmentReport = await 
+missing_array_syntax_broken }";
+    const mockCorruptJsonPayload = "{ ui_type: 'explore_carousel', 'products': 
+    // TEST CASE 03: Critic Validation Repair Flow Diagnostics Framework Systems Runs
+contextual parameters safely from source files arrays.");
+    diagnostic_logs_trace.push("TC-02 PASSED: Catalog search aggregation systems extracted 
+    total_passed_test_cases++;
+    }
+tracking layer array type missing parameters configuration.");
+      throw new Error("REGRESSION_FAIL: Search optimization dataset extraction bounds 
+    if (!Array.isArray(searchExtractionResult.extracted_catalog_slices)) {
+    const searchExtractionResult = await executeCatalogSearchExtraction(mockingKeywords);
+    const mockingKeywords = ["laptop", "gaming"];
+    // TEST CASE 02: Search Array Mappings Boundaries Check Constraints Evaluation
+accurately verified target states parameters context rules.");
+    diagnostic_logs_trace.push("TC-01 PASSED: Structural intent routing classification 
+    total_passed_test_cases++;
+    }
+state identification drift occurred.");
+      throw new Error("REGRESSION_FAIL: Intent classification route switching component 
+    if (routingResult.target_mode !== "deep_research") {
+    const routingResult = await executeRouterRouting(testPromptAlpha, "[]");
+specification comparison charts update";
+    const testPromptAlpha = "Bhai laptop lena hai budget range 50k to 70k configuration 
+Mappings
+    // TEST CASE 01: Core Intent Switching Classification Verification Framework Target 
+  try {
+regression simulation validation checks loop...");
+  diagnostic_logs_trace.push("Initiating end-to-end multi-agent systems integration 
+  let total_passed_test_cases = 0;
+  let diagnostic_logs_trace: string[] = [];
+}> {
+  diagnostic_logs_trace: string[];
+  total_passed_test_cases: number;
+  pipeline_health_status: "OPERATIONAL" | "DEGRADED";
+export async function runProductionRegressionSystemVerificationPipeline(): Promise<{
+import { runWriterCriticValidationLoop } from "./writerCriticLoop";
+import { executeCatalogSearchExtraction } from "./searchAgent";
+import { executeRouterRouting } from "./routerAgent";
+----------------Page (14) Break----------------
+BUYWISE-AI INTEL-AGENT SPECIFICATION CORE-v3.0                             Page 16 of 16
+automated systems operations engines code repositories integration updates directly apply kar skte h. 
+hai. Target structural code deployments optimization automation variables and refactoring tasks processes
+ko fully secure base configurations guidelines compliance matrix parameters mappings targets pr lock karta
+Yeh comprehensive operational specification master design document multi-agent runtime pipeline boundaries
+}
+  }
+    };
+      diagnostic_logs_trace
+      total_passed_test_cases,
+      pipeline_health_status: "DEGRADED",
+    return {
+{regressionPipelineException.message || "System trace fault breakdown."}`);
+    diagnostic_logs_trace.push(`CRITICAL_REGRESSION_EXCEPTION_TRIGGERED: $
+  } catch (regressionPipelineException: any) {
+    };
+      diagnostic_logs_trace
+      total_passed_test_cases,
+      pipeline_health_status: "OPERATIONAL",
+    return {
+contained broken schemas models format validation structural errors.");
+    diagnostic_logs_trace.push("TC-03 PASSED: Critic loop isolation guardrails successfully 
+    total_passed_test_cases++;
+    }
+----------------Page (15) Break----------------

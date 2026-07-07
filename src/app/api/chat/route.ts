@@ -35,7 +35,7 @@ import { getFallbackChatResponse } from "@/lib/fallbackResponses";
 import { enforceChatAccess } from "@/lib/chatAccess";
 import fs from "fs";
 import path from "path";
-import { determineIntent } from "@/lib/agents/router";
+import { executeRouterRouting } from "@/lib/agents/routerAgent";
 import { searchForProducts, type SearchedProduct } from "@/lib/agents/search";
 import { runWriter } from "@/lib/agents/writer";
 import { executeRerankedSearch } from "@/lib/providers/test-serper";
@@ -90,8 +90,10 @@ function similarity(a: string, b: string): number {
   return 1 - levenshtein(a, b) / maxLen;
 }
 
-/** 85% similarity threshold for a cache hit. */
-const CACHE_SIMILARITY_THRESHOLD = 0.85;
+/** 92% similarity threshold for a hard cache hit per spec. */
+const CACHE_SIMILARITY_THRESHOLD_HARD = 0.92;
+/** 82% similarity threshold for a soft cache hit per spec. */
+const CACHE_SIMILARITY_THRESHOLD_SOFT = 0.82;
 
 /** Look up a session's cache for a near-identical message. */
 function getCachedResponse(chatId: string, normalizedMsg: string): CachedEntry | null {
@@ -103,8 +105,13 @@ function getCachedResponse(chatId: string, normalizedMsg: string): CachedEntry |
 
   // Similarity scan (short-circuit on first hit above threshold)
   for (const [cachedKey, entry] of sessionCache.entries()) {
-    if (similarity(normalizedMsg, cachedKey) >= CACHE_SIMILARITY_THRESHOLD) {
-      return entry;
+    const simScore = similarity(normalizedMsg, cachedKey);
+    if (simScore >= CACHE_SIMILARITY_THRESHOLD_HARD) {
+      return entry; // Hard Cache Hit
+    } else if (simScore >= CACHE_SIMILARITY_THRESHOLD_SOFT) {
+      console.log(`[cache] SOFT HIT (${simScore}) for session "${chatId}" — routing to intermediate LLM eval.`);
+      // Treated as a miss to ensure the generative layer evaluates the subtle differences.
+      return null;
     }
   }
   return null;
@@ -154,7 +161,13 @@ export async function POST(req: NextRequest) {
     userMessage = message;
 
     if (mode !== "buy_explanation") {
-      mode = await determineIntent(userMessage, history);
+      try {
+        const routerOutput = await executeRouterRouting(userMessage, JSON.stringify(history));
+        mode = routerOutput.target_mode;
+      } catch (err) {
+        console.warn("Router agent failed, falling back to deep_research", err);
+        mode = "deep_research";
+      }
     }
 
     // Backend JSON file logic (Msg Quality Improvement)
