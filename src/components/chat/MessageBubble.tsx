@@ -200,7 +200,6 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   let exploreProductsList: Product[] = [];
   let exploreDeepDiveText = "";
   let textResponseContent = "";
-  let parseError = false;
 
   try {
     const rawContent = message.content || "";
@@ -255,15 +254,9 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
       }
     } else {
       // Doesn't contain a JSON object - treat as plain text fallback
-      // Do not throw parse error unless it explicitly requires one based on mode state
-      if ((mode === "deep_research" || mode === "explore") && !message.intakeQuestionnaire && !message.clarifyingQuestion && !message.deepResearchResults && !message.searchTag && (!message.products || message.products.length === 0)) {
-         parseError = true;
-      }
     }
   } catch (e) {
-    if ((mode === "deep_research" || mode === "explore") && !message.intakeQuestionnaire && !message.clarifyingQuestion && !message.deepResearchResults && !message.searchTag && (!message.products || message.products.length === 0)) {
-       parseError = true;
-    }
+    // Treat as plain text fallback
   }
 
   // Fallback to parsed properties if raw JSON wasn't matched/parsed
@@ -286,11 +279,6 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
       ...p,
       image: p.image && !p.image.includes("placeholder.png") ? p.image : getCuratedProductImage(p.name || "")
     }));
-  }
-
-  // Ensure parseError is cleared if we successfully fallback to a known layout
-  if (isQuestionnaire || isExploreCarousel || message.deepResearchResults) {
-    parseError = false;
   }
 
   // Determine Explore layout variables
@@ -434,8 +422,25 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   const isSingleProduct = hasProducts && message.products?.length === 1;
   
   // Use textResponseContent if it was successfully parsed, otherwise fallback to original message.content
-  const rawMarkdownContent = textResponseContent || message.content;
+  let rawMarkdownContent = textResponseContent || message.content || "";
   
+  // If we couldn't parse the JSON but the string seems to be a JSON object, let's extract readable text from it to avoid showing ugly braces to the user.
+  if (!textResponseContent && rawMarkdownContent.trim().startsWith('{')) {
+    const extractRegex = /"(text|thought|headline|deep_dive|acknowledgement|question|summary)"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)/g;
+    const extractedParts = [];
+    let match;
+    while ((match = extractRegex.exec(rawMarkdownContent)) !== null) {
+      extractedParts.push(match[2].replace(/\\n/g, '\n').replace(/\\"/g, '"'));
+    }
+    
+    if (extractedParts.length > 0) {
+      rawMarkdownContent = extractedParts.join('\n\n');
+    } else {
+      // If no recognized keys are found, just strip the JSON syntax roughly
+      rawMarkdownContent = rawMarkdownContent.replace(/[{}]/g, '').replace(/"([a-zA-Z_]+)"\s*:/g, '').replace(/\\n/g, '\n').replace(/\\"/g, '"').trim();
+    }
+  }
+
   // Pre-process for spoiler syntax ||text||
   const processedContent = rawMarkdownContent.replace(/\|\|(.*?)\|\|/g, '<span data-spoiler="true">$1</span>');
 
@@ -457,16 +462,8 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
         </Avatar>
  
         <div className="flex flex-col gap-2 w-full min-w-0">
-          {/* JSON Parse Error Fallback */}
-          {parseError && (
-            <div className="flex items-center gap-2 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-[14px] sm:text-[15px] font-sans">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-triangle-alert shrink-0 animate-pulse"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-              <span>Re-calibrating research data...</span>
-            </div>
-          )}
-
           {/* Default AI Bubble (Standard markdown prose / Fallback) */}
-          {!parseError && !isQuestionnaire && (!isExploreModeLayout || !shouldRenderSplitLayout) && !message.deepResearchResults && message.content && (
+          {!isQuestionnaire && (!isExploreModeLayout || !shouldRenderSplitLayout) && !message.deepResearchResults && message.content && (
             <div
               dir="auto"
               style={{
