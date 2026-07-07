@@ -307,7 +307,7 @@ export function ChatInput({
         {/* Smart UX Trigger Toast */}
         {showUpgradeToast && (
           <div className="absolute bottom-[calc(100%+12px)] left-0 right-0 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-none">
-            <div className="mx-auto w-fit bg-[#1a1b26]/90 backdrop-blur-md border border-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.3)] rounded-2xl px-5 py-3 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 pointer-events-auto">
+            <div className="mx-auto w-fit bg-bg-input border border-border-light shadow-none rounded-xl px-5 py-3 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 pointer-events-auto">
               <span className="text-white text-[13px] font-medium text-center sm:text-left">
                 Tired of waiting? Get Pro for Instant Responses!
               </span>
@@ -316,23 +316,23 @@ export function ChatInput({
                   setShowUpgradeToast(false);
                   openPremium();
                 }}
-                className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:brightness-110 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-[0_0_15px_rgba(168,85,247,0.4)] whitespace-nowrap active:scale-95"
+                className="bg-bg-main hover:bg-white/5 text-text-primary-light font-bold text-xs px-4 py-2 rounded-lg transition-all whitespace-nowrap active:scale-95 border border-border-light"
               >
                 Upgrade Now
               </button>
             </div>
           </div>
         )}
-
+ 
         {/* Stop Generating button — shown above input while AI is responding */}
         {isGenerating && onStop && (
           <button
             onClick={onStop}
             className="
-              self-center flex items-center gap-2 px-4 py-2 rounded-full
-              bg-bg-input border border-border-light text-text-primary-light text-[13px] font-sans
-              hover:border-brand-accent/50 hover:text-brand-accent active:scale-[0.97]
-              transition-all duration-200 touch-manipulation shadow-sm cursor-pointer
+              self-center flex items-center gap-2 px-4 py-2 rounded-lg
+              bg-bg-input border border-border-light text-text-secondary text-[13px] font-sans
+              hover:border-border-dark hover:text-text-primary-light active:scale-[0.97]
+              transition-all duration-200 touch-manipulation cursor-pointer
               animate-in fade-in slide-in-from-bottom-1 duration-200
             "
           >
@@ -340,10 +340,10 @@ export function ChatInput({
             Stop generating
           </button>
         )}
-
-        <div className="flex flex-col bg-bg-input rounded-3xl border border-border-light focus-within:border-brand-accent/50 transition-colors shadow-sm overflow-hidden">
+ 
+        <div className="flex flex-col bg-bg-input rounded-xl border border-border-light focus-within:border-brand-accent/50 transition-colors shadow-none overflow-hidden">
           {/* Toolbar with Mode Badge and Formatting Options */}
-          <div className="flex items-center justify-between px-3 py-1.5 border-b border-border-light bg-black/15 select-none">
+          <div className="flex items-center justify-between px-3 py-1.5 border-b border-border-light bg-black/[0.03] dark:bg-black/15 select-none">
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs font-semibold text-text-primary-light animate-in fade-in duration-200">
               {mode === "deep_research" ? (
                 <>
