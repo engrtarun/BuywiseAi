@@ -3,8 +3,18 @@
  * Implements Step 01 & Step 02: Deep Web Scraping & Sanitization Loop
  */
 
-export async function scrapeWebText(urls: string[]): Promise<{ url: string; text: string }[]> {
+export interface ScrapeResponse {
+  success: boolean;
+  results: { url: string; text: string }[];
+  error?: string;
+}
+
+export async function scrapeWebText(urls: string[]): Promise<ScrapeResponse> {
   const timeoutMs = 2500; // Concurrency timeout ceiling
+
+  if (urls.length === 0) {
+    return { success: true, results: [] };
+  }
 
   const fetchWithTimeout = async (url: string) => {
     const controller = new AbortController();
@@ -15,10 +25,14 @@ export async function scrapeWebText(urls: string[]): Promise<{ url: string; text
         headers: { "User-Agent": "BuyWiseAI-Bot/1.0" } 
       });
       clearTimeout(id);
-      if (!res.ok) return null;
+      if (!res.ok) {
+        console.warn(`[scraper] Failed to fetch ${url}: HTTP ${res.status}`);
+        return null;
+      }
       return await res.text();
-    } catch (_err) {
+    } catch (err: any) {
       clearTimeout(id);
+      console.warn(`[scraper] Exception fetching ${url}:`, err.message || err);
       return null;
     }
   };
@@ -55,7 +69,17 @@ export async function scrapeWebText(urls: string[]): Promise<{ url: string; text
     return { url, text: cleanText };
   }));
 
-  return results
+  const validResults = results
     .map(r => r.status === "fulfilled" ? r.value : { url: "", text: "" })
     .filter(r => r.text.length > 0);
+
+  if (validResults.length === 0) {
+    return { 
+      success: false, 
+      results: [], 
+      error: "All scrape requests failed (e.g. rate-limited, timed out, or blocked)." 
+    };
+  }
+
+  return { success: true, results: validResults };
 }

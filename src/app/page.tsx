@@ -109,31 +109,38 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
         link: String(p.link || "https://amazon.in"),
       }));
     } else if (parsedJson.ui_type === "deep_research_results" || parsedJson.type === "deep_research_results" || parsedJson.ui_type === "results") {
-      aiMsg.content = parsedJson.summary || "Based on your options, here are the best fits:";
-      aiMsg.deepResearchResults = {
-        summary: parsedJson.summary,
-        finalVerdict: parsedJson.final_verdict,
-        comparison: Array.isArray(parsedJson.comparison) ? parsedJson.comparison : [],
-      };
       const items = Array.isArray(parsedJson.recommended_products) ? parsedJson.recommended_products : [];
-      
-      // Recommendation Recovery: if LLM failed to output the array but gave us the verdict
-      if (items.length === 0) {
-         if (parsedJson.primary_query) {
-             items.push({ name: parsedJson.primary_query, badge: "Best Overall" });
-         }
-         if (Array.isArray(parsedJson.backup_queries)) {
-             parsedJson.backup_queries.forEach((q: string) => items.push({ name: q, badge: "Alternative Option" }));
-         }
-         if (items.length === 0 && (parsedJson.final_verdict || parsedJson.summary)) {
-            items.push({
-              name: "Recommended Choice",
-              description: String(parsedJson.final_verdict || parsedJson.summary).substring(0, 100) + "...",
-              badge: "Top Pick",
-              price: "See Retailer"
-            });
-         }
-      }
+
+      // Frontend Safety Net: If this is a fallback or completely empty response, gracefully downgrade to text bubble
+      if (items.length === 0 && (parsedJson.final_verdict === "Please try again later." || (!parsedJson.primary_query && !parsedJson.final_verdict))) {
+        aiMsg.content = parsedJson.summary || "I'm having trouble fetching live results right now.";
+        aiMsg.deepResearchResults = undefined;
+        aiMsg.products = undefined;
+      } else {
+        aiMsg.content = parsedJson.summary || "Based on your options, here are the best fits:";
+        aiMsg.deepResearchResults = {
+          summary: parsedJson.summary,
+          finalVerdict: parsedJson.final_verdict,
+          comparison: Array.isArray(parsedJson.comparison) ? parsedJson.comparison : [],
+        };
+        
+        // Recommendation Recovery: if LLM failed to output the array but gave us the verdict
+        if (items.length === 0) {
+           if (parsedJson.primary_query) {
+               items.push({ name: parsedJson.primary_query, badge: "Best Overall" });
+           }
+           if (Array.isArray(parsedJson.backup_queries)) {
+               parsedJson.backup_queries.forEach((q: string) => items.push({ name: q, badge: "Alternative Option" }));
+           }
+           if (items.length === 0 && (parsedJson.final_verdict || parsedJson.summary)) {
+              items.push({
+                name: "Recommended Choice",
+                description: String(parsedJson.final_verdict || parsedJson.summary).substring(0, 100) + "...",
+                badge: "Top Pick",
+                price: "See Retailer"
+              });
+           }
+        }
 
       aiMsg.products = items.map((p: any) => ({
         id: String(p.id || Math.random()),
@@ -147,6 +154,7 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
         link: String(p.link || "https://amazon.in"),
         badge: String(p.badge || "Recommended")
       }));
+      }
     } else if (parsedJson.ui_type === "unrecognized") {
       // Gibberish / unrecognized input — render as a plain clarification prompt
       aiMsg.content = parsedJson.text || "I'm not sure what product you're looking for — could you tell me more?";

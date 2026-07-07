@@ -49,6 +49,7 @@ const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEYS[0]);
 export async function POST(req: NextRequest) {
   let userMessage = "";
   let userHistory: ChatHistoryMessage[] = [];
+  let mode = "explore";
 
   try {
     let body: unknown;
@@ -77,7 +78,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let { chatId = "default", history = [], message, mode = "explore", requirements = {}, isRegenerate = false } = body;
+    let { chatId = "default", history = [], message, mode: bodyMode = "explore", requirements = {}, isRegenerate = false } = body;
+    mode = bodyMode;
     userMessage = message;
 
     if (mode !== "buy_explanation") {
@@ -249,21 +251,42 @@ export async function POST(req: NextRequest) {
       typeof requirements === "object" &&
       Object.keys(requirements).length >= 2;
 
+    let shoppingSearchFailed = false;
+
     if (requirementsReady) {
+      const query = [
+        requirements.category,
+        requirements.use_case,
+        requirements.budget ? `under ${requirements.budget}` : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+
       try {
-        const query = [
-          requirements.category,
-          requirements.use_case,
-          requirements.budget ? `under ${requirements.budget}` : "",
-        ]
-          .filter(Boolean)
-          .join(" ");
         searchResults = await searchForProducts(query, 6);
-        
+      } catch (searchErr) {
+        shoppingSearchFailed = true;
+        console.warn("[route] Shopping API search failed:", searchErr);
+      }
+
+      try {
         // Execute Deep Web Scraping & Reranking Pipeline
         rerankedContext = await executeRerankedSearch(query);
+        if (rerankedContext && rerankedContext.error) {
+          console.warn("[route] Scraper/Organic search failed (partial fallback active):", rerankedContext.error);
+        }
       } catch (searchErr) {
-        console.warn("[route] Pre-search failed, writer will proceed without products:", searchErr);
+        console.warn("[route] Pre-search failed unexpectedly:", searchErr);
+      }
+
+      // If Shopping API completely failed or returned 0 results, we cannot provide product options.
+      // Trigger a full fallback immediately to prevent LLM hallucinations or blank UI.
+      if (shoppingSearchFailed || searchResults.length === 0) {
+        return NextResponse.json({
+          text: [getFallbackChatResponse(userMessage, mode)],
+          fallback: true,
+          products: null
+        });
       }
     }
 
@@ -341,7 +364,7 @@ export async function POST(req: NextRequest) {
     logGeminiFailure(error);
 
     return NextResponse.json({
-      text: getFallbackChatResponse(userMessage, userHistory),
+      text: [getFallbackChatResponse(userMessage, mode)],
       fallback: true,
       products: null
     });

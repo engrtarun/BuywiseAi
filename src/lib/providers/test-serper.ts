@@ -6,11 +6,11 @@
 
 import { runRerankingPipeline, type RerankedContext } from "../retrieval/index";
 
-export async function executeRerankedSearch(query: string): Promise<RerankedContext | null> {
+export async function executeRerankedSearch(query: string): Promise<RerankedContext> {
   const apiKey = process.env.SERPER_API_KEY;
   if (!apiKey) {
     console.warn("[test-serper] SERPER_API_KEY not found. Skipping reranked search.");
-    return null;
+    return { primary: [], secondary: [], error: "Missing SERPER_API_KEY" };
   }
 
   try {
@@ -25,22 +25,22 @@ export async function executeRerankedSearch(query: string): Promise<RerankedCont
     });
 
     if (!response.ok) {
-      console.error(`[test-serper] Serper API error: ${response.status}`);
-      return null;
+      console.warn(`[test-serper] Serper API error: ${response.status}`);
+      return { primary: [], secondary: [], error: `Serper Organic Search failed with status ${response.status}` };
     }
 
     const data = await response.json();
     const organic = data.organic || [];
     const urls: string[] = organic.map((r: { link?: string }) => r.link).filter(Boolean);
 
-    if (urls.length === 0) return null;
+    if (urls.length === 0) return { primary: [], secondary: [], error: "No organic URLs found" };
 
     // Trigger Steps 02 through 06 in the Reranking Pipeline
     const rerankedContext = await runRerankingPipeline(query, urls.slice(0, 15));
     
     return rerankedContext;
-  } catch (err) {
-    console.error("[test-serper] Execution failed:", err);
-    return null;
+  } catch (err: any) {
+    console.warn("[test-serper] Execution failed:", err.message || err);
+    return { primary: [], secondary: [], error: "Serper Organic Search execution failed" };
   }
 }

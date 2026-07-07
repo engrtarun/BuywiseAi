@@ -10,6 +10,7 @@ import { scoreChunks, type ScoredChunk } from "./crossEncoder";
 export interface RerankedContext {
   primary: ScoredChunk[];    // S >= 0.85
   secondary: ScoredChunk[];  // 0.50 <= S < 0.85
+  error?: string;            // Signal if scraping failed completely
 }
 
 /**
@@ -17,10 +18,14 @@ export interface RerankedContext {
  */
 export async function runRerankingPipeline(query: string, urls: string[]): Promise<RerankedContext> {
   // Step 01 & 02: Scrape and sanitize
-  const pages = await scrapeWebText(urls);
+  const scrapeResponse = await scrapeWebText(urls);
+  
+  if (!scrapeResponse.success) {
+    return { primary: [], secondary: [], error: scrapeResponse.error };
+  }
   
   // Step 03: Sliding window chunks
-  const chunks = slidingWindowChunker(pages);
+  const chunks = slidingWindowChunker(scrapeResponse.results);
   
   // Step 04 & 05: Cross encoder scoring and sorting
   const scored = await scoreChunks(query, chunks);

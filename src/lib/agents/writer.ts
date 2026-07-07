@@ -422,20 +422,27 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
         console.warn("[writer] Inline search failed:", searchErr);
       }
 
-      const searchContextMessage = `Here are product listings for your search: ${JSON.stringify(serperProducts)}. Please output the explore_carousel JSON now with the best options. Make sure to provide a valid headline, products array, and deep_dive markdown string.`;
-      try {
-        const secondResult = await chat.sendMessage(searchContextMessage);
-        const carouselText = secondResult.response.text();
-        responseTexts = [carouselText];
-        text = carouselText;
-      } catch (secondErr) {
-        console.warn("[writer] Second-turn carousel failed, using inline fallback:", secondErr);
-        responseTexts = [JSON.stringify({
-          ui_type: "explore_carousel",
-          headline: "Here are some great options for you based on your request.",
-          products: serperProducts,
-          deep_dive: "Explore these options carefully to find what best fits your needs.",
-        })];
+      if (serperProducts.length === 0) {
+        const { getFallbackChatResponse } = await import("@/lib/fallbackResponses");
+        const fallbackText = getFallbackChatResponse(userMessage, "explore");
+        responseTexts = [fallbackText];
+        text = fallbackText;
+      } else {
+        const searchContextMessage = `Here are product listings for your search: ${JSON.stringify(serperProducts)}. Please output the explore_carousel JSON now with the best options. Make sure to provide a valid headline, products array, and deep_dive markdown string.`;
+        try {
+          const secondResult = await chat.sendMessage(searchContextMessage);
+          const carouselText = secondResult.response.text();
+          responseTexts = [carouselText];
+          text = carouselText;
+        } catch (secondErr) {
+          console.warn("[writer] Second-turn carousel failed, using inline fallback:", secondErr);
+          responseTexts = [JSON.stringify({
+            ui_type: "explore_carousel",
+            headline: "Here are some great options for you based on your request.",
+            products: serperProducts,
+            deep_dive: "Explore these options carefully to find what best fits your needs.",
+          })];
+        }
       }
     }
   }
