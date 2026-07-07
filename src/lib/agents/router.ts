@@ -1,6 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+import { getNextGeminiClient } from "./keyManager";
 
 const ROUTER_SYSTEM_PROMPT = `You are an intent classifier for a shopping assistant.
 Analyze the user's message and the recent chat history to determine the appropriate chat mode.
@@ -19,6 +17,7 @@ Do not include any confidence scores or other fields.`;
 
 export async function determineIntent(message: string, history: any[]): Promise<'explore' | 'deep_research'> {
   try {
+    const genAI = getNextGeminiClient();
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
       systemInstruction: ROUTER_SYSTEM_PROMPT,

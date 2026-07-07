@@ -615,7 +615,6 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
               category={message.intakeQuestionnaire.category}
               keyAttributes={message.intakeQuestionnaire.key_attributes}
               onSubmit={(val) => {
-                setInputText?.(val);
                 onSend(val);
               }}
               disabled={!isLastAiMessage}

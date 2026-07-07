@@ -1,5 +1,18 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# =========================================================================
+# STRICT RULE: DO NOT COMMIT ANY .ENV FILES!
+# =========================================================================
+# Environment variables contain sensitive secrets (API keys, etc.).
+# NEVER remove this rule. Committing .env files is a security risk and 
+# will be blocked by GitHub Push Protection.
+# For Netlify deployments, add your Environment Variables directly in the 
+# Netlify Dashboard (Site Settings > Environment Variables), NOT in code!
+# =========================================================================
+.env
+.env.*
+!.env.example
+
 # dependencies
 /node_modules
 /.pnp
@@ -31,7 +44,8 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env
+.env.local
 !.env.example
 
 # vercel

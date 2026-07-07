@@ -302,7 +302,6 @@ export async function POST(req: NextRequest) {
           : undefined
       },
       isRegenerate,
-      groqApiKey: process.env.GROQ_API_KEY,
     });
 
     // ── Step 5: Extract confirmed_category and store in cache ─────────────────
@@ -378,16 +377,9 @@ function sanitizeError(error: unknown): unknown {
       errorStr = JSON.stringify(error);
     } else {
       errorStr = String(error);
+      return error.stack || error.message;
     }
-
-    // Redact ?key=... in URLs
-    errorStr = errorStr.replace(/([?&]key=)[^&\s"\\]+/gi, '$1REDACTED');
-    // Redact Authorization headers or tokens if present
-    errorStr = errorStr.replace(/(Authorization:\s*Bearer\s+)[^\s"\\]+/gi, '$1REDACTED');
-    errorStr = errorStr.replace(/(x-goog-api-key:\s*)[^\s"\\]+/gi, '$1REDACTED');
-
-    // Return the sanitized string so it doesn't leak raw objects with hidden properties
-    return errorStr;
+    return JSON.stringify(error, Object.getOwnPropertyNames(error));
   } catch (e) {
     return "[Un-stringifiable Error Object]";
   }

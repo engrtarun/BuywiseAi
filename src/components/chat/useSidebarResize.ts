@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 
-const STORAGE_KEY = "buywise-sidebar";
+const STORAGE_KEY = "buywise-sidebar-v2";
 const DEFAULT_WIDTH = 272;
 const MIN_WIDTH = 220;
 const COLLAPSE_THRESHOLD = 150;
@@ -15,18 +15,18 @@ interface SidebarState {
 }
 
 function loadState(): SidebarState {
-  if (typeof window === "undefined") return { width: DEFAULT_WIDTH, collapsed: false };
+  if (typeof window === "undefined") return { width: DEFAULT_WIDTH, collapsed: true };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
-  } catch {}
-  return { width: DEFAULT_WIDTH, collapsed: false };
+  } catch { }
+  return { width: DEFAULT_WIDTH, collapsed: true };
 }
 
 function saveState(state: SidebarState) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {}
+  } catch { }
 }
 
 /**
@@ -48,7 +48,7 @@ function saveState(state: SidebarState) {
  */
 export function useSidebarResize() {
   const [width, setWidth] = useState(DEFAULT_WIDTH);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const lastExpandedWidth = useRef(DEFAULT_WIDTH);
   const initialised = useRef(false);
