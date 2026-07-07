@@ -79,7 +79,7 @@ When presenting product options (after real listings are injected):
   "ui_type": "explore_carousel",
   "headline": "Staying hydrated is crucial! Here are some of the best water options available right now.",
   "products": [
-    { "id": "1", "name": "...", "price": "₹...", "rating": 4.5, "image": "...", "reason": "...", "stretch": false }
+    { "id": "1", "name": "...", "price": "₹...", "rating": 4.5, "image": "...", "platform": "...", "link": "...", "reason": "...", "stretch": false }
   ],
   "deep_dive": "### The Science of Hydration\\n...",
   "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }

@@ -237,17 +237,20 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
           exploreHeadline = parsed.headline || "";
           exploreDeepDiveText = parsed.deep_dive || "";
           const items = Array.isArray(parsed.products) ? parsed.products : [];
-          exploreProductsList = items.map((p: { id?: string | number; name?: string; price?: string | number; rating?: number; reviewCount?: string | number; description?: string; platform?: string; image?: string; link?: string; }) => ({
-            id: String(p.id || Math.random()),
-            name: String(p.name || "Unknown Product"),
-            price: String(p.price || "₹0"),
-            rating: typeof p.rating === "number" ? p.rating : 4.0,
-            reviewCount: String(p.reviewCount || "42"),
-            description: String(p.description || "Recommended product matching your request."),
-            platform: p.platform === "Flipkart" ? "Flipkart" : "Amazon",
-            image: p.image && !p.image.includes("placeholder.png") ? String(p.image) : getCuratedProductImage(p.name || ""),
-            link: String(p.link || "https://amazon.in"),
-          }));
+          exploreProductsList = items.map((p: any) => {
+            const productName = String(p.name || p.title || "Unknown Product");
+            return {
+              id: String(p.id || Math.random()),
+              name: productName,
+              price: String(p.price || "₹0"),
+              rating: typeof p.rating === "number" ? p.rating : 4.0,
+              reviewCount: String(p.reviewCount || "42"),
+              description: String(p.description || "Recommended product matching your request."),
+              platform: String(p.platform || p.store || "Amazon"),
+              image: p.image && !String(p.image).includes("placeholder.png") ? String(p.image) : getCuratedProductImage(productName),
+              link: String(p.link || p.url || "https://amazon.in"),
+            };
+          });
         } else if (parsed.ui_type === "text_response") {
           textResponseContent = parsed.text || "";
         }

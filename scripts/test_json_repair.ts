@@ -1,4 +1,4 @@
-import { repairPartialJson, parsePartialJson } from "../src/utils/jsonRepair.ts";
+import { repairPartialJson, parsePartialJson } from "../src/utils/jsonRepair";
 
 const tests = [
   {

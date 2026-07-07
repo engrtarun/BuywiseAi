@@ -30,6 +30,19 @@ function renderStars(rating: number) {
   return stars.join("");
 }
 
+function getBadgeStyle(platform: string) {
+  if (!platform) return "bg-zinc-700/80 text-white border-zinc-600/50";
+  const p = platform.toLowerCase();
+  if (p.includes("amazon")) return "bg-amber-400/90 text-amber-950 border-amber-400/50";
+  if (p.includes("flipkart")) return "bg-blue-600/90 text-white border-blue-400/50";
+  if (p.includes("meesho")) return "bg-pink-600/90 text-white border-pink-400/50";
+  if (p.includes("shopify")) return "bg-emerald-600/90 text-white border-emerald-400/50";
+  if (p.includes("blinkit")) return "bg-yellow-400/90 text-yellow-950 border-yellow-400/50";
+  if (p.includes("zomato")) return "bg-red-600/90 text-white border-red-400/50";
+  if (p.includes("myntra")) return "bg-fuchsia-600/90 text-white border-fuchsia-400/50";
+  return "bg-zinc-700/80 text-white border-zinc-600/50";
+}
+
 export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: ProductCardProps) {
   const isAmazon = product.platform === "Amazon";
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -147,12 +160,9 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
         <div className={`
           absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-[0.15em] 
           backdrop-blur-md shadow-md border
-          ${isAmazon 
-            ? "bg-amber-400/80 text-amber-950 border-amber-400/50" 
-            : "bg-blue-500/80 text-white border-blue-400/50"
-          }
+          ${getBadgeStyle(product.platform || "")}
         `}>
-          {product.platform}
+          {product.platform || "STORE"}
         </div>
 
         {/* Add to Cart Checkbox overlay top-right */}
