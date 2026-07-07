@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useAppMode } from "@/contexts/AppModeContext";
-import { ShoppingBag, Utensils } from "lucide-react";
+import { ShoppingBag, Pizza } from "lucide-react";
 import { motion } from "framer-motion";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
@@ -19,10 +19,10 @@ export function FoodModeToggle({ isCollapsed = false }: FoodModeToggleProps) {
         <TooltipTrigger asChild>
           <button
             onClick={() => setMode(mode === "retail" ? "food" : "retail")}
-            className="flex items-center justify-center size-10 rounded-xl bg-white/[0.04] border border-border-dark text-text-primary-dark hover:bg-white/[0.08] transition-colors shrink-0"
+            className="flex items-center justify-center size-10 rounded-xl bg-white/[0.04] border border-border-dark text-text-primary-dark hover:bg-white/[0.08] transition-colors shrink-0 cursor-pointer"
             aria-label={`Switch to ${mode === "retail" ? "Food" : "Retail"} Mode`}
           >
-            {mode === "retail" ? <Utensils className="size-5 text-text-secondary" /> : <ShoppingBag className="size-5 text-text-secondary" />}
+            {mode === "retail" ? <Pizza className="size-5 text-text-secondary" /> : <ShoppingBag className="size-5 text-text-secondary" />}
           </button>
         </TooltipTrigger>
         <TooltipContent side="right">Switch to {mode === "retail" ? "Food" : "Retail"} Mode</TooltipContent>
@@ -56,7 +56,7 @@ export function FoodModeToggle({ isCollapsed = false }: FoodModeToggleProps) {
           mode === "food" ? "text-bg-main" : "text-text-secondary hover:text-white"
         }`}
       >
-        <Utensils className="size-4" />
+        <Pizza className="size-4" />
         Food
       </button>
     </div>
