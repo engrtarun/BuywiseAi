@@ -33,10 +33,8 @@ Contract schema:
 
   const startTime = performance.now();
   try {
-    const sessionExecution = model.startChat({});
-    const communicationResult = await sessionExecution.sendMessage(`History context: ${contextHistory} \n Message: ${userMessage}`);
-    const payloadResponse = await communicationResult.response;
-    const targetText = payloadResponse.text().trim();
+    const payloadResponse = await model.generateContent(`History context: ${contextHistory} \n Message: ${userMessage}`);
+    const targetText = payloadResponse.response.text().trim();
     return JSON.parse(targetText) as RouterOutput;
   } catch (error) {
     console.error("[routerAgent] Routing execution failed:", error);

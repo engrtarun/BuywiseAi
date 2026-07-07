@@ -28,8 +28,8 @@ function fallbackDenseSimilarity(query: string, text: string): number {
   }
   
   const score = matchCount / qTerms.length;
-  // Apply a non-linear boost to push high matches over the 0.85 threshold
-  return score > 0.4 ? Math.min(1.0, score + 0.4) : score;
+  // Use a realistic Jaccard coefficient mapping without artificial inflation.
+  return score;
 }
 
 /**
