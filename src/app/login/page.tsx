@@ -128,7 +128,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/auth/callback`,
         },
       });
       if (!error) {
@@ -154,7 +154,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/auth/callback?next=/welcome`,
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/auth/callback?next=/welcome`,
       });
 
       if (error) {
