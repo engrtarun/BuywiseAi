@@ -36,7 +36,7 @@ export async function executeGenerativeOrchestration(input: OrchestratorInput): 
 
     // Enforce latency bounds (GUARD-RANK-GAMMA)
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
 
     const result = await chat.sendMessage(input.effectiveUserMessage, { signal: controller.signal } as any);
     clearTimeout(timeoutId);

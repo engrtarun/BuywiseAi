@@ -141,7 +141,7 @@ export function ChatInput({
     
     setTimeout(() => {
       setIsAnalyzing(false);
-    }, 6000);
+    }, 45000);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
