@@ -12,6 +12,85 @@ interface OrchestratorInput {
   historyForGroq: Array<{ role: string; content: string }>;
 }
 
+export async function* executeStreamingOrchestration(input: OrchestratorInput): AsyncGenerator<string, void, unknown> {
+  // Always use Groq for streaming since it's the requested optimization
+  if (!input.groqApiKey) {
+    throw new Error("Groq API key required for streaming.");
+  }
+
+  const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${input.groqApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "llama-3.1-8b-instant",
+      messages: [
+        { role: "system", content: input.systemInstruction },
+        ...input.historyForGroq.map((m) => ({
+          role: m.role === "assistant" ? "assistant" : "user",
+          content: m.content || "",
+        })),
+        { role: "user", content: input.effectiveUserMessage },
+      ],
+      response_format: { type: "json_object" },
+      stream: true,
+    }),
+  });
+
+  if (!groqRes.ok || !groqRes.body) {
+     throw new Error(`[Orchestrator] Streaming failed: ${groqRes.statusText}`);
+  }
+
+  const reader = groqRes.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    
+    // Process SSE lines
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || ""; // Keep the last incomplete line in the buffer
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed === "data: [DONE]") continue;
+
+      if (trimmed.startsWith("data: ")) {
+        try {
+          const data = JSON.parse(trimmed.slice(6));
+          const chunk = data.choices[0]?.delta?.content || "";
+          if (chunk) {
+            yield chunk;
+          }
+        } catch (e) {
+          console.warn("Failed to parse SSE chunk:", trimmed);
+        }
+      }
+    }
+  }
+  
+  if (buffer.trim()) {
+    const trimmed = buffer.trim();
+    if (trimmed.startsWith("data: ") && trimmed !== "data: [DONE]") {
+        try {
+          const data = JSON.parse(trimmed.slice(6));
+          const chunk = data.choices[0]?.delta?.content || "";
+          if (chunk) {
+            yield chunk;
+          }
+        } catch (e) {
+           // Ignore
+        }
+    }
+  }
+}
+
 /**
  * Cross-API Schema Translation Layer & Protocol Buffers Architecture
  * Replaces direct model generation loops with a multi-vendor fallback orchestrator.

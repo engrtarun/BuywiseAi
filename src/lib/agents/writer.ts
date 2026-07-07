@@ -474,3 +474,41 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
 
   return { responseTexts, serperProducts };
 }
+
+import { executeStreamingOrchestration } from "@/lib/guardrails/apiOrchestrator";
+
+export async function* runStreamingWriter(input: WriterInput): AsyncGenerator<string, void, unknown> {
+  const { mode, userMessage, history, products = [], sessionContext, isRegenerate } = input;
+
+  const isDeepResearch = mode === "deep_research";
+  let systemInstruction = isDeepResearch ? DEEP_RESEARCH_SYSTEM_PROMPT : EXPLORE_SYSTEM_PROMPT;
+
+  if (sessionContext && Object.keys(sessionContext).length > 0) {
+    systemInstruction += `\n\nUser's accumulated session context (including linguistic fingerprint): ${JSON.stringify(sessionContext)}`;
+  }
+
+  let effectiveUserMessage = userMessage;
+  if (isRegenerate) {
+    effectiveUserMessage += `\n\n[SYSTEM NOTE: The user has requested to REGENERATE the response. Please rethink and provide a different, higher-quality answer.]`;
+  }
+  if (products.length > 0) {
+    effectiveUserMessage += `\n\n[INJECTED PRODUCT DATA — use these real listings in your response]:\n${JSON.stringify(products, null, 2)}`;
+  }
+
+  const groqApiKey = getNextGroqKey();
+  if (!groqApiKey) {
+    throw new Error("No Groq API key available for streaming.");
+  }
+
+  const stream = executeStreamingOrchestration({
+    systemInstruction,
+    formattedHistory: [], // Only used by Gemini in orchestrator
+    effectiveUserMessage,
+    groqApiKey,
+    historyForGroq: history,
+  });
+
+  for await (const chunk of stream) {
+    yield chunk;
+  }
+}

@@ -290,8 +290,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── Step 4: Writer produces the final structured response ─────────────────
-    const { responseTexts, serperProducts } = await runWriter({
+    // ── Step 4: Writer produces the final structured response (STREAMING) ─────────
+    const { runStreamingWriter } = await import("@/lib/agents/writer");
+    const writerStream = runStreamingWriter({
       mode: mode === "deep_research" ? "deep_research" : "explore",
       userMessage,
       history: userHistory.map((m) => ({ role: m.role ?? "user", content: m.content ?? "" })),
@@ -299,7 +300,7 @@ export async function POST(req: NextRequest) {
       sessionContext: {
         ...backendContext.context,
         ...requirements,
-        chatMemory: backendContext.memory, // Pass session memory to personalize answers
+        chatMemory: backendContext.memory,
         reranked_context: rerankedContext 
           ? {
               primary: rerankedContext.primary.map(c => c.text),
@@ -310,65 +311,83 @@ export async function POST(req: NextRequest) {
       isRegenerate,
     });
 
-    // Append the assistant's reply to the JSON file's history (saving only clean text, no raw JSON with thoughts)
-    if (responseTexts && responseTexts.length > 0) {
-      const rawText = responseTexts[0];
-      let assistantCleanText = "";
-      
-      try {
-        const parsedRes = JSON.parse(rawText.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
-        if (parsedRes.fingerprint && parsedRes.fingerprint.language) {
-          backendContext.memory.userLanguagePreference = parsedRes.fingerprint.language;
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        let fullResponse = "";
+        
+        // Send initial metadata (products array for frontend fallback)
+        if (searchResults && searchResults.length > 0) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'metadata', products: searchResults })}\n\n`));
         }
-        assistantCleanText = String(parsedRes.headline || parsedRes.text || parsedRes.summary || "");
-      } catch (err) {
-        // Regex fallback to extract clean text/headline/summary value without parsing the full JSON
-        const match = rawText.match(/"(?:text|headline|summary)"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-        if (match && match[1]) {
-          assistantCleanText = match[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
-        } else {
-          // Strip braces and quotes to get a clean text representation
-          assistantCleanText = rawText.replace(/[{}"[\]]/g, "").replace(/\b(?:ui_type|text|thought|fingerprint|language|tone|verbosity)\b/g, "").trim();
+
+        try {
+          for await (const chunk of writerStream) {
+            fullResponse += chunk;
+            // Send chunk to client via SSE
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: chunk })}\n\n`));
+          }
+
+          // Once the stream finishes, save the full response to context
+          let assistantCleanText = "";
+          let confirmedCategory: string | null = null;
+          try {
+            const parsedRes = JSON.parse(fullResponse.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
+            if (parsedRes.fingerprint && parsedRes.fingerprint.language) {
+              backendContext.memory.userLanguagePreference = parsedRes.fingerprint.language;
+            }
+            if (typeof parsedRes.confirmed_category === "string") {
+              confirmedCategory = parsedRes.confirmed_category;
+            }
+            assistantCleanText = String(parsedRes.headline || parsedRes.text || parsedRes.summary || "");
+          } catch (err) {
+            const match = fullResponse.match(/"(?:text|headline|summary)"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+            if (match && match[1]) {
+              assistantCleanText = match[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
+            } else {
+              assistantCleanText = fullResponse.replace(/[{}"[\]]/g, "").replace(/\b(?:ui_type|text|thought|fingerprint|language|tone|verbosity)\b/g, "").trim();
+            }
+          }
+
+          if (!assistantCleanText.trim()) {
+            assistantCleanText = "Hello! How can I assist you?";
+          }
+          
+          backendContext.history.push({ role: "assistant", content: assistantCleanText });
+          backendContext.messageCount = backendContext.history.length;
+          backendContext.lastActive = new Date().toISOString();
+          fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
+
+          if (confirmedCategory) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'metadata', confirmed_category: confirmedCategory })}\n\n`));
+          }
+
+          // Also update Redis Semantic Cache asynchronously
+          storeInSemanticCache(userMessage, {
+            responseTexts: [fullResponse],
+            products: searchResults.length > 0 ? searchResults : null,
+          }, chatId);
+
+        } catch (streamErr) {
+          console.error("Stream failed:", streamErr);
+          // Only send fallback if we haven't sent much data yet, otherwise just close.
+          if (fullResponse.length < 50) {
+            const fallbackText = getFallbackChatResponse(userMessage, mode);
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: fallbackText })}\n\n`));
+          }
+        } finally {
+          controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+          controller.close();
         }
       }
+    });
 
-      if (!assistantCleanText.trim()) {
-        assistantCleanText = "Hello! How can I assist you?";
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive"
       }
-      
-      backendContext.history.push({ role: "assistant", content: assistantCleanText });
-      backendContext.messageCount = backendContext.history.length;
-      backendContext.lastActive = new Date().toISOString();
-      fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
-    }
-
-    // ── Step 5: Extract confirmed_category and store in cache ─────────────────
-    // Parse the first response to pull out confirmed_category if the AI set it.
-    // Send it back to the client so it can be persisted into session requirements,
-    // preventing the category from being re-guessed on subsequent turns.
-    let confirmedCategory: string | null = null;
-    try {
-      const firstResponse = responseTexts[0];
-      if (firstResponse) {
-        const parsed = JSON.parse(firstResponse.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
-        if (typeof parsed?.confirmed_category === "string") {
-          confirmedCategory = parsed.confirmed_category;
-        }
-      }
-    } catch {
-      // Non-critical — ignore parse failures
-    }
-
-    // Store in Redis VSS asynchronously
-    storeInSemanticCache(userMessage, {
-      responseTexts,
-      products: serperProducts.length > 0 ? serperProducts : null,
-    }, chatId);
-
-    return NextResponse.json({
-      text: responseTexts,
-      products: serperProducts.length > 0 ? serperProducts : null,
-      ...(confirmedCategory ? { confirmed_category: confirmedCategory } : {}),
     });
 
   } catch (error: unknown) {

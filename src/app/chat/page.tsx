@@ -24,13 +24,10 @@ import {
   updateChatSessionPinned,
 } from "@/app/actions/chat";
 
+import { parsePartialJson } from "@/utils/jsonRepair";
+
 function parseJSONSafe(text: string) {
-  try {
-    const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
-    return JSON.parse(cleaned);
-  } catch {
-    return null;
-  }
+  return parsePartialJson(text);
 }
 
 export function getExploreLayoutParts(content: string): { intro: string; deepDive: string } {
@@ -447,52 +444,121 @@ export default function Page() {
           return;
         }
 
-        const data = await response.json();
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error("No readable stream available");
         
-        const aiMsgContents = Array.isArray(data.text) ? data.text : [data.text];
-        const newMessages: Message[] = [];
+        const decoder = new TextDecoder("utf-8");
+        let fullText = "";
         let newRequirements = currentReqs || session?.requirements || {};
+        let fallbackProducts: any[] = [];
+        let buffer = "";
         
-        for (const aiMsgContent of aiMsgContents) {
-          let dbAiMsg;
-          if (session?.isTemporary) {
-            dbAiMsg = {
-              id: generateId(),
-              session_id: chatId,
-              sender: "ai",
-              message: aiMsgContent,
-              created_at: new Date().toISOString(),
-            };
-          } else {
-            // Persist AI message to Supabase
-            dbAiMsg = await apiSendMessage(chatId, "ai", aiMsgContent);
-          }
-  
-          // Parse and restore rich layout client-side
-          const aiMsg = parseAiMessageContent(dbAiMsg.id, dbAiMsg.message);
-  
-          if (aiMsg.fingerprint) {
-             newRequirements = { ...newRequirements, fingerprint: aiMsg.fingerprint };
-             updateSessionRequirements(chatId, newRequirements).catch(e => console.error("Failed to update fingerprint", e));
-          }
+        // Generate a temporary ID for the streaming message
+        const tempMsgId = generateId();
+        
+        // Push an empty placeholder message immediately so the UI can start rendering
+        setChatSessions((prev) =>
+          prev.map((s) =>
+            s.id === chatId ? { ...s, messages: [...s.messages, { id: tempMsgId, role: "assistant", content: "" }] } : s
+          )
+        );
 
-          // Persist confirmed_category if the API returned one — locks the category
-          // for the rest of this session so the AI doesn't re-guess it each turn.
-          if (data.confirmed_category && typeof data.confirmed_category === "string" && !newRequirements.confirmed_category) {
-            newRequirements = { ...newRequirements, confirmed_category: data.confirmed_category, category: data.confirmed_category };
-            updateSessionRequirements(chatId, newRequirements).catch(e => console.error("Failed to persist confirmed_category", e));
-          }
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || "";
+          
+          let updatedFullText = false;
 
-          // If the API returned real product results (Serper/FakeStore fallback), attach them
-          if (data.products && Array.isArray(data.products) && ((aiMsg as any).ui_type === 'explore_carousel' || aiMsg.products !== undefined)) {
-             (aiMsg as any).products = data.products;
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed === "data: [DONE]") continue;
+            
+            if (trimmed.startsWith("data: ")) {
+              try {
+                const eventData = JSON.parse(trimmed.slice(6));
+                
+                if (eventData.type === "metadata") {
+                  if (eventData.products) fallbackProducts = eventData.products;
+                  if (eventData.confirmed_category && typeof eventData.confirmed_category === "string") {
+                     newRequirements = { ...newRequirements, confirmed_category: eventData.confirmed_category, category: eventData.confirmed_category };
+                     updateSessionRequirements(chatId, newRequirements).catch(e => console.error("Failed to update confirmed_category", e));
+                  }
+                } else if (eventData.type === "chunk") {
+                  fullText += eventData.text;
+                  updatedFullText = true;
+                }
+              } catch (e) {
+                // Silently ignore SSE parsing errors for individual chunks
+              }
+            }
           }
-          newMessages.push(aiMsg);
+          
+          // Live UI Update on every chunk batch
+          if (updatedFullText) {
+             const aiMsg = parseAiMessageContent(tempMsgId, fullText);
+             
+             // Inject fallback products if they exist and the JSON hasn't fully rendered them yet
+             if (fallbackProducts.length > 0 && ((aiMsg as any).ui_type === 'explore_carousel' || aiMsg.products !== undefined)) {
+                if (!aiMsg.products || aiMsg.products.length === 0) {
+                  (aiMsg as any).products = fallbackProducts;
+                }
+             }
+
+             setChatSessions((prev) =>
+               prev.map((s) =>
+                 s.id === chatId 
+                   ? { 
+                       ...s, 
+                       requirements: newRequirements,
+                       messages: s.messages.map(m => m.id === tempMsgId ? aiMsg : m) 
+                     } 
+                   : s
+               )
+             );
+          }
+        }
+        
+        // Final database persistence after stream is completely done
+        let dbAiMsg;
+        if (session?.isTemporary) {
+          dbAiMsg = {
+            id: generateId(),
+            session_id: chatId,
+            sender: "ai",
+            message: fullText,
+            created_at: new Date().toISOString(),
+          };
+        } else {
+          // Persist the FULL AI message to Supabase
+          dbAiMsg = await apiSendMessage(chatId, "ai", fullText);
+        }
+
+        // Final UI swap to the permanent database ID
+        const finalAiMsg = parseAiMessageContent(dbAiMsg.id, dbAiMsg.message);
+        if (fallbackProducts.length > 0 && ((finalAiMsg as any).ui_type === 'explore_carousel' || finalAiMsg.products !== undefined)) {
+            if (!finalAiMsg.products || finalAiMsg.products.length === 0) {
+               (finalAiMsg as any).products = fallbackProducts;
+            }
+        }
+
+        if (finalAiMsg.fingerprint) {
+           newRequirements = { ...newRequirements, fingerprint: finalAiMsg.fingerprint };
+           updateSessionRequirements(chatId, newRequirements).catch(e => console.error("Failed to update fingerprint", e));
         }
 
         setChatSessions((prev) =>
           prev.map((s) =>
-            s.id === chatId ? { ...s, messages: [...s.messages, ...newMessages], requirements: newRequirements } : s
+            s.id === chatId 
+              ? { 
+                  ...s, 
+                  requirements: newRequirements,
+                  messages: s.messages.map(m => m.id === tempMsgId ? finalAiMsg : m) 
+                } 
+              : s
           )
         );
       } catch (error: unknown) {
