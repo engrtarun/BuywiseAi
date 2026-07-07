@@ -45,6 +45,7 @@ export const metadata: Metadata = {
 };
 
 import { ThemeProvider } from "@/hooks/useTheme";
+import { I18nProvider } from "@/contexts/I18nContext";
 
 export default function RootLayout({
   children,
@@ -61,24 +62,24 @@ export default function RootLayout({
         <ThemeInitializer />
       </head>
       <body className="bg-ink-deeper">
-        <ThemeProvider>
-          <UserProvider>
-            <OnboardingProvider>
-              <PremiumProvider>
-                <AppModeProvider>
-                  <TooltipProvider delayDuration={300}>
-                    {children}
-                    <CanvasOnboardingTour />
-                    <PremiumModal />
-                  </TooltipProvider>
-                </AppModeProvider>
-            </PremiumProvider>
-          </OnboardingProvider>
-        </UserProvider>
-      </ThemeProvider>
+        <I18nProvider>
+          <ThemeProvider>
+            <UserProvider>
+              <OnboardingProvider>
+                <PremiumProvider>
+                  <AppModeProvider>
+                    <TooltipProvider delayDuration={300}>
+                      {children}
+                      <CanvasOnboardingTour />
+                      <PremiumModal />
+                    </TooltipProvider>
+                  </AppModeProvider>
+                </PremiumProvider>
+              </OnboardingProvider>
+            </UserProvider>
+          </ThemeProvider>
+        </I18nProvider>
       </body>
     </html>
   );
 }
-
-

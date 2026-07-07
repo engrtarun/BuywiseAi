@@ -273,10 +273,36 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
         }
       }
     } else {
-      // Doesn't contain a JSON object - treat as plain text fallback
+      // JSON is incomplete (streaming) or malformed.
+      throw new Error("Incomplete JSON");
     }
   } catch (e) {
-    // Treat as plain text fallback
+    // Fallback parsing for incomplete/streaming JSON
+    const rawStr = message.content || "";
+    if (rawStr.includes('"ui_type"')) {
+      if (rawStr.includes('"explore_carousel"') || rawStr.includes('"carousel"')) {
+        isExploreCarousel = true;
+        
+        // Extract headline
+        const hlMatch = rawStr.match(/"headline"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)/);
+        if (hlMatch && hlMatch[1]) {
+          exploreHeadline = hlMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+        }
+        
+        // Extract deep_dive
+        const ddMatch = rawStr.match(/"deep_dive"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)/);
+        if (ddMatch && ddMatch[1]) {
+          exploreDeepDiveText = ddMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+        }
+        
+        // Products will fall back to message.products below
+      } else if (rawStr.includes('"text_response"')) {
+        const textMatch = rawStr.match(/"text"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)/);
+        if (textMatch && textMatch[1]) {
+          textResponseContent = textMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+        }
+      }
+    }
   }
 
   // Fallback to parsed properties if raw JSON wasn't matched/parsed

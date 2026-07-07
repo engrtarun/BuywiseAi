@@ -7,6 +7,7 @@ import { LoginRequiredScreen } from "./LoginRequiredScreen";
 import { DailyLimitReachedCard } from "./DailyLimitReachedCard";
 import Logo from "@/components/ui/logo";
 import { ChatMode } from "@/types/chat";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface WelcomeScreenProps {
   onSuggestionClick: (text: string) => void;
@@ -20,6 +21,7 @@ interface WelcomeScreenProps {
   onModeChange: (mode: ChatMode) => void;
   onOpenQuickBuy?: () => void;
   onOpenFoodQuickBuy?: () => void;
+  dynamicPrompts?: string[];
 }
 
 type ActiveCycleMode = 'explore' | 'deep_research' | 'quick_buy' | 'quick_food' | 'virtual_wardrobe';
@@ -60,16 +62,16 @@ const SHOWCASE_PRODUCTS = [
 ];
 
 const MODE_METADATA: Record<ActiveCycleMode, {
-  title: string;
+  titleKey: string;
   icon: any;
-  desc: string;
+  descKey: string;
   benefits: string[];
   themeColor: string;
 }> = {
   explore: {
-    title: "Explore Mode",
+    titleKey: "Explore Mode",
     icon: Compass,
-    desc: "Lightweight, visual, browse-first experience for quick discoveries.",
+    descKey: "Lightweight, visual, browse-first experience for quick discoveries.",
     benefits: [
       "Discoverability metrics integration",
       "Automated food/apparel intent triggers",
@@ -78,9 +80,9 @@ const MODE_METADATA: Record<ActiveCycleMode, {
     themeColor: "text-blue-400 border-blue-500/30"
   },
   deep_research: {
-    title: "Deep Research Mode",
+    titleKey: "Deep Research Mode",
     icon: Brain,
-    desc: "Guided, interactive hardware specification and performance comparisons.",
+    descKey: "Guided, interactive hardware specification and performance comparisons.",
     benefits: [
       "Dual-agent Critic review loop",
       "Multi-source factual validation check",
@@ -89,9 +91,9 @@ const MODE_METADATA: Record<ActiveCycleMode, {
     themeColor: "text-purple-400 border-purple-500/30"
   },
   quick_buy: {
-    title: "Quick Buy Mode",
+    titleKey: "Quick Buy Mode",
     icon: ShoppingBag,
-    desc: "Express checkout parameter mapper for zero-friction acquisition.",
+    descKey: "Express checkout parameter mapper for zero-friction acquisition.",
     benefits: [
       "Live crawler price scraping links",
       "Automated target parameter filtration",
@@ -100,9 +102,9 @@ const MODE_METADATA: Record<ActiveCycleMode, {
     themeColor: "text-amber-400 border-amber-500/30"
   },
   quick_food: {
-    title: "Quick Food Mode",
+    titleKey: "Quick Food Mode",
     icon: Utensils,
-    desc: "Real-time localized dataset mapper for instant dining recommendations.",
+    descKey: "Real-time localized dataset mapper for instant dining recommendations.",
     benefits: [
       "Live local restaurant catalogs",
       "Delivery times & schema validation",
@@ -111,9 +113,9 @@ const MODE_METADATA: Record<ActiveCycleMode, {
     themeColor: "text-rose-400 border-rose-500/30"
   },
   virtual_wardrobe: {
-    title: "Virtual Wardrobe Mode",
+    titleKey: "Virtual Wardrobe Mode",
     icon: Shirt,
-    desc: "Interactive visual overlays and fit catalog parameter profilings.",
+    descKey: "Interactive visual overlays and fit catalog parameter profilings.",
     benefits: [
       "Apparel fit metadata mapping",
       "Clean UI visual overlay modules",
@@ -134,9 +136,11 @@ export function WelcomeScreen({
   selectedMode,
   onModeChange,
   onOpenQuickBuy,
-  onOpenFoodQuickBuy
+  onOpenFoodQuickBuy,
+  dynamicPrompts
 }: WelcomeScreenProps) {
   const router = useRouter();
+  const { t } = useI18n();
 
   // State Management
   const [productIndex, setProductIndex] = useState(0);
@@ -159,6 +163,11 @@ export function WelcomeScreen({
 
   // 30s Interval Loop: Dynamic Suggestions fetching
   useEffect(() => {
+    if (dynamicPrompts && dynamicPrompts.length > 0) {
+      setSuggestions(dynamicPrompts.slice(0, 4));
+      return;
+    }
+
     const fetchSuggestions = async () => {
       try {
         setSuggestionsLoading(true);
@@ -179,7 +188,7 @@ export function WelcomeScreen({
     fetchSuggestions(); // Initial call
     const suggestionInterval = setInterval(fetchSuggestions, 30000);
     return () => clearInterval(suggestionInterval);
-  }, []);
+  }, [dynamicPrompts]);
 
   // 10s Interval Loop: Mode Cycling
   useEffect(() => {
@@ -231,9 +240,13 @@ export function WelcomeScreen({
           BuyWise AI
         </h1>
         {isGuest && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-neutral-900 border border-neutral-800 text-[11px] font-mono text-neutral-400">
-            <User className="size-3" />
-            <span>Guest session — {guestMessagesRemaining} queries remaining</span>
+          <div className="inline-flex items-center gap-2 mt-2 px-3.5 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.10] backdrop-blur-sm animate-in fade-in duration-500 text-xs font-mono text-text-dim-ondark">
+            <User className="size-3.5" />
+            <span>{t("welcome.guestMode")}</span>
+            <span className="w-px h-3 bg-line-ondark" />
+            <span className="text-marigold font-medium">
+              {guestMessagesRemaining} {guestMessagesRemaining === 1 ? t("welcome.freeMessageLeft") : t("welcome.freeMessagesLeft")}
+            </span>
           </div>
         )}
       </div>
@@ -301,10 +314,10 @@ export function WelcomeScreen({
                 </span>
               </div>
               <h2 className="text-sm font-sans font-bold text-white">
-                {currentModeInfo.title}
+                {currentModeType === 'explore' ? t("welcome.exploreMode") : currentModeType === 'deep_research' ? t("welcome.deepResearch") : currentModeInfo.titleKey}
               </h2>
               <p className="text-xs text-neutral-400 leading-relaxed">
-                {currentModeInfo.desc}
+                {currentModeInfo.descKey}
               </p>
               
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-2">

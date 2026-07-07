@@ -229,12 +229,14 @@ export async function POST(req: NextRequest) {
 
     // ── Step 2: Cache check ───────────────────────────────────────────────────
     // Skip cache for regenerate requests and buy_explanation (handled above).
-    if (!isRegenerate) {
+    // Also skip cache temporarily to flush out broken cached search_intent JSONs.
+    if (!isRegenerate && false) {
       const cacheResult = await checkSemanticCache(userMessage, chatId);
-      if (cacheResult.type === "HARD_HIT" && cacheResult.payload) {
+      const payload = cacheResult.payload;
+      if (cacheResult.type === "HARD_HIT" && payload) {
         return NextResponse.json({
-          text: cacheResult.payload.responseTexts,
-          products: cacheResult.payload.products,
+          text: payload!.responseTexts,
+          products: payload!.products,
           cached: true,
         });
       }
@@ -245,7 +247,7 @@ export async function POST(req: NextRequest) {
     // In deep_research mode we only search when the user has already supplied
     // both use-case and budget (i.e. requirements is non-empty).
 
-    // ── Step 3: Search & Deep Reranking (only in deep_research) ───────────────
+    // ── Step 3: Search & Deep Reranking ───────────────
     let searchResults: SearchedProduct[] = [];
     let rerankedContext: RerankedContext | null = null;
     const requirementsReady =
@@ -256,14 +258,14 @@ export async function POST(req: NextRequest) {
 
     let shoppingSearchFailed = false;
 
-    if (requirementsReady) {
-      const query = [
-        requirements.category,
-        requirements.use_case,
-        requirements.budget ? `under ${requirements.budget}` : "",
-      ]
-        .filter(Boolean)
-        .join(" ");
+    if (requirementsReady || mode === "explore") {
+      const query = mode === "deep_research" 
+        ? [
+            requirements?.category,
+            requirements?.use_case,
+            requirements?.budget ? `under ${requirements.budget}` : "",
+          ].filter(Boolean).join(" ")
+        : userMessage;
 
       try {
         searchResults = await searchForProducts(query, 6);
@@ -272,16 +274,17 @@ export async function POST(req: NextRequest) {
         console.warn("[route] Shopping API search failed:", searchErr);
       }
 
-      try {
-        // Execute Deep Web Scraping & Reranking Pipeline
-        rerankedContext = await executeRerankedSearch(query);
-        if (rerankedContext && rerankedContext.error) {
-          console.warn("[route] Scraper/Organic search failed (partial fallback active):", rerankedContext.error);
+      if (mode === "deep_research") {
+        try {
+          // Execute Deep Web Scraping & Reranking Pipeline
+          rerankedContext = await executeRerankedSearch(query);
+          if (rerankedContext && rerankedContext.error) {
+            console.warn("[route] Scraper/Organic search failed (partial fallback active):", rerankedContext.error);
+          }
+        } catch (searchErr) {
+          console.warn("[route] Pre-search failed unexpectedly:", searchErr);
         }
-      } catch (searchErr) {
-        console.warn("[route] Pre-search failed unexpectedly:", searchErr);
       }
-
       // If Shopping API completely failed or returned 0 results, we cannot provide product options.
       // Trigger a full fallback immediately to prevent LLM hallucinations or blank UI.
       if (shoppingSearchFailed || searchResults.length === 0) {
@@ -358,8 +361,9 @@ export async function POST(req: NextRequest) {
           // Once the stream finishes, save the full response to context
           let assistantCleanText = "";
           let confirmedCategory: string | null = null;
+          let fullJsonResponse = fullResponse.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
           try {
-            const parsedRes = JSON.parse(fullResponse.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
+            const parsedRes = JSON.parse(fullJsonResponse);
             if (parsedRes.fingerprint && parsedRes.fingerprint.language) {
               backendContext.memory.userLanguagePreference = parsedRes.fingerprint.language;
             }
@@ -380,7 +384,8 @@ export async function POST(req: NextRequest) {
             assistantCleanText = "Hello! How can I assist you?";
           }
           
-          backendContext.history.push({ role: "assistant", content: assistantCleanText });
+          // Save the full JSON response in history so the frontend can parse UI elements (carousel, deep_dive, etc.)
+          backendContext.history.push({ role: "assistant", content: fullJsonResponse });
           backendContext.messageCount = backendContext.history.length;
           backendContext.lastActive = new Date().toISOString();
 

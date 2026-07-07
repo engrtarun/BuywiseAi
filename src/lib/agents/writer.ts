@@ -79,7 +79,17 @@ When presenting product options (after real listings are injected):
   "ui_type": "explore_carousel",
   "headline": "Staying hydrated is crucial! Here are some of the best water options available right now.",
   "products": [
-    { "id": "1", "name": "...", "price": "₹...", "rating": 4.5, "image": "...", "platform": "...", "link": "...", "reason": "...", "stretch": false }
+    { 
+      "id": "1", 
+      "name": "...", 
+      "price": "₹...", 
+      "rating": 4.5, 
+      "image": "...", 
+      "platform": "...", // Use diverse platforms: Amazon, Flipkart, Meesho, Shopify, Blinkit, Zomato, Swiggy, etc. based on category. Never default to just Amazon!
+      "link": "...", 
+      "reason": "...", 
+      "stretch": false 
+    }
   ],
   "deep_dive": "### The Science of Hydration\\n...",
   "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
@@ -194,18 +204,18 @@ If you have gathered enough details (or the user insists on results), return ONL
       "rating": 4.5,
       "reviewCount": "1200",
       "description": "Short description of key features.",
-      "platform": "Amazon",
+      "platform": "...", // Use diverse platforms like Amazon, Flipkart, Meesho, Shopify, Myntra, Blinkit, Zomato, Swiggy depending on the product!
       "image": "/placeholder.png",
-      "link": "https://amazon.in",
+      "link": "https://example.in",
       "badge": "Best Overall"
     }
   ],
   "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
 }
 
-Provide 2-3 products in the recommended_products array, sorted by rank. Assign appropriate badges like "Best Overall", "Best Value", "Alternative Choice", etc.
+Provide 2-3 products in the recommended_products array, sorted by rank. Assign appropriate badges like "Best Overall", "Best Value", "Alternative Choice", etc. Make sure Name, Price, and Rating are ALL populated.
 
-When real product data is injected below the user message, use those products in your recommended_products array rather than hallucinating product details.
+When real product data is injected below the user message, use those products in your recommended_products array rather than hallucinating product details. PRESERVE their original platform!
 
 Ensure queries match real Indian market products. Return ONLY the raw JSON string. Do not wrap in markdown code blocks.`;
 
@@ -515,7 +525,7 @@ CORE CONSTRAINT 3: DYNAMIC MODE RULES
 import { executeStreamingOrchestration } from "@/lib/guardrails/apiOrchestrator";
 
 export async function* runStreamingWriter(input: WriterInput): AsyncGenerator<string, void, unknown> {
-  const { mode, userMessage, history, products = [], sessionContext, isRegenerate } = input;
+  let { mode, userMessage, history, products = [], sessionContext, isRegenerate } = input;
 
   const isDeepResearch = mode === "deep_research";
   let systemInstruction = `
@@ -532,7 +542,46 @@ export async function* runStreamingWriter(input: WriterInput): AsyncGenerator<st
   if (isRegenerate) {
     effectiveUserMessage += `\n\n[SYSTEM NOTE: The user has requested to REGENERATE the response. Please rethink and provide a different, higher-quality answer.]`;
   }
-  if (products.length > 0) {
+
+  // ── 2-Turn Inline Search for Explore Mode (Streaming Fix) ──
+  // If we are in explore mode and haven't fetched products yet, run a quick non-streaming 
+  // turn to check if the LLM wants to search. If it returns search_intent, fetch products 
+  // and inject them before streaming the final carousel.
+  if (!isDeepResearch && products.length === 0) {
+    try {
+      const genAI = getNextGeminiClient();
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        systemInstruction,
+        generationConfig: { responseMimeType: "application/json" }
+      });
+      const formattedHistory = history.map((msg) => ({
+        role: msg.role === "assistant" ? "model" : "user",
+        parts: [{ text: msg.content || "" }],
+      }));
+      const chat = model.startChat({ history: formattedHistory });
+      const result = await chat.sendMessage(effectiveUserMessage);
+      const text = result.response.text();
+      const parsed = tryParse(text);
+
+      if (parsed?.ui_type === "search_intent") {
+        const { searchForProducts } = await import("@/lib/agents/search");
+        const query = typeof parsed.query === "string" ? parsed.query : userMessage;
+        products = await searchForProducts(query, 6);
+        
+        // Let the streaming turn know that it needs to output the carousel now
+        effectiveUserMessage = `Here are product listings for your search: ${JSON.stringify(products)}. Please output the explore_carousel JSON now with the best options. Make sure to provide a valid headline, products array, and deep_dive markdown string.`;
+      } else if (parsed?.ui_type) {
+        // If it decided to output text_response or clarifying_question right away, 
+        // we can technically just yield that JSON and skip streaming, but to keep it simple,
+        // we'll just let the orchestrator stream it.
+      }
+    } catch (e) {
+      console.warn("[writer] Inline search pre-check for stream failed:", e);
+    }
+  }
+
+  if (products.length > 0 && !effectiveUserMessage.includes("Here are product listings")) {
     effectiveUserMessage += `\n\n[INJECTED PRODUCT DATA — use these real listings in your response]:\n${JSON.stringify(products, null, 2)}`;
   }
 

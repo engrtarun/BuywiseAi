@@ -90,6 +90,7 @@ interface ChatWindowProps {
   onCloseQuickBuy: () => void;
   onOpenFoodQuickBuy: () => void;
   onCloseFoodQuickBuy: () => void;
+  dynamicPrompts?: string[];
 }
 
 export function ChatWindow({
@@ -124,6 +125,7 @@ export function ChatWindow({
   onCloseQuickBuy,
   onOpenFoodQuickBuy,
   onCloseFoodQuickBuy,
+  dynamicPrompts,
 }: ChatWindowProps) {
   const [inputText, setInputText] = React.useState("");
   
@@ -183,6 +185,7 @@ export function ChatWindow({
             onModeChange={onModeChange}
             onOpenQuickBuy={onOpenQuickBuy}
             onOpenFoodQuickBuy={onOpenFoodQuickBuy}
+            dynamicPrompts={dynamicPrompts}
           />
         )
       ) : (

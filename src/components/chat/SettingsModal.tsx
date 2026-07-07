@@ -12,10 +12,12 @@ interface SettingsModalProps {
 }
 
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useI18n } from "@/contexts/I18nContext";
 
 export function SettingsModal({ isOpen, onClose, profile, onEditProfile }: SettingsModalProps) {
-  const [activeTab, setActiveTab] = useState<"THEME" | "NOTIFICATIONS" | "ACCOUNT" | "HELP">("THEME");
+  const [activeTab, setActiveTab] = useState<"PREFERENCES" | "NOTIFICATIONS" | "ACCOUNT" | "HELP">("PREFERENCES");
   const { startTour } = useOnboarding();
+  const { t, language, setLanguage } = useI18n();
 
   // Notifications state with localStorage persistence
   const [emailNotifs, setEmailNotifs] = useState(true);
@@ -47,13 +49,13 @@ export function SettingsModal({ isOpen, onClose, profile, onEditProfile }: Setti
         
         {/* Sidebar */}
         <div className="w-full md:w-48 bg-white/5 border-b md:border-b-0 md:border-r border-line-ondark flex md:flex-col p-4 gap-2 overflow-x-auto shrink-0">
-          <h2 className="font-heading font-bold text-lg text-text-ondark mb-2 hidden md:block px-2">Settings</h2>
+          <h2 className="font-heading font-bold text-lg text-text-ondark mb-2 hidden md:block px-2">{t("settings.title")}</h2>
           
           <button 
-            onClick={() => setActiveTab("THEME")}
-            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-sans transition-colors ${activeTab === "THEME" ? "bg-white/10 text-white font-bold" : "text-text-dim-ondark hover:bg-white/5 hover:text-white"}`}
+            onClick={() => setActiveTab("PREFERENCES")}
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-sans transition-colors ${activeTab === "PREFERENCES" ? "bg-white/10 text-white font-bold" : "text-text-dim-ondark hover:bg-white/5 hover:text-white"}`}
           >
-            <Moon className="size-4" /> Theme
+            <Moon className="size-4" /> {t("settings.preferences")}
           </button>
           
           <button 
@@ -80,11 +82,11 @@ export function SettingsModal({ isOpen, onClose, profile, onEditProfile }: Setti
 
         {/* Content Area */}
         <div className="flex-1 flex flex-col min-w-0">
-          <div className="flex items-center justify-between p-4 border-b border-line-ondark">
-            <h3 className="font-heading font-bold text-lg text-text-ondark">
-              {activeTab === "THEME" && "Appearance"}
+          <div className="flex items-center justify-between p-4 border-b border-line-ondark shrink-0">
+            <h3 className="font-bold text-text-primary-light">
+              {activeTab === "PREFERENCES" && t("settings.preferences")}
               {activeTab === "NOTIFICATIONS" && "Notifications"}
-              {activeTab === "ACCOUNT" && "Account Settings"}
+              {activeTab === "ACCOUNT" && t("settings.account")}
               {activeTab === "HELP" && "Help & Onboarding"}
             </h3>
             <button 
@@ -96,10 +98,11 @@ export function SettingsModal({ isOpen, onClose, profile, onEditProfile }: Setti
           </div>
           
           <div className="flex-1 overflow-y-auto p-6">
-            {activeTab === "THEME" && (
-              <div className="space-y-6">
+            {activeTab === "PREFERENCES" && (
+              <div className="space-y-8">
+                {/* Theme Section */}
                 <div className="flex flex-col gap-2">
-                  <span className="text-sm font-bold">Theme Preference</span>
+                  <span className="text-sm font-bold">{t("settings.theme")}</span>
                   <p className="text-xs text-text-dim-ondark mb-2">Select your preferred app appearance.</p>
                   
                   <div className="grid grid-cols-2 gap-4">
@@ -118,6 +121,27 @@ export function SettingsModal({ isOpen, onClose, profile, onEditProfile }: Setti
                         <span className="font-bold text-sm">Light Mode</span>
                         <span className="text-[10px] text-brand-accent mt-1 group-hover:block">Coming Soon</span>
                       </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Language Section */}
+                <div className="flex flex-col gap-2 pt-4 border-t border-white/10">
+                  <span className="text-sm font-bold">{t("settings.language")}</span>
+                  <p className="text-xs text-text-dim-ondark mb-4">{t("settings.languageDesc")}</p>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <button 
+                      onClick={() => setLanguage("en")}
+                      className={`flex items-center justify-center py-3 px-4 rounded-xl border transition-colors ${language === 'en' ? 'border-brand-accent bg-brand-accent/10 text-brand-accent font-bold' : 'border-white/10 bg-white/5 text-text-secondary hover:bg-white/10'}`}
+                    >
+                      English
+                    </button>
+                    <button 
+                      onClick={() => setLanguage("hi")}
+                      className={`flex items-center justify-center py-3 px-4 rounded-xl border transition-colors ${language === 'hi' ? 'border-brand-accent bg-brand-accent/10 text-brand-accent font-bold' : 'border-white/10 bg-white/5 text-text-secondary hover:bg-white/10'}`}
+                    >
+                      हिंदी (Hindi)
                     </button>
                   </div>
                 </div>
