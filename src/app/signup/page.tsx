@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
+import Logo from "@/components/ui/logo";
 import { 
   Eye, 
   EyeOff, 
@@ -24,6 +25,10 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
   const router = useRouter();
   const supabase = createClient();
 
+  useEffect(() => {
+    document.title = "BuyWise AI - Sign Up";
+  }, []);
+
   // Multi-step flow state
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [direction, setDirection] = useState(1); // 1 for forward, -1 for backward
@@ -36,7 +41,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [otpCodes, setOtpCodes] = useState<string[]>(Array(6).fill(""));
+  const [otpCodes, setOtpCodes] = useState<string[]>(Array(8).fill(""));
 
   // UI state
   const [showPassword, setShowPassword] = useState(false);
@@ -81,7 +86,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
         if (isPasswordStrong && passwordsMatch) handleNextStep();
       } else if (step === 4) {
         const fullOtp = otpCodes.join("");
-        if (fullOtp.length === 6) handleSubmitOtp();
+        if (fullOtp.length === 8) handleSubmitOtp();
       }
     }
   };
@@ -225,12 +230,12 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
     setOtpCodes(newOtp);
 
     // Auto-advance focus
-    if (index < 5 && singleDigit) {
+    if (index < 7 && singleDigit) {
       focusOtpInput(index + 1);
     }
     
     // Auto-submit
-    if (newOtp.join("").length === 6) {
+    if (newOtp.join("").length === 8) {
       handleSubmitOtp(newOtp.join(""));
     }
   };
@@ -244,10 +249,10 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
   const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData("text").trim().replace(/[^0-9]/g, "");
-    if (pastedData.length >= 6) {
-      const newOtp = pastedData.slice(0, 6).split("");
+    if (pastedData.length >= 8) {
+      const newOtp = pastedData.slice(0, 8).split("");
       setOtpCodes(newOtp);
-      focusOtpInput(5);
+      focusOtpInput(7);
       handleSubmitOtp(newOtp.join(""));
     }
   };
@@ -256,8 +261,8 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
   const handleSubmitOtp = async (codeParam?: string) => {
     setInlineError(null);
     const code = codeParam || otpCodes.join("");
-    if (code.length !== 6) {
-      triggerError("Please enter all 6 digits of the verification code.");
+    if (code.length !== 8) {
+      triggerError("Please enter all 8 digits of the verification code.");
       return;
     }
 
@@ -312,7 +317,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
 
       setSuccessMessage("Verification code resent! Check your email.");
       setResendCooldown(30);
-      setOtpCodes(Array(6).fill(""));
+      setOtpCodes(Array(8).fill(""));
       focusOtpInput(0);
     } catch (err: any) {
       console.error('Resend error caught:', err);
@@ -365,6 +370,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
         onKeyDown={handleKeyDown}
         className="w-full max-w-md bg-ink-deep border border-white/10 rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col gap-6"
       >
+        <Logo />
         {/* Top Header */}
         <div className="flex items-center justify-between w-full">
           {step > 1 && (
@@ -455,7 +461,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
                 type="button"
                 onClick={handleGoogleSignUp}
                 disabled={loading}
-                className="w-full h-12 flex items-center justify-center gap-3 bg-[#F6EFDD] text-[#1B2B27] rounded-xl hover:bg-[#EDE3C9] font-sans font-bold text-sm transition-all shadow-md"
+                className="w-full h-12 flex items-center justify-center gap-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary-dark font-sans font-bold text-sm transition-all shadow-md"
               >
                 <svg className="size-5" viewBox="0 0 24 24">
                   <path
@@ -622,7 +628,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
                 </p>
                 <div className="text-sm font-sans text-white bg-white/5 p-4 rounded-2xl border border-white/10 space-y-2 mt-2 shadow-inner">
                   <p>👉 <strong className="text-marigold">Option 1:</strong> Click the <strong className="text-marigold">Confirm email address</strong> link in the email to log in directly.</p>
-                  <p>👉 <strong className="text-marigold">Option 2:</strong> Enter the 6-digit OTP code below (if your Supabase email template is configured to send the code).</p>
+                  <p>👉 <strong className="text-marigold">Option 2:</strong> Enter the 8-digit OTP code below (if your Supabase email template is configured to send the code).</p>
                 </div>
               </div>
 
@@ -740,7 +746,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
         ) : (
           <Button
             onClick={() => handleSubmitOtp()}
-            disabled={loading || otpCodes.join("").length !== 6}
+            disabled={loading || otpCodes.join("").length !== 8}
             className="w-full h-12 bg-marigold text-zinc-900 hover:bg-marigold-dark rounded-xl font-sans font-bold text-sm tracking-wide transition-all duration-200 shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
