@@ -133,10 +133,11 @@ export function ChatInput({
     const content = inputText.trim();
     if (!content || disabled) return;
 
+    setIsAnalyzing(true);
     onSend(content);
     setInputText("");
     setShowUpgradeToast(false);
-    setIsAnalyzing(true);
+    
     setTimeout(() => {
       setIsAnalyzing(false);
     }, 6000);
@@ -508,11 +509,7 @@ export function ChatInput({
               />
             </div>
 
-            {!isGuest && tokensUsed !== undefined && tokenLimit !== undefined && (
-              <div className="flex items-center self-end mb-[8px] mr-1 shrink-0">
-                <UsageRing value={tokensUsed} max={tokenLimit} size={26} />
-              </div>
-            )}
+
 
             <button
               type="button"
