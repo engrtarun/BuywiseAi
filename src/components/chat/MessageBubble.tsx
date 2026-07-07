@@ -271,6 +271,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
         } else if (parsed.ui_type === "text_response") {
           textResponseContent = parsed.text || "";
         }
+      }
     } else {
       // Doesn't contain a JSON object - treat as plain text fallback
     }
