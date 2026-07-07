@@ -263,10 +263,10 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
   };
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-ink-deeper px-4 py-12 text-text-ondark">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-ink-deeper px-4 py-12 text-white">
       <div 
         onKeyDown={handleKeyDown}
-        className="w-full max-w-md bg-ink-deep border border-line-ondark rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col gap-6 relative"
+        className="w-full max-w-md bg-ink-deep border border-white/10 rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col gap-6 relative"
       >
         {/* Close / Skip Login (X) button — top-right of card */}
         {viewState === "login" && (
@@ -280,8 +280,8 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
               size-8 rounded-full
               bg-white/10 backdrop-blur-sm
               flex items-center justify-center
-              text-text-dim-ondark
-              hover:bg-white/20 hover:text-text-ondark hover:scale-110
+              text-zinc-400
+              hover:bg-white/20 hover:text-white hover:scale-110
               active:scale-95
               transition-all duration-200
               cursor-pointer
@@ -298,7 +298,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
               setInlineError(null);
             }}
             disabled={loading}
-            className="flex items-center gap-1 text-[13px] font-mono text-text-dim-ondark hover:text-marigold transition-colors disabled:opacity-50"
+            className="flex items-center gap-1 text-[13px] font-mono text-zinc-400 hover:text-marigold transition-colors disabled:opacity-50"
           >
             <ArrowLeft className="size-4" />
             BACK TO LOG IN
@@ -312,7 +312,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
               <h1 className="font-heading font-extrabold text-2xl tracking-tight">
                 Log in
               </h1>
-              <p className="text-sm font-sans text-text-dim-ondark">
+              <p className="text-sm font-sans text-zinc-400">
                 Welcome back to BuyWise AI. Enter your details below.
               </p>
             </div>
@@ -347,38 +347,38 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
 
             <div className="flex items-center my-1">
               <div className="flex-1 h-px bg-line-ondark" />
-              <span className="px-3 text-xs font-mono text-text-dim-ondark">OR</span>
+              <span className="px-3 text-xs font-mono text-zinc-400">OR</span>
               <div className="flex-1 h-px bg-line-ondark" />
             </div>
 
             {/* Email Input */}
             <div className="relative flex items-center">
-              <Mail className="absolute left-3.5 size-5 text-text-dim-ondark" />
+              <Mail className="absolute left-3.5 size-5 text-zinc-400" />
               <Input
                 type="email"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-12 pl-11 bg-ink-deeper/50 border-line-ondark text-text-ondark placeholder:text-text-dim-ondark/60 focus-visible:border-marigold focus-visible:ring-marigold/30"
+                className="h-12 pl-11 bg-white/5 border-white/10 text-white placeholder:text-zinc-400/60 focus-visible:border-marigold focus-visible:ring-marigold/30"
                 disabled={loading}
               />
             </div>
 
             {/* Password Input */}
             <div className="relative flex items-center">
-              <Lock className="absolute left-3.5 size-5 text-text-dim-ondark" />
+              <Lock className="absolute left-3.5 size-5 text-zinc-400" />
               <Input
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-12 pl-11 pr-11 bg-ink-deeper/50 border-line-ondark text-text-ondark placeholder:text-text-dim-ondark/60 focus-visible:border-marigold focus-visible:ring-marigold/30"
+                className="h-12 pl-11 pr-11 bg-white/5 border-white/10 text-white placeholder:text-zinc-400/60 focus-visible:border-marigold focus-visible:ring-marigold/30"
                 disabled={loading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 text-text-dim-ondark hover:text-marigold transition-colors cursor-pointer"
+                className="absolute right-3.5 text-zinc-400 hover:text-marigold transition-colors cursor-pointer"
               >
                 {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
               </button>
@@ -406,7 +406,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
               <h1 className="font-heading font-extrabold text-2xl tracking-tight">
                 Reset Password
               </h1>
-              <p className="text-sm font-sans text-text-dim-ondark">
+              <p className="text-sm font-sans text-zinc-400">
                 {/* reason or tarun`s antigravity */}
                 Enter your email address and we&apos;ll send you a link to reset your password.
               </p>
@@ -414,13 +414,13 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
 
             {/* Email Input */}
             <div className="relative flex items-center">
-              <Mail className="absolute left-3.5 size-5 text-text-dim-ondark" />
+              <Mail className="absolute left-3.5 size-5 text-zinc-400" />
               <Input
                 type="email"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-12 pl-11 bg-ink-deeper/50 border-line-ondark text-text-ondark placeholder:text-text-dim-ondark/60 focus-visible:border-marigold focus-visible:ring-marigold/30"
+                className="h-12 pl-11 bg-white/5 border-white/10 text-white placeholder:text-zinc-400/60 focus-visible:border-marigold focus-visible:ring-marigold/30"
                 disabled={loading}
                 autoFocus
               />
@@ -435,15 +435,15 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
             <h1 className="font-heading font-extrabold text-2xl tracking-tight mt-2">
               Reset Link Sent!
             </h1>
-            <p className="text-sm font-sans text-text-dim-ondark leading-relaxed max-w-xs">
-              Check your inbox at <span className="text-text-ondark font-semibold">{email}</span> for a link to reset your password.
+            <p className="text-sm font-sans text-zinc-400 leading-relaxed max-w-xs">
+              Check your inbox at <span className="text-white font-semibold">{email}</span> for a link to reset your password.
             </p>
             <Button
               onClick={() => {
                 setViewState("login");
                 setInlineError(null);
               }}
-              className="mt-4 px-6 h-11 bg-ink-deeper/50 border border-line-ondark rounded-xl text-text-ondark text-xs font-mono tracking-widest uppercase hover:bg-ink-deeper hover:border-marigold transition-all cursor-pointer"
+              className="mt-4 px-6 h-11 bg-white/5 border border-white/10 rounded-xl text-white text-xs font-mono tracking-widest uppercase hover:bg-ink-deeper hover:border-marigold transition-all cursor-pointer"
             >
               Back to log in
             </Button>
@@ -457,13 +457,13 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
               <h1 className="font-heading font-extrabold text-2xl tracking-tight">
                 Verify your email
               </h1>
-              <p className="text-sm font-sans text-text-dim-ondark leading-relaxed">
+              <p className="text-sm font-sans text-zinc-400 leading-relaxed">
                 {/* reason or tarun`s antigravity */}
-                Your email isn&apos;t confirmed yet. We&apos;ve sent a verification email to <span className="text-text-ondark font-semibold">{email}</span>.
+                Your email isn&apos;t confirmed yet. We&apos;ve sent a verification email to <span className="text-white font-semibold">{email}</span>.
               </p>
-              <div className="text-xs font-sans text-text-dim-ondark/80 bg-ink-deeper/40 p-3.5 rounded-2xl border border-line-ondark/60 space-y-1.5 mt-1">
-                <p>👉 <strong>Option 1:</strong> Click the <strong>Confirm email address</strong> link in the email to log in directly.</p>
-                <p>👉 <strong>Option 2:</strong> Enter the 6-digit OTP code below (if your Supabase email template is configured to send the code).</p>
+              <div className="text-sm font-sans text-white bg-white/5 p-4 rounded-2xl border border-white/10 space-y-2 mt-2 shadow-inner">
+                <p>👉 <strong className="text-marigold">Option 1:</strong> Click the <strong className="text-marigold">Confirm email address</strong> link in the email to log in directly.</p>
+                <p>👉 <strong className="text-marigold">Option 2:</strong> Enter the 6-digit OTP code below (if your Supabase email template is configured to send the code).</p>
               </div>
             </div>
 
@@ -483,7 +483,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
                   onChange={(e) => handleOtpChange(e.target.value, idx)}
                   onKeyDown={(e) => handleOtpKeyDown(e, idx)}
                   onPaste={idx === 0 ? handleOtpPaste : undefined}
-                  className="size-11 sm:size-12 rounded-xl border border-line-ondark bg-ink-deeper/50 text-center font-heading text-lg font-bold text-marigold focus:border-marigold focus:ring-2 focus:ring-marigold/20 outline-none transition-all disabled:opacity-50"
+                  className="w-10 sm:w-12 h-12 sm:h-14 rounded-xl border border-white/10 bg-white/5 text-center font-heading text-lg font-bold text-marigold focus:border-marigold focus:ring-2 focus:ring-marigold/20 outline-none transition-all disabled:opacity-50 min-w-0"
                   disabled={loading}
                   autoFocus={idx === 0}
                 />
@@ -493,7 +493,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
             {/* Resend button */}
             <div className="text-center mt-2 text-xs font-mono">
               {resendCooldown > 0 ? (
-                <span className="text-text-dim-ondark">
+                <span className="text-zinc-400">
                   Resend code in {resendCooldown}s
                 </span>
               ) : (
@@ -529,7 +529,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
           <Button
             onClick={handleLogin}
             disabled={loading || !email.trim() || !password}
-            className="w-full h-12 bg-marigold text-ink-deeper hover:bg-marigold-dark rounded-xl font-sans font-bold text-sm tracking-wide transition-all duration-200 shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-12 bg-marigold text-zinc-900 hover:bg-marigold-dark rounded-xl font-sans font-bold text-sm tracking-wide transition-all duration-200 shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <Loader2 className="size-5 animate-spin" />
@@ -543,7 +543,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
           <Button
             onClick={handleResetPassword}
             disabled={loading || !email.trim()}
-            className="w-full h-12 bg-marigold text-ink-deeper hover:bg-marigold-dark rounded-xl font-sans font-bold text-sm tracking-wide transition-all duration-200 shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-12 bg-marigold text-zinc-900 hover:bg-marigold-dark rounded-xl font-sans font-bold text-sm tracking-wide transition-all duration-200 shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <Loader2 className="size-5 animate-spin" />
@@ -557,7 +557,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
           <Button
             onClick={handleVerifyOtp}
             disabled={loading || otpCodes.join("").length !== 6}
-            className="w-full h-12 bg-marigold text-ink-deeper hover:bg-marigold-dark rounded-xl font-sans font-bold text-sm tracking-wide transition-all duration-200 shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-12 bg-marigold text-zinc-900 hover:bg-marigold-dark rounded-xl font-sans font-bold text-sm tracking-wide transition-all duration-200 shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <Loader2 className="size-5 animate-spin" />
@@ -569,7 +569,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
 
         {/* Bottom Navigation link */}
         {viewState === "login" && (
-          <div className="text-center text-xs font-mono text-text-dim-ondark mt-2">
+          <div className="text-center text-xs font-mono text-zinc-400 mt-2">
             {/* reason or tarun`s antigravity */}
             Don&apos;t have an account?{" "}
             <a href="/signup" className="text-marigold hover:underline transition-all">
