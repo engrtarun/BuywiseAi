@@ -78,7 +78,6 @@ export function ChatInput({
   const [plusButtonRect, setPlusButtonRect] = useState<DOMRect | null>(null);
   const { openPremium } = usePremium();
   const [showUpgradeToast, setShowUpgradeToast] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   
   // Slash command state
   const [showSlashCommands, setShowSlashCommands] = useState(false);
@@ -86,7 +85,7 @@ export function ChatInput({
   const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
   const router = useRouter(); // For Quick Buy navigation
 
-  const isDisabled = disabled || dailyLimitReached || isAnalyzing;
+  const isDisabled = disabled || dailyLimitReached;
 
   // Rotate placeholder every 5 seconds
   useEffect(() => {
@@ -125,7 +124,7 @@ export function ChatInput({
   }, [cooldownUntil]);
 
   const handleSend = () => {
-    if (guestLimitReached || dailyLimitReached || isAnalyzing) return;
+    if (guestLimitReached || dailyLimitReached) return;
     if (timeLeft > 0) {
       setShowUpgradeToast(true);
       setTimeout(() => setShowUpgradeToast(false), 5000);
@@ -134,14 +133,9 @@ export function ChatInput({
     const content = inputText.trim();
     if (!content || disabled) return;
 
-    setIsAnalyzing(true);
     onSend(content);
     setInputText("");
     setShowUpgradeToast(false);
-    
-    setTimeout(() => {
-      setIsAnalyzing(false);
-    }, 45000);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -235,8 +229,7 @@ export function ChatInput({
   };
 
   const handleEnhancePrompt = async () => {
-    if (!inputText.trim() || isAnalyzing) return;
-    setIsAnalyzing(true);
+    if (!inputText.trim()) return;
     try {
       const res = await fetch("/api/enhance-prompt", {
         method: "POST",
@@ -251,8 +244,6 @@ export function ChatInput({
       }
     } catch (err) {
       console.error("Failed to enhance prompt:", err);
-    } finally {
-      setIsAnalyzing(false);
     }
   };
 
@@ -373,7 +364,7 @@ export function ChatInput({
                   <button
                     type="button"
                     onClick={handleEnhancePrompt}
-                    disabled={!inputText.trim() || isAnalyzing}
+                    disabled={!inputText.trim()}
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-brand-accent bg-brand-accent/10 hover:bg-brand-accent/20 transition-colors active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border border-brand-accent/20"
                     aria-label="Enhance Prompt"
                   >
@@ -467,20 +458,7 @@ export function ChatInput({
                 </div>
               )}
 
-              {/* AI Deep Analysis Loader Overlay */}
-              {isAnalyzing && (
-                <div className="absolute inset-0 z-20 flex items-center px-4 bg-bg-input/90 backdrop-blur-sm rounded-lg overflow-hidden animate-in fade-in duration-300">
-                  <div className="flex items-center gap-3">
-                    <div className="relative flex items-center justify-center size-6">
-                      <div className="absolute inset-0 rounded-full border-2 border-brand-accent/20 border-t-brand-accent animate-spin" />
-                      <Brain className="size-3.5 text-brand-accent animate-pulse" />
-                    </div>
-                    <span className="text-[14px] font-medium font-sans text-brand-accent tracking-wide animate-pulse">
-                      AI deep analysis in progress...
-                    </span>
-                  </div>
-                </div>
-              )}
+
 
               <TextareaAutosize
                 ref={inputRef}
