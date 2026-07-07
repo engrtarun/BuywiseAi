@@ -42,7 +42,7 @@ import { executeRerankedSearch } from "@/lib/providers/test-serper";
 import type { RerankedContext } from "@/lib/retrieval/index";
 import { executeGenerativeOrchestration } from "@/lib/guardrails/apiOrchestrator";
 
-const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEYS[0]);
 
 // ─── In-Memory Response Cache ─────────────────────────────────────────────────
 // Keyed by chatId → Map<normalizedMessage, cachedResponsePayload>.
@@ -376,8 +376,7 @@ function sanitizeError(error: unknown): unknown {
     } else if (typeof error === "object") {
       errorStr = JSON.stringify(error);
     } else {
-      errorStr = String(error);
-      return error.stack || error.message;
+      return String(error);
     }
     return JSON.stringify(error, Object.getOwnPropertyNames(error));
   } catch (e) {

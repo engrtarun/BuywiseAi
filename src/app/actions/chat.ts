@@ -437,7 +437,7 @@ export async function deleteChatSession(sessionId: string): Promise<void> {
  * Falls back to truncating the first message if the call fails or times out.
  */
 export async function generateChatTitle(message: string): Promise<string> {
-  const apiKey = env.GEMINI_API_KEY;
+  const apiKey = env.GEMINI_API_KEYS[0];
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);

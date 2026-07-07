@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "@/lib/env";
 import { validateAndSanitizeOutput } from "./schemaGuardrails";
 
-const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEYS[0]);
 
 interface OrchestratorInput {
   systemInstruction: string;
