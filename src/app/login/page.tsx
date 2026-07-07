@@ -34,6 +34,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
   // Loading and Error States
   const [loading, setLoading] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Form Fields
   const [email, setEmail] = useState("");
@@ -82,6 +83,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
 
     setLoading(true);
     setInlineError(null);
+    setSuccessMessage(null);
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -151,6 +153,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
 
     setLoading(true);
     setInlineError(null);
+    setSuccessMessage(null);
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
@@ -208,6 +211,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
 
   const handleVerifyOtp = async () => {
     setInlineError(null);
+    setSuccessMessage(null);
     const code = otpCodes.join("");
     if (code.length !== 6) {
       setInlineError("Please enter all 6 digits.");
@@ -237,25 +241,36 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
   };
 
   const handleResendOtp = async () => {
+    console.log('Resend OTP clicked in login');
     if (resendCooldown > 0) return;
     setInlineError(null);
+    setSuccessMessage(null);
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resend({
+      console.log('Calling supabase.auth.resend for email:', email.trim());
+      const { data, error } = await supabase.auth.resend({
         type: "signup",
         email: email.trim(),
       });
 
+      console.log('Resend result:', { data, error });
+
       if (error) {
-        setInlineError(error.message);
+        if (error.status === 429) {
+          setInlineError("Please wait a moment before requesting another code.");
+        } else {
+          setInlineError(error.message);
+        }
         return;
       }
 
+      setSuccessMessage("Verification code resent! Check your email.");
       setResendCooldown(30);
       setOtpCodes(Array(6).fill(""));
       focusOtpInput(0);
     } catch (err: any) {
+      console.error('Resend error caught:', err);
       setInlineError(err.message || "Failed to resend verification code.");
     } finally {
       setLoading(false);
@@ -518,6 +533,22 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
             <button
               onClick={() => setInlineError(null)}
               className="text-chili hover:text-chili/80 font-bold ml-1 text-sm leading-none cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Success Alert */}
+        {successMessage && (
+          <div className="px-4 py-3 bg-[#2E7E6A]/10 border border-[#2E7E6A]/30 rounded-xl text-[#2E7E6A] text-xs flex items-start gap-2.5 animate-in fade-in duration-300">
+            <CheckCircle2 className="size-4 shrink-0 mt-0.5" />
+            <div className="font-sans leading-relaxed flex-1">
+              {successMessage}
+            </div>
+            <button
+              onClick={() => setSuccessMessage(null)}
+              className="text-[#2E7E6A] hover:text-[#2E7E6A]/80 font-bold ml-1 text-sm leading-none"
             >
               ✕
             </button>

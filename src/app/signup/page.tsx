@@ -29,6 +29,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
   const [direction, setDirection] = useState(1); // 1 for forward, -1 for backward
   const [loading, setLoading] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Form fields
   const [name, setName] = useState("");
@@ -98,6 +99,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
 
   const handleNextStep = async () => {
     setInlineError(null);
+    setSuccessMessage(null);
     setDirection(1);
 
     if (step === 1) {
@@ -178,6 +180,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
 
   const handlePrevStep = () => {
     setInlineError(null);
+    setSuccessMessage(null);
     setDirection(-1);
     if (step > 1) {
       setStep((prev) => (prev - 1) as 1 | 2 | 3 | 4);
@@ -282,25 +285,37 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
 
   // Resend OTP
   const handleResendOtp = async () => {
+    console.log('Resend OTP clicked');
     if (resendCooldown > 0) return;
     setInlineError(null);
+    setSuccessMessage(null);
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resend({
+      console.log('Calling supabase.auth.resend for email:', email);
+      const { data, error } = await supabase.auth.resend({
         type: "signup",
         email,
       });
 
+      console.log('Resend result:', { data, error });
+
       if (error) {
-        setInlineError(error.message);
+        // Handle specific rate-limit / generic errors better for UX
+        if (error.status === 429) {
+          setInlineError("Please wait a moment before requesting another code.");
+        } else {
+          setInlineError(error.message);
+        }
         return;
       }
 
+      setSuccessMessage("Verification code resent! Check your email.");
       setResendCooldown(30);
       setOtpCodes(Array(6).fill(""));
       focusOtpInput(0);
     } catch (err: any) {
+      console.error('Resend error caught:', err);
       setInlineError(err.message || "Failed to resend verification code.");
     } finally {
       setLoading(false);
@@ -680,6 +695,22 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
             <button
               onClick={() => setInlineError(null)}
               className="text-chili hover:text-chili/80 font-bold ml-1 text-sm leading-none"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Success Alert */}
+        {successMessage && (
+          <div className="px-4 py-3 bg-[#2E7E6A]/10 border border-[#2E7E6A]/30 rounded-xl text-[#2E7E6A] text-xs flex items-start gap-2.5 animate-in fade-in duration-300">
+            <Check className="size-4 shrink-0 mt-0.5" />
+            <div className="font-sans leading-relaxed flex-1">
+              {successMessage}
+            </div>
+            <button
+              onClick={() => setSuccessMessage(null)}
+              className="text-[#2E7E6A] hover:text-[#2E7E6A]/80 font-bold ml-1 text-sm leading-none"
             >
               ✕
             </button>
