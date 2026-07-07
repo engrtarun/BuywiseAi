@@ -19,7 +19,7 @@ export async function runWriterCriticValidationLoop(
         return { is_valid: true, sanitized_payload: inspectionText };
       }
     } else if (schemaTargetMode === "deep_research") {
-      if (verifiedObject.ui_type === "clarifying_question" || verifiedObject.ui_type === "results") {
+      if (["intake_questionnaire", "deep_research_results", "unrecognized", "clarifying_question", "results"].includes(verifiedObject.ui_type)) {
         return { is_valid: true, sanitized_payload: inspectionText };
       }
     }
