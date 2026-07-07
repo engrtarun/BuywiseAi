@@ -142,7 +142,7 @@ export async function GET(request: Request) {
     const filteredProducts = scoredProducts;
 
     const totalFiltered = filteredProducts.length;
-    let paginatedProducts = [];
+    const paginatedProducts = [];
     let hasMore = false;
 
     if (totalFiltered > 0) {

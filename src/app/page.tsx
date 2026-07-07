@@ -115,7 +115,7 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
         finalVerdict: parsedJson.final_verdict,
         comparison: Array.isArray(parsedJson.comparison) ? parsedJson.comparison : [],
       };
-      let items = Array.isArray(parsedJson.recommended_products) ? parsedJson.recommended_products : [];
+      const items = Array.isArray(parsedJson.recommended_products) ? parsedJson.recommended_products : [];
       
       // Recommendation Recovery: if LLM failed to output the array but gave us the verdict
       if (items.length === 0) {
@@ -749,7 +749,7 @@ export default function Page() {
             await apiSendMessage(newId, "user", content);
             // Also set title of the chat in Supabase
             const supabase = createClient();
-            let updatePayload: any = { title: generateTitle(content), mode: selectedMode };
+            const updatePayload: any = { title: generateTitle(content), mode: selectedMode };
             let { error } = await supabase
               .from("chat_sessions")
               .update(updatePayload)
@@ -822,8 +822,8 @@ export default function Page() {
                 prev.map((s) => (s.id === activeChatId ? { ...s, title: newTitle, mode: selectedMode } : s))
               );
               const supabase = createClient();
-              let updatePayload: any = { title: newTitle, mode: selectedMode };
-              let { error } = await supabase
+              const updatePayload: any = { title: newTitle, mode: selectedMode };
+              const { error } = await supabase
                 .from("chat_sessions")
                 .update(updatePayload)
                 .eq("id", activeChatId);
