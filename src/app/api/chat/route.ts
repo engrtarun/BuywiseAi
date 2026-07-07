@@ -321,14 +321,33 @@ export async function POST(req: NextRequest) {
         }
 
         try {
+          let dataTagFound = false;
+          let jsonBuffer = "";
+          
           for await (const chunk of writerStream) {
-            fullResponse += chunk;
-            // Hide processing tags from visible frontend chunks while building the buffer
-            if (!fullResponse.includes("[")) {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: chunk })}\n\n`));
+            const chunkText = chunk || "";
+            fullResponse += chunkText;
+
+            if (fullResponse.includes("|||PRODUCT_DATA_START|||")) {
+              dataTagFound = true;
+              // Split out what belongs to the chat text vs what belongs to the raw JSON string
+              const parts = chunkText.split("|||PRODUCT_DATA_START|||");
+              
+              if (parts[0] && !fullResponse.split("|||PRODUCT_DATA_START|||")[0].includes("[")) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: parts[0] })}\n\n`));
+              }
+              if (parts[1]) {
+                jsonBuffer += parts[1];
+              } else if (parts.length === 1 && dataTagFound) {
+                 // If the tag was already found in a previous chunk, the whole chunk belongs to JSON
+                 if (!chunkText.includes("|||PRODUCT_DATA_START|||")) {
+                    jsonBuffer += chunkText;
+                 }
+              }
             } else {
-              const cleanVisibleChunk = chunk.replace(/\[TRACK_PREFERENCE:.*?\]/g, "");
-              if (cleanVisibleChunk) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: cleanVisibleChunk })}\n\n`));
+              if (!dataTagFound && !fullResponse.includes("[")) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: chunkText })}\n\n`));
+              }
             }
           }
 
@@ -373,6 +392,16 @@ export async function POST(req: NextRequest) {
             }
           }
 
+          // Parse out the filled jsonBuffer to attach to metadata tracking database hooks
+          if (jsonBuffer.trim()) {
+             try {
+                const parsedProducts = JSON.parse(jsonBuffer.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'metadata', products: parsedProducts })}\n\n`));
+             } catch (err) {
+                console.warn("Failed to parse split-boundary JSON buffer:", err);
+             }
+          }
+
           fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
 
           if (confirmedCategory) {
@@ -386,8 +415,87 @@ export async function POST(req: NextRequest) {
           }, chatId);
 
         } catch (streamErr: any) {
-          console.error("Critical Execution Fault across both pipelines:", streamErr);
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: `\n\n[Stream Interrupted: Failed to generate response from AI models]` })}\n\n`));
+          console.warn("Switching to Groq streaming fallback orchestration channel...", streamErr.message || streamErr);
+          try {
+            const activeGroqKey = process.env.GROQ_API_KEY;
+            if (!activeGroqKey) throw new Error("Groq credentials pool unavailable.");
+
+            const systemInstruction = `
+              You are BuyWise AI. You must adhere strictly to these rules:
+              1. If the query yields products, write your natural chat message response first.
+              2. At the absolute end of your response, if product items are present, insert the exact separator tag: |||PRODUCT_DATA_START||| followed immediately by the raw JSON string containing the structured products object array (with id, name, price, rating, image, platform, link, reason). Do not add markdown code fences (like \`\`\`json) inside or around the separator tag block.
+            `;
+
+            const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+              method: "POST",
+              headers: { "Authorization": `Bearer ${activeGroqKey}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                stream: true,
+                messages: [
+                  { role: "system", content: systemInstruction },
+                  ...userHistory.map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content || "" })),
+                  { role: "user", content: userMessage }
+                ]
+              })
+            });
+
+            if (!groqResponse.ok) throw new Error(`Groq stream connection error: ${groqResponse.status}`);
+            
+            const reader = groqResponse.body?.getReader();
+            const decoder = new TextDecoder();
+            if (!reader) throw new Error("Failed to extract active reader stream descriptor.");
+
+            let fallbackDataTagFound = false;
+            let fallbackJsonBuffer = "";
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              const chunkStr = decoder.decode(value, { stream: true });
+              const lines = chunkStr.split("\n").filter(line => line.trim() !== "");
+              
+              for (const line of lines) {
+                if (line.includes("data: [DONE]")) break;
+                if (line.startsWith("data: ")) {
+                  try {
+                    const parsed = JSON.parse(line.slice(6));
+                    const textDelta = parsed.choices[0]?.delta?.content || "";
+                    fullResponse += textDelta;
+                    
+                    if (fullResponse.includes("|||PRODUCT_DATA_START|||")) {
+                      fallbackDataTagFound = true;
+                      const parts = textDelta.split("|||PRODUCT_DATA_START|||");
+                      
+                      if (parts[0] && !fullResponse.split("|||PRODUCT_DATA_START|||")[0].includes("[")) {
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: parts[0] })}\n\n`));
+                      }
+                      if (parts[1]) {
+                        fallbackJsonBuffer += parts[1];
+                      } else if (parts.length === 1 && fallbackDataTagFound) {
+                        if (!textDelta.includes("|||PRODUCT_DATA_START|||")) fallbackJsonBuffer += textDelta;
+                      }
+                    } else {
+                      if (!fallbackDataTagFound && !fullResponse.includes("[")) {
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: textDelta })}\n\n`));
+                      }
+                    }
+                  } catch (e) {}
+                }
+              }
+            }
+            
+            if (fallbackJsonBuffer.trim()) {
+               try {
+                  const parsedProducts = JSON.parse(fallbackJsonBuffer.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'metadata', products: parsedProducts })}\n\n`));
+               } catch (err) {}
+            }
+          } catch (fallbackError: any) {
+            console.error("Critical Execution Fault across both pipelines:", fallbackError);
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: `\\n[Stream Interrupted: ${fallbackError.message}]` })}\n\n`));
+          }
         } finally {
           controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
           controller.close();

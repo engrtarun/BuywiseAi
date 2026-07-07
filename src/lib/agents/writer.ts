@@ -533,7 +533,11 @@ export async function* runStreamingWriter(input: WriterInput): AsyncGenerator<st
   let { mode, userMessage, history, products = [], sessionContext, isRegenerate } = input;
 
   const isDeepResearch = mode === "deep_research";
-  let systemInstruction = isDeepResearch ? DEEP_RESEARCH_SYSTEM_PROMPT : EXPLORE_SYSTEM_PROMPT;
+  let systemInstruction = `
+    You are BuyWise AI. You must adhere strictly to these rules:
+    1. If the query yields products, write your natural chat message response first.
+    2. At the absolute end of your response, if product items are present, insert the exact separator tag: |||PRODUCT_DATA_START||| followed immediately by the raw JSON string containing the structured products object array (with id, name, price, rating, image, platform, link, reason). Do not add markdown code fences (like \`\`\`json) inside or around the separator tag block.
+  `;
 
   if (sessionContext && Object.keys(sessionContext).length > 0) {
     systemInstruction += `\n\nUser's accumulated session context (including linguistic fingerprint): ${JSON.stringify(sessionContext)}`;

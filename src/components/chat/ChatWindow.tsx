@@ -183,6 +183,8 @@ export function ChatWindow({
             onLoginClick={onLoginClick}
             selectedMode={selectedMode}
             onModeChange={onModeChange}
+            onOpenQuickBuy={onOpenQuickBuy}
+            onOpenFoodQuickBuy={onOpenFoodQuickBuy}
             dynamicPrompts={dynamicPrompts}
           />
         )

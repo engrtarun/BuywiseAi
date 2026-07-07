@@ -36,7 +36,6 @@ export async function* executeStreamingOrchestration(input: OrchestratorInput): 
           })),
           { role: "user", content: input.effectiveUserMessage },
         ],
-        response_format: { type: "json_object" },
         stream: true,
       }),
     });
@@ -55,9 +54,6 @@ export async function* executeStreamingOrchestration(input: OrchestratorInput): 
     
     const chat = model.startChat({
       history: input.formattedHistory,
-      generationConfig: {
-        responseMimeType: "application/json",
-      },
     });
     
     const result = await chat.sendMessageStream(input.effectiveUserMessage);

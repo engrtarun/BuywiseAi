@@ -91,7 +91,7 @@ export function MessageList({ messages, isTyping, onRegenerate, onRetry, onFeedb
               />
             )
           )}
-          {isTyping && <ThinkingIndicator />}
+          {isTyping && <ThinkingIndicator mode={mode} />}
           <div ref={messagesEndRef} className="h-4" />
         </div>
       </ScrollArea>
