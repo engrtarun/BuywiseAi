@@ -10,7 +10,7 @@ async function runTests() {
   // We can force fallback by using a fake API key or sending a large chunk.
   const oldEnv = process.env.HUGGINGFACE_API_KEY;
   process.env.HUGGINGFACE_API_KEY = "fake"; // force fallback
-  const chunks = [{ id: "1", text: "cheap red shoes" }, { id: "2", text: "red shoes for cheap" }, { id: "3", text: "blue socks" }];
+  const chunks = [{ id: "1", text: "cheap red shoes", url: "", index: 0 }, { id: "2", text: "red shoes for cheap", url: "", index: 1 }, { id: "3", text: "blue socks", url: "", index: 2 }];
   const scored = await scoreChunks("cheap red shoes", chunks);
   console.log("Scored chunks (fallback):", scored);
   process.env.HUGGINGFACE_API_KEY = oldEnv;

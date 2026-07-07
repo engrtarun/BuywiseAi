@@ -13,6 +13,8 @@ import { QuickBuyButton } from "@/components/quick-buy/QuickBuyButton";
 import { QuickBuyScreen } from "@/components/quick-buy/QuickBuyScreen";
 import { ModeToggle } from "./ModeToggle";
 import { Ghost } from "lucide-react";
+import { FoodQuickBuyButton } from "@/components/quick-buy/FoodQuickBuyButton";
+import { FoodQuickBuyScreen } from "@/components/quick-buy/FoodQuickBuyScreen";
 
 /* ── Header ──────────────────────────────────────────── */
 
@@ -23,9 +25,10 @@ interface ChatHeaderProps {
   isTemporaryChat: boolean;
   onNewTemporaryChat?: () => void;
   onOpenQuickBuy: () => void;
+  onOpenFoodQuickBuy: () => void;
 }
 
-function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onNewTemporaryChat, onOpenQuickBuy }: ChatHeaderProps) {
+function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onNewTemporaryChat, onOpenQuickBuy, onOpenFoodQuickBuy }: ChatHeaderProps) {
   return (
     <header className="shrink-0 z-20 flex items-center bg-bg-main border-b border-border-light h-14 transition-colors duration-500">
       <div className="w-full flex items-center justify-between">
@@ -46,6 +49,7 @@ function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onN
             <TemporaryChatButton onClick={onNewTemporaryChat} isTemporaryChat={isTemporaryChat} />
           )}
           <QuickBuyButton onClick={onOpenQuickBuy} />
+          <FoodQuickBuyButton onClick={onOpenFoodQuickBuy} />
         </div>
       </div>
     </header>
@@ -81,8 +85,11 @@ interface ChatWindowProps {
   activeMode: ChatMode | null;
   onProductBuy?: (product: any) => void;
   showQuickBuy: boolean;
+  showFoodQuickBuy: boolean;
   onOpenQuickBuy: () => void;
   onCloseQuickBuy: () => void;
+  onOpenFoodQuickBuy: () => void;
+  onCloseFoodQuickBuy: () => void;
 }
 
 export function ChatWindow({
@@ -112,8 +119,11 @@ export function ChatWindow({
   activeMode,
   onProductBuy,
   showQuickBuy,
+  showFoodQuickBuy,
   onOpenQuickBuy,
   onCloseQuickBuy,
+  onOpenFoodQuickBuy,
+  onCloseFoodQuickBuy,
 }: ChatWindowProps) {
   const [inputText, setInputText] = React.useState("");
   
@@ -148,6 +158,7 @@ export function ChatWindow({
         isTemporaryChat={isTemporaryChat} 
         onNewTemporaryChat={onNewTemporaryChat} 
         onOpenQuickBuy={onOpenQuickBuy}
+        onOpenFoodQuickBuy={onOpenFoodQuickBuy}
       />
       <OfflineBanner />
       {showWelcome ? (
@@ -212,6 +223,9 @@ export function ChatWindow({
 
       {/* Quick Buy Overlay */}
       {showQuickBuy && <QuickBuyScreen onClose={onCloseQuickBuy} />}
+      
+      {/* Food Quick Buy Overlay */}
+      {showFoodQuickBuy && <FoodQuickBuyScreen onClose={onCloseFoodQuickBuy} />}
     </div>
   );
 }

@@ -30,6 +30,37 @@ function renderStars(rating: number) {
   return stars.join("");
 }
 
+function getBadgeStyle(platform: string) {
+  if (!platform) return "bg-zinc-700/80 text-white border-zinc-600/50";
+  const p = platform.toLowerCase();
+  
+  if (p.includes("amazon")) return "bg-amber-400/90 text-amber-950 border-amber-400/50";
+  if (p.includes("flipkart")) return "bg-blue-600/90 text-white border-blue-400/50";
+  if (p.includes("meesho")) return "bg-pink-600/90 text-white border-pink-400/50";
+  if (p.includes("myntra")) return "bg-fuchsia-600/90 text-white border-fuchsia-400/50";
+  if (p.includes("ajio")) return "bg-teal-600/90 text-white border-teal-400/50";
+  if (p.includes("nykaa")) return "bg-rose-500/90 text-white border-rose-400/50";
+  if (p.includes("shopify")) return "bg-emerald-600/90 text-white border-emerald-400/50";
+  
+  if (p.includes("zomato")) return "bg-red-600/90 text-white border-red-400/50";
+  if (p.includes("swiggy")) return "bg-orange-500/90 text-white border-orange-400/50";
+  if (p.includes("blinkit")) return "bg-yellow-400/90 text-yellow-950 border-yellow-400/50";
+  if (p.includes("zepto")) return "bg-indigo-600/90 text-white border-indigo-400/50";
+  if (p.includes("dunzo")) return "bg-green-500/90 text-white border-green-400/50";
+  if (p.includes("bigbasket")) return "bg-lime-600/90 text-white border-lime-400/50";
+  
+  if (p.includes("tataneu")) return "bg-purple-600/90 text-white border-purple-400/50";
+  if (p.includes("croma")) return "bg-cyan-600/90 text-white border-cyan-400/50";
+  if (p.includes("reliancedigital")) return "bg-blue-700/90 text-white border-blue-500/50";
+  if (p.includes("jiomart")) return "bg-sky-500/90 text-white border-sky-400/50";
+  
+  if (p.includes("lenskart")) return "bg-teal-500/90 text-white border-teal-400/50";
+  if (p.includes("purplle")) return "bg-fuchsia-500/90 text-white border-fuchsia-400/50";
+  if (p.includes("snapdeal")) return "bg-red-500/90 text-white border-red-400/50";
+
+  return "bg-zinc-700/80 text-white border-zinc-600/50";
+}
+
 export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: ProductCardProps) {
   const isAmazon = product.platform === "Amazon";
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -147,12 +178,9 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
         <div className={`
           absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-[0.15em] 
           backdrop-blur-md shadow-md border
-          ${isAmazon 
-            ? "bg-amber-400/80 text-amber-950 border-amber-400/50" 
-            : "bg-blue-500/80 text-white border-blue-400/50"
-          }
+          ${getBadgeStyle(product.platform || "")}
         `}>
-          {product.platform}
+          {product.platform || "STORE"}
         </div>
 
         {/* Add to Cart Checkbox overlay top-right */}

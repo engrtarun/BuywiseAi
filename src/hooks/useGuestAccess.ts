@@ -70,7 +70,7 @@ export function useGuestAccess() {
 
     const supabase = createClient();
     if (supabase) {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
         if (event === 'SIGNED_IN' || session) {
           console.log("[useGuestAccess] Auth state changed to signed in. Resetting guest state.");
           resetGuestAccess();

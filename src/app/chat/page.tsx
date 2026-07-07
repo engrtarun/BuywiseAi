@@ -240,6 +240,7 @@ export default function Page() {
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
   const [isTemporaryChat, setIsTemporaryChat] = useState(false);
   const [showQuickBuy, setShowQuickBuy] = useState(false);
+  const [showFoodQuickBuy, setShowFoodQuickBuy] = useState(false);
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
 
   // Guest access hook
@@ -654,6 +655,7 @@ export default function Page() {
     setIsTyping(false);
     setIsTemporaryChat(false);
     setShowQuickBuy(false);
+    setShowFoodQuickBuy(false);
     const initialMode = mode || "explore";
     setSelectedMode(initialMode);
     setActiveChatId(null);
@@ -680,6 +682,7 @@ export default function Page() {
 
   const handleNewTemporaryChat = useCallback(() => {
     setShowQuickBuy(false);
+    setShowFoodQuickBuy(false);
     if (isTemporaryChat) {
       // Exit temporary chat
       setIsTemporaryChat(false);
@@ -703,6 +706,7 @@ export default function Page() {
     setIsTyping(false);
     setIsTemporaryChat(false);
     setShowQuickBuy(false);
+    setShowFoodQuickBuy(false);
     setChatSessions((prev) => prev.filter((s) => !s.isTemporary));
   }, []);
 
@@ -1075,6 +1079,7 @@ export default function Page() {
           activeMode={activeMode}
           onProductBuy={handleProductBuy}
           showQuickBuy={showQuickBuy}
+          showFoodQuickBuy={showFoodQuickBuy}
           onOpenQuickBuy={() => {
             if (isGuest && MODES_CONFIG.quick_buy.requiresAuth) {
               setShowLoginRequiredModal(true);
@@ -1083,6 +1088,14 @@ export default function Page() {
             setShowQuickBuy(true);
           }}
           onCloseQuickBuy={() => setShowQuickBuy(false)}
+          onOpenFoodQuickBuy={() => {
+            if (isGuest && MODES_CONFIG.food.requiresAuth) {
+              setShowLoginRequiredModal(true);
+              return;
+            }
+            setShowFoodQuickBuy(true);
+          }}
+          onCloseFoodQuickBuy={() => setShowFoodQuickBuy(false)}
         />
       </div>
 
