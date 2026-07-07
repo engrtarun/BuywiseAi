@@ -23,10 +23,10 @@ export interface SemanticCacheHit {
   score: number;
 }
 
-/** 92% similarity threshold for a hard cache hit per spec. */
-const CACHE_SIMILARITY_THRESHOLD_HARD = 0.92;
-/** 82% similarity threshold for a soft cache hit per spec. */
-const CACHE_SIMILARITY_THRESHOLD_SOFT = 0.82;
+/** 95% similarity threshold for a hard cache hit per spec. */
+const CACHE_SIMILARITY_THRESHOLD_HARD = 0.95;
+/** 85% similarity threshold for a soft cache hit per spec. */
+const CACHE_SIMILARITY_THRESHOLD_SOFT = 0.85;
 
 async function generateEmbedding(text: string): Promise<number[]> {
   // Using Google's text-embedding-004 model

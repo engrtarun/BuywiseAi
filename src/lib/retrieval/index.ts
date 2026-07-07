@@ -30,18 +30,27 @@ export async function runRerankingPipeline(query: string, urls: string[]): Promi
   // Step 04 & 05: Cross encoder scoring and sorting
   const scored = await scoreChunks(query, chunks);
   
-  // Step 06: Context Consolidation
+  // Step 06: Context Consolidation with Deduplication & Truncation
   const primary: ScoredChunk[] = [];
   const secondary: ScoredChunk[] = [];
+  const seenTexts = new Set<string>();
   
   for (const item of scored) {
+    if (seenTexts.has(item.text)) continue;
+    
     if (item.score >= 0.85) {
       primary.push(item);
+      seenTexts.add(item.text);
     } else if (item.score >= 0.50) {
       secondary.push(item);
+      seenTexts.add(item.text);
     }
     // S < 0.50 is immediately dropped
   }
   
-  return { primary, secondary };
+  // Truncate to avoid context window bloat and attention dilution
+  return { 
+    primary: primary.slice(0, 3), 
+    secondary: secondary.slice(0, 2) 
+  };
 }
