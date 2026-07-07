@@ -24,7 +24,7 @@ export function OutfitCanvas({ wardrobeItems }: OutfitCanvasProps) {
   
   // Rating State
   const [isRating, setIsRating] = useState(false);
-  const [matchData, setMatchData] = useState<{ score: number; commentary: string } | null>(null);
+  const [matchData, setMatchData] = useState<{ score: number; commentary: string; reasons?: string[] } | null>(null);
   const [isMatchSheetOpen, setIsMatchSheetOpen] = useState(false);
 
   // Checkout State
@@ -112,7 +112,8 @@ export function OutfitCanvas({ wardrobeItems }: OutfitCanvasProps) {
       // Fallback in case of error (e.g. rate limit)
       setMatchData({
         score: 65,
-        commentary: "Gemini is catching its breath, but we'll safely assume this is mid."
+        commentary: "Gemini is catching its breath, but we'll safely assume this is mid.",
+        reasons: ["High traffic volume"]
       });
     } finally {
       setIsRating(false);
@@ -268,6 +269,7 @@ export function OutfitCanvas({ wardrobeItems }: OutfitCanvasProps) {
         onClose={() => setIsMatchSheetOpen(false)}
         score={matchData?.score}
         commentary={matchData?.commentary}
+        reasons={matchData?.reasons}
       />
 
       <CanvasOnboardingTour 

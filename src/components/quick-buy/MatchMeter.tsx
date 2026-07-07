@@ -7,11 +7,12 @@ import { Flame } from "lucide-react";
 interface MatchMeterProps {
   score?: number;
   commentary?: string;
+  reasons?: string[];
   compact?: boolean;
   onClick?: () => void;
 }
 
-export function MatchMeter({ score, commentary, compact = false, onClick }: MatchMeterProps) {
+export function MatchMeter({ score, commentary, reasons, compact = false, onClick }: MatchMeterProps) {
   const [displayScore, setDisplayScore] = useState(0);
   const animatedScore = useMotionValue(0);
   
@@ -118,12 +119,25 @@ export function MatchMeter({ score, commentary, compact = false, onClick }: Matc
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 2.2 }} // Wait for settle animation to finish
-        className="flex items-start gap-3 bg-black/20 p-4 rounded-xl w-full border border-white/5"
+        className="flex flex-col items-start gap-3 bg-black/20 p-4 rounded-xl w-full border border-white/5"
       >
-        <Flame className="size-5 shrink-0" style={{ color: currentColor }} />
-        <p className="text-sm text-text-primary-light leading-relaxed italic font-serif">
-          "{commentary}"
-        </p>
+        <div className="flex items-start gap-3 w-full">
+          <Flame className="size-5 shrink-0" style={{ color: currentColor }} />
+          <div className="flex-1">
+            <p className="text-sm text-text-primary-light leading-relaxed italic font-serif">
+              "{commentary}"
+            </p>
+            {reasons && reasons.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {reasons.slice(0, 2).map((reason, idx) => (
+                  <span key={idx} className="text-[11px] font-bold tracking-wide uppercase px-2 py-1 rounded-md bg-white/5 border border-white/10 text-brand-accent/80 shadow-sm backdrop-blur-sm">
+                    {reason}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   );

@@ -102,9 +102,9 @@ export function ErrorMessageCard({ onRetry, errorType = "generic", retryDelay }:
         </Avatar>
 
         <div className="
-          bg-[#2a2a2a] border border-brand-accent/20 border-l-2 border-l-brand-accent
+          bg-bg-input/90 backdrop-blur-xl border border-brand-accent/30 border-l-4 border-l-brand-accent
           text-text-primary-light rounded-2xl rounded-bl-sm px-4 py-3
-          text-[14px] sm:text-[15px] leading-relaxed break-words shadow-sm
+          text-[14px] sm:text-[15px] leading-relaxed break-words shadow-[0_4px_20px_rgba(255,176,103,0.1)]
           font-sans w-full min-w-0
         ">
           <div className="flex items-start gap-2.5">
@@ -128,10 +128,10 @@ export function ErrorMessageCard({ onRetry, errorType = "generic", retryDelay }:
                 disabled={!canRetry}
                 className={`
                   inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                  bg-chili/10 border border-chili/20 text-chili text-[13px] font-sans font-medium
+                  bg-brand-accent/10 border border-brand-accent/20 text-brand-accent text-[13px] font-sans font-medium
                   transition-all duration-200 touch-manipulation
                   ${canRetry 
-                    ? "hover:bg-chili/20 hover:border-chili/30 active:scale-[0.97] cursor-pointer" 
+                    ? "hover:bg-brand-accent/20 hover:border-brand-accent/30 active:scale-[0.97] cursor-pointer shadow-[0_0_10px_rgba(255,176,103,0.1)]" 
                     : "opacity-50 cursor-not-allowed"}
                 `}
               >

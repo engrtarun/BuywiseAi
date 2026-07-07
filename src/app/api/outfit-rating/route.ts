@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     const itemsList = body.items.join(", ");
     
-    const prompt = `Act as a savage fashion influencer and rate this outfit combination in 2 lines: [${itemsList}]. Output a numeric match score from 0-100 and your 2-line witty commentary.`;
+    const prompt = `Act as a savage fashion influencer and rate this outfit combination in 2 lines: [${itemsList}]. Output a numeric match score from 0-100, your 2-line witty commentary, and an array of 1-2 short reasons why the items match or don't match (e.g. "Colors clash", "Perfect for summer", "Fits your style").`;
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
@@ -54,8 +54,9 @@ export async function POST(req: NextRequest) {
           properties: {
             score: { type: "integer" as any },
             commentary: { type: "string" as any },
+            reasons: { type: "array" as any, items: { type: "string" as any } },
           },
-          required: ["score", "commentary"],
+          required: ["score", "commentary", "reasons"],
         },
       },
     });
@@ -65,15 +66,17 @@ export async function POST(req: NextRequest) {
     // Parse the response with a fallback
     let score = 50;
     let commentary = "Not sure what to say about this fit.";
+    let reasons: string[] = ["AI couldn't decide"];
     try {
       const parsedData = JSON.parse(responseText.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
       if (typeof parsedData.score === "number") score = parsedData.score;
       if (typeof parsedData.commentary === "string") commentary = parsedData.commentary;
+      if (Array.isArray(parsedData.reasons)) reasons = parsedData.reasons;
     } catch (e) {
       console.warn("Failed to parse outfit rating JSON", e);
     }
 
-    const response = NextResponse.json({ score, commentary });
+    const response = NextResponse.json({ score, commentary, reasons });
     applyGuestCountCookie(response, guestCount);
     return response;
     
@@ -82,7 +85,8 @@ export async function POST(req: NextRequest) {
       console.error("Gemini API rate limit hit in outfit rating.");
       const fallbackResponse = NextResponse.json({
         score: 65,
-        commentary: "Gemini is exhausted from too many requests. We'll safely assume this fit is mid. Try again later!"
+        commentary: "Gemini is exhausted from too many requests. We'll safely assume this fit is mid. Try again later!",
+        reasons: ["High traffic volume"]
       });
       applyGuestCountCookie(fallbackResponse, guestCount);
       return fallbackResponse;
@@ -91,7 +95,8 @@ export async function POST(req: NextRequest) {
     console.error("Gemini API failed in outfit rating:", error);
     const fallbackResponse = NextResponse.json({
       score: 50,
-      commentary: "Our fashion AI is currently offline. You do you!"
+      commentary: "Our fashion AI is currently offline. You do you!",
+      reasons: ["System offline"]
     });
     applyGuestCountCookie(fallbackResponse, guestCount);
     return fallbackResponse;

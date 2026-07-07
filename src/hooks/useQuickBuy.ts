@@ -83,6 +83,7 @@ export function useQuickBuy() {
 
   const [allProducts, setAllProducts] = useState<QuickBuyProduct[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Pagination State
   const [page, setPage] = useState(1);
@@ -148,6 +149,7 @@ export function useQuickBuy() {
   const fetchProducts = useCallback(async (currentPage: number, prefs: QuickBuyPreferences | null, isNextPage: boolean = false) => {
     if (isNextPage) setIsFetchingNextPage(true);
     else setIsLoadingProducts(true);
+    setFetchError(null);
 
     try {
       const params = new URLSearchParams({
@@ -198,11 +200,13 @@ export function useQuickBuy() {
         // Fallback to empty if error
         if (!isNextPage) setAllProducts([]);
         setHasMore(false);
+        setFetchError("Failed to fetch products.");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to fetch products", err);
       if (!isNextPage) setAllProducts([]);
       setHasMore(false);
+      setFetchError(err.message || "Network error");
     } finally {
       setIsLoadingProducts(false);
       setIsFetchingNextPage(false);
@@ -223,6 +227,10 @@ export function useQuickBuy() {
     setPage(nextPage);
     fetchProducts(nextPage, preferences, true);
   }, [hasMore, isFetchingNextPage, isLoadingProducts, page, preferences, fetchProducts]);
+
+  const retryFetch = useCallback(() => {
+    fetchProducts(1, preferences, false);
+  }, [fetchProducts, preferences]);
 
   const savePreferences = useCallback(async (newPrefs: QuickBuyPreferences) => {
     setPage(1);
@@ -442,6 +450,8 @@ export function useQuickBuy() {
     moveToCart,
     getFilteredProducts,
     fetchNextPage,
+    fetchError,
+    retryFetch,
     totalSpent,
     addExpense,
     profiles,

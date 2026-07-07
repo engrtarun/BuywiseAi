@@ -8,6 +8,7 @@ import { SavedItemsList } from "./SavedItemsList";
 import { X, Settings2, Heart, Mic, ShoppingCart } from "lucide-react";
 import { ProfileSwitcher } from "./ProfileSwitcher";
 import { QuickBuyLockedState } from "./QuickBuyLockedState";
+import { ErrorMessageCard } from "../chat/ErrorMessageCard";
 
 interface QuickBuyScreenProps {
   onClose: () => void;
@@ -41,7 +42,9 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
     createProfile,
     switchProfile,
     updateProfile,
-    deleteProfile
+    deleteProfile,
+    fetchError,
+    retryFetch
   } = useQuickBuy();
   
   const [showSettings, setShowSettings] = useState(false);
@@ -290,7 +293,14 @@ export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
       </div>
 
       {/* Swipe Deck */}
-      {isLoadingProducts ? (
+      {fetchError ? (
+        <div className="flex-1 flex items-center justify-center p-6">
+          <ErrorMessageCard 
+            errorType="generic" 
+            onRetry={retryFetch} 
+          />
+        </div>
+      ) : isLoadingProducts ? (
         <div className="flex-1 flex flex-col items-center justify-center">
           <div className="size-8 rounded-full border-4 border-brand-accent/20 border-t-brand-accent animate-spin mb-4" />
           <p className="text-text-secondary font-medium animate-pulse">Loading live collection...</p>

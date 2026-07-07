@@ -11,9 +11,10 @@ interface MatchMeterBottomSheetProps {
   onClose: () => void;
   score?: number;
   commentary?: string;
+  reasons?: string[];
 }
 
-export function MatchMeterBottomSheet({ isOpen, onClose, score, commentary }: MatchMeterBottomSheetProps) {
+export function MatchMeterBottomSheet({ isOpen, onClose, score, commentary, reasons }: MatchMeterBottomSheetProps) {
   const [mounted, setMounted] = useState(false);
   const controls = useAnimation();
 
@@ -95,7 +96,7 @@ export function MatchMeterBottomSheet({ isOpen, onClose, score, commentary }: Ma
               <h3 className="font-heading font-bold text-xl text-center text-text-ondark">Outfit Match Analysis</h3>
               
               <div className="w-full flex justify-center">
-                <MatchMeter score={score} commentary={commentary} compact={false} />
+                <MatchMeter score={score} commentary={commentary} reasons={reasons} compact={false} />
               </div>
               
               <button

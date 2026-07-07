@@ -71,3 +71,14 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+    # ── Resource Limits ────────────────────────────────────────────────────
+    # Prevent unbound consumption leading to host freezing under load.
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+        reservations:
+          cpus: "0.2"
+          memory: 256M

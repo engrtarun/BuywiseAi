@@ -6,6 +6,7 @@ import { QuickBuyProduct } from "@/lib/quickBuyMockData";
 import { useSwipeFeedback } from "@/hooks/useSwipeFeedback";
 import { Star, Check, ShoppingCart, Zap, Heart, ArrowRight, Package, PartyPopper } from "lucide-react";
 import { CheckoutFlow, CheckoutItem } from "../checkout/CheckoutFlow";
+import Image from "next/image";
 
 interface SwipeableProductCardProps {
   product: QuickBuyProduct;
@@ -254,12 +255,26 @@ export function SwipeableProductCard({ product, onSwipeLeft, onSwipeRight, onBuy
 
         {/* Product Image Area */}
         <div className="relative w-full h-[55%] shrink-0 overflow-hidden bg-white/5 pointer-events-auto">
-          <motion.img 
-            src={product.image} 
-            alt={product.name}
-            style={{ transform: isTop ? "translateZ(20px)" : undefined }}
-            className="w-full h-full object-cover"
-          />
+          <motion.div
+            style={{ 
+              transform: isTop ? "translateZ(20px)" : undefined,
+              width: '100%',
+              height: '100%',
+              position: 'absolute',
+              inset: 0
+            }}
+          >
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              sizes="(max-width: 768px) 100vw, 340px"
+              priority={isTop || index === 1}
+              className="object-cover"
+              placeholder="blur"
+              blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkqPwfAAIAAsK6xP7CAAAAAElFTkSuQmCC"
+            />
+          </motion.div>
           
           <div className="absolute inset-0 bg-gradient-to-t from-bg-main to-transparent opacity-90 pointer-events-none" />
           
