@@ -18,30 +18,58 @@ export async function* executeStreamingOrchestration(input: OrchestratorInput): 
     throw new Error("Groq API key required for streaming.");
   }
 
-  const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${input.groqApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "llama-3.1-8b-instant",
-      messages: [
-        { role: "system", content: input.systemInstruction },
-        ...input.historyForGroq.map((m) => ({
-          role: m.role === "assistant" ? "assistant" : "user",
-          content: m.content || "",
-        })),
-        { role: "user", content: input.effectiveUserMessage },
-      ],
-      response_format: { type: "json_object" },
-      stream: true,
-    }),
-  });
+  let groqRes: Response | null = null;
+  try {
+    groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${input.groqApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile", // Use a reliable groq model
+        messages: [
+          { role: "system", content: input.systemInstruction },
+          ...input.historyForGroq.map((m) => ({
+            role: m.role === "assistant" ? "assistant" : "user",
+            content: m.content || "",
+          })),
+          { role: "user", content: input.effectiveUserMessage },
+        ],
+        response_format: { type: "json_object" },
+        stream: true,
+      }),
+    });
 
-  if (!groqRes.ok || !groqRes.body) {
-     throw new Error(`[Orchestrator] Streaming failed: ${groqRes.statusText}`);
+    if (!groqRes.ok || !groqRes.body) {
+       throw new Error(`[Orchestrator] Groq streaming failed: ${groqRes.status} ${groqRes.statusText}`);
+    }
+  } catch (groqErr) {
+    console.warn("Groq streaming failed, falling back to Gemini:", groqErr);
+    
+    // Fallback to Gemini Streaming
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      systemInstruction: input.systemInstruction,
+    });
+    
+    const chat = model.startChat({
+      history: input.formattedHistory,
+      generationConfig: {
+        responseMimeType: "application/json",
+      },
+    });
+    
+    const result = await chat.sendMessageStream(input.effectiveUserMessage);
+    for await (const chunk of result.stream) {
+      const chunkText = chunk.text();
+      if (chunkText) {
+        yield chunkText;
+      }
+    }
+    return; // Exit generator after Gemini finishes successfully
   }
+
 
   const reader = groqRes.body.getReader();
   const decoder = new TextDecoder("utf-8");

@@ -393,59 +393,8 @@ export async function POST(req: NextRequest) {
           }, chatId);
 
         } catch (streamErr: any) {
-          console.warn("Switching to Groq streaming fallback orchestration channel...", streamErr.message || streamErr);
-          try {
-            const activeGroqKey = process.env.GROQ_API_KEY;
-            if (!activeGroqKey) throw new Error("Groq credentials pool unavailable.");
-
-            const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-              method: "POST",
-              headers: { "Authorization": `Bearer ${activeGroqKey}`, "Content-Type": "application/json" },
-              body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                stream: true,
-                messages: [
-                  ...userHistory.map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content || "" })),
-                  { role: "user", content: userMessage }
-                ]
-              })
-            });
-
-            if (!groqResponse.ok) throw new Error(`Groq stream connection error: ${groqResponse.status}`);
-            
-            const reader = groqResponse.body?.getReader();
-            const decoder = new TextDecoder();
-            if (!reader) throw new Error("Failed to extract active reader stream descriptor.");
-
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-
-              const chunkStr = decoder.decode(value, { stream: true });
-              const lines = chunkStr.split("\n").filter(line => line.trim() !== "");
-              
-              for (const line of lines) {
-                if (line.includes("data: [DONE]")) break;
-                if (line.startsWith("data: ")) {
-                  try {
-                    const parsed = JSON.parse(line.slice(6));
-                    const textDelta = parsed.choices[0]?.delta?.content || "";
-                    fullResponse += textDelta;
-                    
-                    if (!fullResponse.includes("[")) {
-                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: textDelta })}\n\n`));
-                    } else {
-                      const cleanVisibleChunk = textDelta.replace(/\[TRACK_PREFERENCE:.*?\]/g, "");
-                      if (cleanVisibleChunk) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: cleanVisibleChunk })}\n\n`));
-                    }
-                  } catch (e) {}
-                }
-              }
-            }
-          } catch (fallbackError: any) {
-            console.error("Critical Execution Fault across both pipelines:", fallbackError);
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: `\\n[Stream Interrupted: ${fallbackError.message}]` })}\n\n`));
-          }
+          console.error("Critical Execution Fault across both pipelines:", streamErr);
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: `\n\n[Stream Interrupted: Failed to generate response from AI models]` })}\n\n`));
         } finally {
           controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
           controller.close();
