@@ -63,12 +63,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate message field
-    if (!isChatRequestBody(body) || !body.message.trim()) {
-      return NextResponse.json(
-        { error: "Invalid request: 'message' field is required and must be a non-empty string." },
-        { status: 400 }
-      );
+    // Guardrail: Return empty chunked stream silently for empty array pings to stop frontend infinite retry locks
+    if (!isChatRequestBody(body) || !body.message || !body.message.trim()) {
+      const emptyStream = new ReadableStream({
+        start(controller) { controller.close(); }
+      });
+      return new Response(emptyStream, {
+        headers: { "Content-Type": "text/plain; charset=utf-8", "Transfer-Encoding": "chunked" }
+      });
     }
 
     // Validate history if provided
@@ -369,12 +371,56 @@ export async function POST(req: NextRequest) {
             products: searchResults.length > 0 ? searchResults : null,
           }, chatId);
 
-        } catch (streamErr) {
-          console.error("Stream failed:", streamErr);
-          // Only send fallback if we haven't sent much data yet, otherwise just close.
-          if (fullResponse.length < 50) {
-            const fallbackText = getFallbackChatResponse(userMessage, mode);
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: fallbackText })}\n\n`));
+        } catch (streamErr: any) {
+          console.warn("Switching to Groq streaming fallback orchestration channel...", streamErr.message || streamErr);
+          try {
+            const activeGroqKey = process.env.GROQ_API_KEY;
+            if (!activeGroqKey) throw new Error("Groq credentials pool unavailable.");
+
+            const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+              method: "POST",
+              headers: { "Authorization": `Bearer ${activeGroqKey}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                stream: true,
+                messages: [
+                  ...userHistory.map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content || "" })),
+                  { role: "user", content: userMessage }
+                ]
+              })
+            });
+
+            if (!groqResponse.ok) throw new Error(`Groq stream connection error: ${groqResponse.status}`);
+            
+            const reader = groqResponse.body?.getReader();
+            const decoder = new TextDecoder();
+            if (!reader) throw new Error("Failed to extract active reader stream descriptor.");
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              const chunkStr = decoder.decode(value, { stream: true });
+              const lines = chunkStr.split("\n").filter(line => line.trim() !== "");
+              
+              for (const line of lines) {
+                if (line.includes("data: [DONE]")) break;
+                if (line.startsWith("data: ")) {
+                  try {
+                    const parsed = JSON.parse(line.slice(6));
+                    const textDelta = parsed.choices[0]?.delta?.content || "";
+                    fullResponse += textDelta;
+                    
+                    if (!fullResponse.includes("[")) {
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: textDelta })}\n\n`));
+                    }
+                  } catch (e) {}
+                }
+              }
+            }
+          } catch (fallbackError: any) {
+            console.error("Critical Execution Fault across both pipelines:", fallbackError);
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: `\\n[Stream Interrupted: ${fallbackError.message}]` })}\n\n`));
           }
         } finally {
           controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
