@@ -4,11 +4,10 @@ import { updateSession } from "@/lib/supabase/middleware"
 /**
  * Next.js Edge Middleware — runs before every matched request.
  * Handles Supabase session refresh and route-level auth redirects.
- * Previously named `proxy` (in src/proxy.ts) — renamed to `middleware`
- * so Next.js actually picks this up as an edge middleware file.
+ * Note: Next.js 16+ uses the `proxy.ts` naming convention.
  */
-export async function middleware(request: NextRequest) {
-  console.log(`[middleware] ${request.method} ${request.nextUrl.pathname}`);
+export async function proxy(request: NextRequest) {
+  console.log(`[proxy] ${request.method} ${request.nextUrl.pathname}`);
   return await updateSession(request)
 }
 
