@@ -79,7 +79,17 @@ When presenting product options (after real listings are injected):
   "ui_type": "explore_carousel",
   "headline": "Staying hydrated is crucial! Here are some of the best water options available right now.",
   "products": [
-    { "id": "1", "name": "...", "price": "₹...", "rating": 4.5, "image": "...", "platform": "...", "link": "...", "reason": "...", "stretch": false }
+    { 
+      "id": "1", 
+      "name": "...", 
+      "price": "₹...", 
+      "rating": 4.5, 
+      "image": "...", 
+      "platform": "...", // Use diverse platforms: Amazon, Flipkart, Meesho, Shopify, Blinkit, Zomato, Swiggy, etc. based on category. Never default to just Amazon!
+      "link": "...", 
+      "reason": "...", 
+      "stretch": false 
+    }
   ],
   "deep_dive": "### The Science of Hydration\\n...",
   "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
@@ -194,18 +204,18 @@ If you have gathered enough details (or the user insists on results), return ONL
       "rating": 4.5,
       "reviewCount": "1200",
       "description": "Short description of key features.",
-      "platform": "Amazon",
+      "platform": "...", // Use diverse platforms like Amazon, Flipkart, Meesho, Shopify, Myntra, Blinkit, Zomato, Swiggy depending on the product!
       "image": "/placeholder.png",
-      "link": "https://amazon.in",
+      "link": "https://example.in",
       "badge": "Best Overall"
     }
   ],
   "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
 }
 
-Provide 2-3 products in the recommended_products array, sorted by rank. Assign appropriate badges like "Best Overall", "Best Value", "Alternative Choice", etc.
+Provide 2-3 products in the recommended_products array, sorted by rank. Assign appropriate badges like "Best Overall", "Best Value", "Alternative Choice", etc. Make sure Name, Price, and Rating are ALL populated.
 
-When real product data is injected below the user message, use those products in your recommended_products array rather than hallucinating product details.
+When real product data is injected below the user message, use those products in your recommended_products array rather than hallucinating product details. PRESERVE their original platform!
 
 Ensure queries match real Indian market products. Return ONLY the raw JSON string. Do not wrap in markdown code blocks.`;
 
