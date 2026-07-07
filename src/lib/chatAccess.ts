@@ -114,7 +114,8 @@ export async function enforceChatAccess(
       tokensUsed = 0;
     }
 
-    if (tokensUsed + TOKENS_PER_MESSAGE > DAILY_TOKEN_LIMIT) {
+    // Bypassed daily limit check
+    if (false && tokensUsed + TOKENS_PER_MESSAGE > DAILY_TOKEN_LIMIT) {
       return {
         response: NextResponse.json(
           {

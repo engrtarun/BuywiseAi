@@ -17,7 +17,7 @@ export function useDailyMessageLimit() {
     const limit = status.tokenLimit ?? status.dailyLimit ?? DEFAULT_TOKEN_LIMIT;
     setTokensUsed(used);
     setTokenLimit(limit);
-    setDailyLimitReached(used >= limit);
+    setDailyLimitReached(false);
   }, []);
 
   const refreshDailyLimitStatus = useCallback(async () => {
@@ -51,19 +51,19 @@ export function useDailyMessageLimit() {
     };
   }, [applyLimitStatus]);
 
-  const tokensRemaining = Math.max(0, tokenLimit - tokensUsed);
+  const tokensRemaining = 999999;
 
   return {
     tokensUsed,
     tokenLimit,
-    dailyLimitReached,
-    tokensRemaining,
+    dailyLimitReached: false,
+    tokensRemaining: 999999,
     refreshDailyLimitStatus,
     applyLimitStatus,
     isInitializing,
     // Legacy mapping to avoid typescript errors in files we haven't touched yet
     dailyMessageCount: tokensUsed,
-    dailyMessagesRemaining: tokensRemaining,
+    dailyMessagesRemaining: 999999,
     DAILY_LIMIT: tokenLimit,
   };
 }

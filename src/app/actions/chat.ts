@@ -108,16 +108,14 @@ export async function getDailyMessageLimitStatus(): Promise<MessageLimitResult> 
   }
 
   return {
-    allowed: tokensUsed + TOKENS_PER_MESSAGE <= DAILY_TOKEN_LIMIT,
+    allowed: true,
     tokensUsed,
     tokenLimit: DAILY_TOKEN_LIMIT,
-    remaining: Math.max(0, DAILY_TOKEN_LIMIT - tokensUsed),
+    remaining: DAILY_TOKEN_LIMIT,
     date: todayIST,
     messageCount: tokensUsed,
     dailyLimit: DAILY_TOKEN_LIMIT,
-    message: tokensUsed >= DAILY_TOKEN_LIMIT
-      ? "Daily limit reached — resets at 12:00 AM"
-      : undefined
+    message: undefined
   }
 }
 
@@ -171,7 +169,8 @@ export async function checkAndIncrementMessageLimit(): Promise<MessageLimitResul
     nextResetAt = new Date().toISOString()
   }
 
-  if (nextTokensUsed > DAILY_TOKEN_LIMIT) {
+  // Bypassed limit check to allow unlimited messages
+  if (false && nextTokensUsed > DAILY_TOKEN_LIMIT) {
     return {
       allowed: false,
       message: "Daily limit reached — resets at 12:00 AM",
