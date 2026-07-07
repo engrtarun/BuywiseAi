@@ -79,7 +79,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
       } else if (viewState === "reset_password") {
         if (email.trim()) handleResetPassword();
       } else if (viewState === "otp") {
-        if (otpCodes.join("").length === 6) handleVerifyOtp();
+        if (otpCodes.join("").length === 8) handleVerifyOtp();
       }
     }
   };
@@ -490,13 +490,8 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
                 Your email isn&apos;t confirmed yet. We&apos;ve sent a verification email to <span className="text-white font-semibold">{email}</span>.
               </p>
               <div className="text-sm font-sans text-white bg-white/5 p-4 rounded-2xl border border-white/10 space-y-2 mt-2 shadow-inner">
-<<<<<<< HEAD
                 <p className="flex items-center gap-1.5"><ArrowRight className="size-4 text-marigold" /> <strong className="text-marigold">Option 1:</strong> Click the <strong className="text-marigold">Confirm email address</strong> link in the email to log in directly.</p>
-                <p className="flex items-center gap-1.5"><ArrowRight className="size-4 text-marigold" /> <strong className="text-marigold">Option 2:</strong> Enter the 6-digit OTP code below (if your Supabase email template is configured to send the code).</p>
-=======
-                <p>👉 <strong className="text-marigold">Option 1:</strong> Click the <strong className="text-marigold">Confirm email address</strong> link in the email to log in directly.</p>
-                <p>👉 <strong className="text-marigold">Option 2:</strong> Enter the 8-digit OTP code below (if your Supabase email template is configured to send the code).</p>
->>>>>>> 4df6b7ef83fd0869e6055f387af678f9e283d219
+                <p className="flex items-center gap-1.5"><ArrowRight className="size-4 text-marigold" /> <strong className="text-marigold">Option 2:</strong> Enter the 8-digit OTP code below (if your Supabase email template is configured to send the code).</p>
               </div>
             </div>
 
