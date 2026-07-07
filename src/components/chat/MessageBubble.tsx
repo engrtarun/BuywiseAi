@@ -232,29 +232,45 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
             questionnaireAllowSkip = parsed.allow_skip !== false;
             questionnaireAllowCustom = parsed.allow_custom !== false;
           }
-        } else if (parsed.ui_type === "explore_carousel") {
-          isExploreCarousel = true;
+        } else if (parsed.ui_type === "explore_carousel" || parsed.ui_type === "carousel") {
+          const PRODUCT_PLATFORMS = [
+            "Amazon", "Flipkart", "Meesho", "Myntra", "Ajio", "Nykaa", "Shopify", 
+            "Zomato", "Swiggy", "Blinkit", "Zepto", "TataNeu", "Croma", 
+            "RelianceDigital", "JioMart", "Lenskart", "Purplle", "Dunzo", 
+            "BigBasket", "Snapdeal"
+          ];
+          
+          isExploreCarousel = parsed.ui_type === "explore_carousel";
           exploreHeadline = parsed.headline || "";
           exploreDeepDiveText = parsed.deep_dive || "";
-          const items = Array.isArray(parsed.products) ? parsed.products : [];
+          const items = parsed.products || parsed.items || [];
           exploreProductsList = items.map((p: any) => {
             const productName = String(p.name || p.title || "Unknown Product");
+            const pId = String(p.id || Math.random());
+            
+            // Consistent pseudo-random platform based on ID string
+            let hash = 0;
+            for (let i = 0; i < pId.length; i++) {
+              hash = pId.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const platformIndex = Math.abs(hash) % PRODUCT_PLATFORMS.length;
+            const fallbackPlatform = PRODUCT_PLATFORMS[platformIndex];
+
             return {
-              id: String(p.id || Math.random()),
+              id: pId,
               name: productName,
               price: String(p.price || "₹0"),
               rating: typeof p.rating === "number" ? p.rating : 4.0,
               reviewCount: String(p.reviewCount || "42"),
               description: String(p.description || "Recommended product matching your request."),
-              platform: String(p.platform || p.store || "Amazon"),
+              platform: String(p.platform || p.store || fallbackPlatform),
               image: p.image && !String(p.image).includes("placeholder.png") ? String(p.image) : getCuratedProductImage(productName),
-              link: String(p.link || p.url || "https://amazon.in"),
+              link: String(p.link || p.url || `https://${fallbackPlatform.toLowerCase()}.in`),
             };
           });
         } else if (parsed.ui_type === "text_response") {
           textResponseContent = parsed.text || "";
         }
-      }
     } else {
       // Doesn't contain a JSON object - treat as plain text fallback
     }
