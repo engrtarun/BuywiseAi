@@ -122,9 +122,9 @@ export function ProductCarousel({ products, onAddToCartToggle, onBuyCallback }: 
           scrollPaddingRight: "0.5rem",
         }}
       >
-        {products.map((product) => (
+        {products.map((product, idx) => (
           <div
-            key={product.id}
+            key={product.id ? `${product.id}-${idx}` : idx}
             className="snap-start shrink-0 w-[240px] sm:w-[260px] md:w-[280px]"
           >
             <ProductCard product={product} onAddToCartToggle={onAddToCartToggle} onBuyCallback={onBuyCallback} />
