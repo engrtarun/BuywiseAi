@@ -64,8 +64,8 @@ export default function WelcomePage(props: { params: Promise<any>; searchParams:
         throw error;
       }
 
-      // Redirect to chat
-      router.push("/chat");
+      // Redirect to chat (now at root)
+      router.push("/");
     } catch (err: any) {
       console.error("Failed to save profile name:", err);
       setError(err.message || "Failed to save your name. Please try again.");

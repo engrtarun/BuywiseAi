@@ -39,7 +39,7 @@ export default function VirtualWardrobePage() {
     return (
       <QuickBuyLockedState
         onCreateProfile={() => router.push('/quick-buy')}
-        onClose={() => router.push('/chat')}
+        onClose={() => router.push('/')}
       />
     );
   }
@@ -49,7 +49,7 @@ export default function VirtualWardrobePage() {
       {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 h-14 z-50 bg-bg-main/80 backdrop-blur-xl border-b border-line-ondark flex items-center justify-between px-4">
         <button
-          onClick={() => router.push('/chat')}
+          onClick={() => router.push('/')}
           className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary-light hover:bg-white/5 px-2 py-1.5 rounded-lg transition-all"
         >
           <ChevronLeft className="size-5" />

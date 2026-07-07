@@ -5,8 +5,8 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const redirectOrigin = process.env.NEXT_PUBLIC_SITE_URL || origin;
   const code = searchParams.get("code");
-  // Default to "/chat" if no specific redirect page was provided
-  const next = searchParams.get("next") ?? "/chat";
+  // Default to "/" if no specific redirect page was provided
+  const next = searchParams.get("next") ?? "/";
 
   console.log("[Auth Callback] Request received. Code present:", !!code);
 
@@ -49,10 +49,10 @@ export async function GET(request: Request) {
       console.error("[Auth Callback] Profiles query error:", profileError);
     }
 
-    // If full_name is already set (returning Google user), redirect to /chat
+    // If full_name is already set (returning Google user), redirect to /
     if (profile && profile.full_name) {
-      console.log("[Auth Callback] Profile has name. Redirecting to /chat...");
-      return NextResponse.redirect(`${redirectOrigin}/chat`);
+      console.log("[Auth Callback] Profile has name. Redirecting to /...");
+      return NextResponse.redirect(`${redirectOrigin}/`);
     } else {
       // If full_name is empty/null (first-time Google signup), redirect to /welcome
       console.log("[Auth Callback] Profile name missing. Redirecting to /welcome...");

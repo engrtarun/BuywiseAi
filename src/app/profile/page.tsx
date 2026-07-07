@@ -163,7 +163,7 @@ export default function ProfilePage() {
         
         {/* Back Button */}
         <button
-          onClick={() => router.push("/chat")}
+          onClick={() => router.push("/")}
           className="flex items-center gap-2 text-text-secondary hover:text-text-primary-light transition-colors mb-6 cursor-pointer animate-in duration-200"
         >
           <ArrowLeft className="size-4" />

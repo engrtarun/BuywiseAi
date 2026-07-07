@@ -43,11 +43,10 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // 1. Unauthenticated users:
-  // Redirect to /login if trying to access protected paths ("/chat" or "/welcome")
-  // The root path "/" is intentionally public to serve as the marketing landing page.
+  // Redirect to /login if trying to access protected paths ("/" or "/welcome")
   if (!user) {
     const isGuest = request.cookies.get("buywise_guest_mode")?.value === "true";
-    if (!isGuest && (pathname === "/chat" || pathname.startsWith("/chat/") || pathname === "/welcome")) {
+    if (!isGuest && (pathname === "/" || pathname === "/welcome")) {
       const url = request.nextUrl.clone()
       url.pathname = "/login"
       return NextResponse.redirect(url)
@@ -55,12 +54,12 @@ export async function updateSession(request: NextRequest) {
   }
 
   // 2. Authenticated users:
-  // Redirect to /chat if trying to access auth pages (/login, /signup)
-  // For /welcome, only redirect to /chat if they already have a completed profile (full_name set)
+  // Redirect to / if trying to access auth pages (/login, /signup)
+  // For /welcome, only redirect to / if they already have a completed profile (full_name set)
   if (user) {
     if (pathname === "/login" || pathname === "/signup") {
       const url = request.nextUrl.clone()
-      url.pathname = "/chat"
+      url.pathname = "/"
       return NextResponse.redirect(url)
     }
     
@@ -73,7 +72,7 @@ export async function updateSession(request: NextRequest) {
         
       if (profile && profile.full_name) {
         const url = request.nextUrl.clone()
-        url.pathname = "/chat"
+        url.pathname = "/"
         return NextResponse.redirect(url)
       }
     }

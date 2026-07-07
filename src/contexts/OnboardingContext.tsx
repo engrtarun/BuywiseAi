@@ -63,7 +63,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     if (!isMounted || isDone || autoStartFired.current) return;
     
     // Scoped strictly to the chat route
-    if (pathname !== "/chat") return;
+    if (pathname !== "/") return;
 
     autoStartFired.current = true;
     const timer = setTimeout(() => {

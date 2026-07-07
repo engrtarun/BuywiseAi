@@ -864,7 +864,7 @@ function SidebarContent({
 
           {!isCollapsed && (
             <div className="flex items-center gap-2.5 min-w-0 transition-opacity duration-300">
-              <div className="size-8 shrink-0 rounded-lg bg-marigold flex items-center justify-center shadow-sm">
+              <div className="size-8 min-w-[32px] min-h-[32px] shrink-0 rounded-lg bg-marigold flex items-center justify-center shadow-sm overflow-visible">
                 <span className="text-ink-deeper font-heading font-extrabold text-sm">B</span>
               </div>
               <span className="font-heading font-bold text-[15px] text-text-primary-dark tracking-tight truncate">

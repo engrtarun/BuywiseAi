@@ -31,7 +31,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
   /** Skip login → enter as guest */
   const handleGuestSkip = () => {
     enterGuestMode();
-    router.push("/chat");
+    router.push("/");
   };
 
   // Loading and Error States
@@ -122,7 +122,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
 
       // Successful login
       resetGuestAccess();
-      router.push("/chat");
+      router.push("/");
     } catch (err: any) {
       setInlineError(err.message || "An unexpected error occurred. Please try again.");
     } finally {
@@ -240,7 +240,7 @@ export default function LoginPage(props: { params: Promise<any>; searchParams: P
       }
 
       resetGuestAccess();
-      router.push("/chat");
+      router.push("/");
     } catch (err: any) {
       setInlineError(err.message || "Verification failed. Please try again.");
     } finally {
