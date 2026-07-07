@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import { User, Loader2, ShieldAlert } from "lucide-react";
+import { User, Loader2, ShieldAlert, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
@@ -120,7 +120,7 @@ export default function WelcomePage(props: { params: Promise<any>; searchParams:
                 onClick={() => setError(null)}
                 className="text-chili hover:text-chili/80 font-bold ml-1 text-sm leading-none"
               >
-                ✕
+                <X className="size-3.5" />
               </button>
             </div>
           )}

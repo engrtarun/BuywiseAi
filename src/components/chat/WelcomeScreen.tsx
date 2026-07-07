@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Sparkles, Search, Gift, Smartphone, Laptop, Scale, Compass, Brain } from "lucide-react";
+import { Sparkles, Search, Gift, Smartphone, Laptop, Scale, Compass, Brain, User } from "lucide-react";
 import { LoginRequiredScreen } from "./LoginRequiredScreen";
 import { DailyLimitReachedCard } from "./DailyLimitReachedCard";
 import { motion } from "framer-motion";
@@ -88,8 +88,8 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
           {/* Guest mode indicator badge */}
           {isGuest && (
             <div className="inline-flex items-center gap-2 mt-2 px-3.5 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.10] backdrop-blur-sm animate-in fade-in duration-500">
-              <span className="text-xs font-mono text-text-dim-ondark">
-                👋 Guest mode
+              <span className="text-xs font-mono text-text-dim-ondark flex items-center gap-1.5">
+                <User className="size-3.5" /> Guest mode
               </span>
               <span className="w-px h-3 bg-line-ondark" />
               <span className="text-xs font-mono text-marigold font-medium">

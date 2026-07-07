@@ -3,6 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { usePremium } from "@/contexts/PremiumContext";
+import { Rocket, Crown } from "lucide-react";
 
 function CheckIcon({ className }: { className?: string }) {
   return (
@@ -94,7 +95,7 @@ export function PremiumPricingGrid() {
 
             <div className="mb-6 mt-4">
               <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
-                BuyWise Pro <span>🚀</span>
+                BuyWise Pro <Rocket className="size-5 text-purple-400" />
               </h3>
               <div className="flex items-baseline gap-1">
                 <span className="text-5xl font-extrabold text-white">₹199</span>
@@ -145,7 +146,7 @@ export function PremiumPricingGrid() {
 
           <div className="mb-6 relative z-10">
             <h3 className="text-xl font-bold text-[#D4AF37] mb-2 flex items-center gap-2">
-              Elite Alpha <span>👑</span>
+              Elite Alpha <Crown className="size-5 text-[#D4AF37]" />
             </h3>
             <div className="flex items-baseline gap-1">
               <span className="text-4xl font-extrabold text-white">₹499</span>

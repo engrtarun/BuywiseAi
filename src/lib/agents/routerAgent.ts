@@ -31,9 +31,23 @@ Contract schema:
     systemInstruction: routerPrompt,
   });
 
-  const sessionExecution = model.startChat({});
-  const communicationResult = await sessionExecution.sendMessage(`History context: ${contextHistory} \n Message: ${userMessage}`);
-  const payloadResponse = await communicationResult.response;
-  const targetText = payloadResponse.text().trim();
-  return JSON.parse(targetText) as RouterOutput;
+  const startTime = performance.now();
+  try {
+    const sessionExecution = model.startChat({});
+    const communicationResult = await sessionExecution.sendMessage(`History context: ${contextHistory} \n Message: ${userMessage}`);
+    const payloadResponse = await communicationResult.response;
+    const targetText = payloadResponse.text().trim();
+    return JSON.parse(targetText) as RouterOutput;
+  } catch (error) {
+    console.error("[routerAgent] Routing execution failed:", error);
+    // Safe fallback to explore mode to keep the conversation going
+    return {
+      target_mode: "explore",
+      confidence_score: 0.1,
+      reasoning_trace: "Fallback due to router execution failure."
+    };
+  } finally {
+    const endTime = performance.now();
+    console.log(`[routerAgent] Execution completed in ${(endTime - startTime).toFixed(2)}ms`);
+  }
 }

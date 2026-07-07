@@ -8,6 +8,7 @@ export async function runWriterCriticValidationLoop(
   rawWriterOutput: string, 
   schemaTargetMode: "explore" | "deep_research"
 ): Promise<ValidationReport> {
+  const startTime = performance.now();
   let inspectionText = rawWriterOutput.replace(/```json|```/g, "").trim();
   try {
     const verifiedObject = JSON.parse(inspectionText);
@@ -32,5 +33,8 @@ export async function runWriterCriticValidationLoop(
       sanitized_payload: "",
       error_diagnostic_trace: parseException.message || "Unknown schema processing evaluation break criteria logic sets."
     };
+  } finally {
+    const endTime = performance.now();
+    console.log(`[writerCriticLoop] Execution completed in ${(endTime - startTime).toFixed(2)}ms`);
   }
 }

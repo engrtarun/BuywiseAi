@@ -8,6 +8,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import { PartyPopper, ArrowRight, Rocket } from "lucide-react";
 import type { TooltipPlacement } from "@/types/onboarding";
 
 interface CoachMarkTooltipProps {
@@ -84,8 +85,8 @@ export function CoachMarkTooltip({
         </div>
 
         {/* Title */}
-        <h3 className="text-lg font-extrabold text-white mb-2 leading-tight">
-          {title}
+        <h3 className="text-lg font-extrabold text-white mb-2 leading-tight flex items-center gap-2">
+          {title} {isFirst && <Rocket className="size-5 text-brand-accent" />}
         </h3>
 
         {/* Description */}
@@ -100,9 +101,9 @@ export function CoachMarkTooltip({
               key={i}
               className={`h-1.5 rounded-full transition-all duration-300 ${
                 i === stepIndex
-                  ? "w-7 bg-blue-500"
+                  ? "w-7 bg-brand-accent"
                   : i < stepIndex
-                  ? "w-3 bg-blue-500/50"
+                  ? "w-3 bg-brand-accent/50"
                   : "w-3 bg-white/15"
               }`}
             />
@@ -130,15 +131,23 @@ export function CoachMarkTooltip({
             onClick={onNext}
             className="
               flex-1 px-4 py-2.5
-              bg-blue-500 text-white font-bold text-sm
-              border-b-[3px] border-blue-700
+              bg-brand-accent text-bg-main font-bold text-sm
+              border-b-[3px] border-brand-accent/60
               active:border-b-0 active:translate-y-[3px]
               rounded-xl transition-all duration-100
-              hover:bg-blue-400
-              shadow-[0_4px_15px_rgba(59,130,246,0.4)]
+              hover:bg-brand-accent/90
+              shadow-lg shadow-brand-accent/40
             "
           >
-            {isLast ? "Let's Go! 🎉" : "Next →"}
+            {isLast ? (
+              <span className="flex items-center justify-center gap-2">
+                Let's Go! <PartyPopper className="size-4" />
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                Next <ArrowRight className="size-4" />
+              </span>
+            )}
           </button>
         </div>
       </div>
