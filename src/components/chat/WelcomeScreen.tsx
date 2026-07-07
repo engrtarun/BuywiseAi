@@ -7,6 +7,7 @@ import { DailyLimitReachedCard } from "./DailyLimitReachedCard";
 import Logo from "@/components/ui/logo";
 import { motion } from "framer-motion";
 import { ChatMode } from "@/types/chat";
+import { useI18n } from "@/contexts/I18nContext";
 
 interface WelcomeScreenProps {
   onSuggestionClick: (text: string) => void;
@@ -18,6 +19,7 @@ interface WelcomeScreenProps {
   onLoginClick?: () => void;
   selectedMode: ChatMode;
   onModeChange: (mode: ChatMode) => void;
+  dynamicPrompts?: string[];
 }
 
 const suggestions = [
@@ -47,7 +49,9 @@ const suggestions = [
   },
 ];
 
-export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessagesRemaining = 0, guestLimitReached = false, dailyLimitReached = false, dailyLimitMessage, onLoginClick, selectedMode, onModeChange }: WelcomeScreenProps) {
+export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessagesRemaining = 0, guestLimitReached = false, dailyLimitReached = false, dailyLimitMessage, onLoginClick, selectedMode, onModeChange, dynamicPrompts }: WelcomeScreenProps) {
+  const { t } = useI18n();
+  
   if (guestLimitReached) {
     return <LoginRequiredScreen onLoginClick={onLoginClick} />;
   }
@@ -71,17 +75,12 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
         {/* Welcome text */}
         <div className="text-center space-y-3">
           <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-text-primary-light tracking-tight">
-            Hi, I&apos;m <span className="text-marigold">BuyWise AI</span>
+            {t("welcome.greeting")} <span className="text-marigold">BuyWise AI</span>
           </h1>
           <div className="text-sm sm:text-base text-text-secondary font-sans max-w-md mx-auto leading-relaxed space-y-2">
-            <p>
-              Your smart shopping assistant. Ask me to find, compare, or recommend
-              products across Amazon &amp; Flipkart.
-            </p>
+            <p>{t("welcome.subtitle")}</p>
             <p className="text-[13px] sm:text-sm text-text-secondary/90">
-              BuyWise AI ek AI assistant hai aur kabhi-kabhi galat ho sakta hai.
-              Agar aapko selection sahi nahi lage, toh thoda aur detail dein ya
-              phir sawal ko dubara puchhein.
+              {t("welcome.disclaimer")}
             </p>
           </div>
 
@@ -89,11 +88,11 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
           {isGuest && (
             <div className="inline-flex items-center gap-2 mt-2 px-3.5 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.10] backdrop-blur-sm animate-in fade-in duration-500">
               <span className="text-xs font-mono text-text-dim-ondark flex items-center gap-1.5">
-                <User className="size-3.5" /> Guest mode
+                <User className="size-3.5" /> {t("welcome.guestMode")}
               </span>
               <span className="w-px h-3 bg-line-ondark" />
               <span className="text-xs font-mono text-marigold font-medium">
-                {guestMessagesRemaining} free message{guestMessagesRemaining !== 1 ? "s" : ""} left
+                {guestMessagesRemaining} {guestMessagesRemaining === 1 ? t("welcome.freeMessageLeft") : t("welcome.freeMessagesLeft")}
               </span>
             </div>
           )}
@@ -118,7 +117,7 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
             }`}
           >
             <Brain className="size-4" />
-            Deep Research
+            {t("welcome.deepResearch")}
           </button>
           <button
             type="button"
@@ -128,20 +127,20 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
             }`}
           >
             <Compass className="size-4" />
-            Explore Mode
+            {t("welcome.exploreMode")}
           </button>
         </div>
 
         {/* Suggestion chips */}
         <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-          {suggestions.map((s) => {
-            const Icon = s.icon;
+          {(dynamicPrompts && dynamicPrompts.length > 0 ? dynamicPrompts : suggestions.slice(0, 4).map(s => s.text)).map((promptText, index) => {
+            const Icon = [Search, Compass, Brain, Sparkles][index % 4];
             return (
               <button
-                key={s.text}
+                key={promptText}
                 type="button"
                 onClick={() => {
-                  if (!guestLimitReached) onSuggestionClick(s.text);
+                  if (!guestLimitReached) onSuggestionClick(promptText);
                 }}
                 disabled={guestLimitReached}
                 className={`
@@ -158,7 +157,7 @@ export function WelcomeScreen({ onSuggestionClick, isGuest = false, guestMessage
                   <Icon className="size-4.5 text-marigold" />
                 </div>
                 <span className="text-[13px] sm:text-[14px] text-text-primary-light font-sans leading-snug">
-                  {s.text}
+                  {promptText}
                 </span>
               </button>
             );
