@@ -24,19 +24,18 @@ export async function* executeStreamingOrchestration(input: OrchestratorInput): 
       Authorization: `Bearer ${input.groqApiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model: "llama-3.1-8b-instant",
-      messages: [
-        { role: "system", content: input.systemInstruction },
-        ...input.historyForGroq.map((m) => ({
-          role: m.role === "assistant" ? "assistant" : "user",
-          content: m.content || "",
-        })),
-        { role: "user", content: input.effectiveUserMessage },
-      ],
-      response_format: { type: "json_object" },
-      stream: true,
-    }),
+      body: JSON.stringify({
+        model: "llama-3.1-8b-instant",
+        messages: [
+          { role: "system", content: input.systemInstruction },
+          ...input.historyForGroq.map((m) => ({
+            role: m.role === "assistant" ? "assistant" : "user",
+            content: m.content || "",
+          })),
+          { role: "user", content: input.effectiveUserMessage },
+        ],
+        stream: true,
+      }),
   });
 
   if (!groqRes.ok || !groqRes.body) {
