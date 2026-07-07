@@ -287,22 +287,33 @@ export async function POST(req: NextRequest) {
       isRegenerate,
     });
 
-    // Append the assistant's reply to the JSON file's history
+    // Append the assistant's reply to the JSON file's history (saving only clean text, no raw JSON with thoughts)
     if (responseTexts && responseTexts.length > 0) {
-      let assistantText = responseTexts[0];
+      const rawText = responseTexts[0];
+      let assistantCleanText = "";
+      
       try {
-        const parsedRes = JSON.parse(assistantText.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
+        const parsedRes = JSON.parse(rawText.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
         if (parsedRes.fingerprint && parsedRes.fingerprint.language) {
           backendContext.memory.userLanguagePreference = parsedRes.fingerprint.language;
         }
-        if (parsedRes.headline || parsedRes.text || parsedRes.summary) {
-          assistantText = parsedRes.headline || parsedRes.text || parsedRes.summary;
-        }
+        assistantCleanText = String(parsedRes.headline || parsedRes.text || parsedRes.summary || "");
       } catch (err) {
-        // Fallback to storing raw response text if parsing fails
+        // Regex fallback to extract clean text/headline/summary value without parsing the full JSON
+        const match = rawText.match(/"(?:text|headline|summary)"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        if (match && match[1]) {
+          assistantCleanText = match[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
+        } else {
+          // Strip braces and quotes to get a clean text representation
+          assistantCleanText = rawText.replace(/[{}"[\]]/g, "").replace(/\b(?:ui_type|text|thought|fingerprint|language|tone|verbosity)\b/g, "").trim();
+        }
+      }
+
+      if (!assistantCleanText.trim()) {
+        assistantCleanText = "Hello! How can I assist you?";
       }
       
-      backendContext.history.push({ role: "assistant", content: assistantText });
+      backendContext.history.push({ role: "assistant", content: assistantCleanText });
       backendContext.messageCount = backendContext.history.length;
       backendContext.lastActive = new Date().toISOString();
       fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
