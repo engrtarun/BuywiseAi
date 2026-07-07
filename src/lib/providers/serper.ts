@@ -79,7 +79,7 @@ export async function searchShoppingIndia(
       "X-API-KEY": apiKey,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ q: query, gl: "in" }),
+    body: JSON.stringify({ q: query, gl: "in", hl: "en" }),
     // Cache at the Next.js data-cache layer for 1 hour to conserve credits.
     next: { revalidate: 3600 },
   });

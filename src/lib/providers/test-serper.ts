@@ -21,7 +21,7 @@ export async function executeRerankedSearch(query: string): Promise<RerankedCont
         "X-API-KEY": apiKey,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ q: query, gl: "in", num: 15 }),
+      body: JSON.stringify({ q: query, gl: "in", hl: "en", num: 15 }),
     });
 
     if (!response.ok) {
