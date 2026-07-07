@@ -10,7 +10,7 @@ export function FloatingChatBubble() {
 
   return (
     <motion.button
-      onClick={() => router.push('/chat')}
+      onClick={() => router.push('/')}
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       whileHover={{ scale: 1.1 }}

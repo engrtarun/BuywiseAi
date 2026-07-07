@@ -282,7 +282,7 @@ export default function SignupPage(props: { params: Promise<any>; searchParams: 
       }
 
       // Successful signup, redirect
-      router.push("/chat");
+      router.push('/');
     } catch (err: any) {
       triggerError(err.message || "Verification failed. Please try again.");
     } finally {

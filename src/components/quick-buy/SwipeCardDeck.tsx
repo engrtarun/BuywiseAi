@@ -118,7 +118,7 @@ export function SwipeCardDeck({ products, onSave, onOpenSettings, hasMore, onPre
           </button>
           
           <button
-            onClick={() => router.push('/chat')}
+            onClick={() => router.push('/')}
             className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-text-primary-light font-bold hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm"
           >
             <MessageSquare className="size-4" />

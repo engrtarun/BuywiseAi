@@ -5,8 +5,8 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const redirectOrigin = process.env.NEXT_PUBLIC_SITE_URL || origin;
   const code = searchParams.get("code");
-  // Default to "/chat" if no specific redirect page was provided
-  const next = searchParams.get("next") ?? "/chat";
+  // Default to "/" if no specific redirect page was provided
+  const next = searchParams.get("next") ?? "/";
 
   console.log("[Auth Callback] Request received. Code present:", !!code);
 
