@@ -13,6 +13,7 @@ import { QuickBuyButton } from "@/components/quick-buy/QuickBuyButton";
 import { QuickBuyScreen } from "@/components/quick-buy/QuickBuyScreen";
 import { ModeToggle } from "./ModeToggle";
 import { Ghost } from "lucide-react";
+import { FoodQuickBuyButton } from "@/components/quick-buy/FoodQuickBuyButton";
 
 /* ── Header ──────────────────────────────────────────── */
 
@@ -46,6 +47,7 @@ function ChatHeader({ isSidebarOpen, onMenuToggle, isGuest, isTemporaryChat, onN
             <TemporaryChatButton onClick={onNewTemporaryChat} isTemporaryChat={isTemporaryChat} />
           )}
           <QuickBuyButton onClick={onOpenQuickBuy} />
+          <FoodQuickBuyButton onClick={onOpenQuickBuy} />
         </div>
       </div>
     </header>
