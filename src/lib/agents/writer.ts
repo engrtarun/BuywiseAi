@@ -15,8 +15,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "@/lib/env";
 import type { SearchedProduct } from "@/lib/agents/search";
-
-const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
+import { getNextGeminiClient, getNextGroqKey } from "./keyManager";
 
 // ─── System Prompts ───────────────────────────────────────────────────────────
 
@@ -209,8 +208,6 @@ export interface WriterInput {
   products?: SearchedProduct[];         // injected search results (may be empty)
   sessionContext?: Record<string, unknown>; // accumulated requirements / fingerprint
   isRegenerate?: boolean;
-  /** Groq fallback key — used when Gemini fails */
-  groqApiKey?: string;
 }
 
 export interface WriterOutput {
@@ -244,7 +241,7 @@ function tryParse(text: string): Record<string, unknown> | null {
  * intake / results flow internally so the caller (`route.ts`) stays clean.
  */
 export async function runWriter(input: WriterInput): Promise<WriterOutput> {
-  const { mode, userMessage, history, products = [], sessionContext, isRegenerate, groqApiKey } = input;
+  const { mode, userMessage, history, products = [], sessionContext, isRegenerate } = input;
 
   const isDeepResearch = mode === "deep_research";
   let systemInstruction = isDeepResearch ? DEEP_RESEARCH_SYSTEM_PROMPT : EXPLORE_SYSTEM_PROMPT;
@@ -270,6 +267,7 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
     parts: [{ text: msg.content || "" }],
   }));
 
+  const genAI = getNextGeminiClient();
   const model = genAI.getGenerativeModel({
     model: "gemini-2.5-flash",
     systemInstruction,
@@ -317,6 +315,7 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
             }
           },
           allow_skip: { type: "boolean" as any },
+          allow_custom: { type: "boolean" as any },
           confirmed_category: { type: "string" as any },
           category: { type: "string" as any },
           key_attributes: {
@@ -370,12 +369,13 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
     text = result.response.text();
   } catch (geminiErr) {
     console.warn("[writer] Gemini failed, trying Groq fallback...", geminiErr);
-    if (!groqApiKey) throw geminiErr;
+    const currentGroqApiKey = getNextGroqKey();
+    if (!currentGroqApiKey) throw geminiErr;
 
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${groqApiKey}`,
+        Authorization: `Bearer ${currentGroqApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

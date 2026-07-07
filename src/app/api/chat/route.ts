@@ -40,6 +40,7 @@ import { searchForProducts, type SearchedProduct } from "@/lib/agents/search";
 import { runWriter } from "@/lib/agents/writer";
 import { executeRerankedSearch } from "@/lib/providers/test-serper";
 import type { RerankedContext } from "@/lib/retrieval/index";
+import { executeGenerativeOrchestration } from "@/lib/guardrails/apiOrchestrator";
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 
@@ -207,34 +208,20 @@ export async function POST(req: NextRequest) {
         let product = JSON.parse(userMessage);
         const explanationPrompt = `The user selected the product "${product.name}" priced at ${product.price}. Their stated need was their previous conversation context. Write a short, genuine 2-3 sentence explanation of why this specific product is a good fit for their stated need, referencing whatever real specs/features are available from the product title/description. Be honest — if the product isn't a perfect fit, say so briefly rather than oversell it. Output your response as a valid JSON object in this format: { "ui_type": "text_response", "text": "Your explanation here" }`;
 
-        const model = genAI.getGenerativeModel({
-          model: "gemini-2.5-flash",
-        });
-        const chat = model.startChat({
-          history: formattedHistory,
-          generationConfig: {
-            maxOutputTokens: 500,
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: "object" as any,
-              properties: {
-                ui_type: { type: "string" as any },
-                text: { type: "string" as any },
-              },
-              required: ["ui_type", "text"],
-            },
-          },
+        const text = await executeGenerativeOrchestration({
+          systemInstruction: explanationPrompt,
+          formattedHistory,
+          effectiveUserMessage: "Provide explanation",
+          groqApiKey: process.env.GROQ_API_KEY,
+          historyForGroq: history.map((m) => ({ role: m.role ?? "user", content: m.content ?? "" }))
         });
 
-        const result = await chat.sendMessage(explanationPrompt);
-        const text = (await result.response).text();
-
-        // Simple check
-        const parsedData = JSON.parse(text.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
+        // The orchestrator already parses and validates the output using Zod, ensuring structural determinism
+        const parsedData = JSON.parse(text);
         if (parsedData && parsedData.ui_type === "text_response") {
           return NextResponse.json({ text: [text], products: null });
         } else {
-          throw new Error("Invalid format from Gemini");
+          throw new Error("Invalid format from Generative Orchestrator");
         }
       } catch (e) {
         console.error("Failed to generate buy explanation:", e);
@@ -270,6 +257,8 @@ export async function POST(req: NextRequest) {
     // In explore mode the writer handles inline search via search_intent.
     // In deep_research mode we only search when the user has already supplied
     // both use-case and budget (i.e. requirements is non-empty).
+
+    // ── Step 3: Search & Deep Reranking (only in deep_research) ───────────────
     let searchResults: SearchedProduct[] = [];
     let rerankedContext: RerankedContext | null = null;
     const requirementsReady =
@@ -313,7 +302,6 @@ export async function POST(req: NextRequest) {
           : undefined
       },
       isRegenerate,
-      groqApiKey: process.env.GROQ_API_KEY,
     });
 
     // ── Step 5: Extract confirmed_category and store in cache ─────────────────
@@ -389,16 +377,9 @@ function sanitizeError(error: unknown): unknown {
       errorStr = JSON.stringify(error);
     } else {
       errorStr = String(error);
+      return error.stack || error.message;
     }
-
-    // Redact ?key=... in URLs
-    errorStr = errorStr.replace(/([?&]key=)[^&\s"\\]+/gi, '$1REDACTED');
-    // Redact Authorization headers or tokens if present
-    errorStr = errorStr.replace(/(Authorization:\s*Bearer\s+)[^\s"\\]+/gi, '$1REDACTED');
-    errorStr = errorStr.replace(/(x-goog-api-key:\s*)[^\s"\\]+/gi, '$1REDACTED');
-
-    // Return the sanitized string so it doesn't leak raw objects with hidden properties
-    return errorStr;
+    return JSON.stringify(error, Object.getOwnPropertyNames(error));
   } catch (e) {
     return "[Un-stringifiable Error Object]";
   }

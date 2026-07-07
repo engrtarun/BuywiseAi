@@ -35,7 +35,8 @@ const clientEnvSchema = z
   .strict();
 
 const serverEnvSchema = clientEnvSchema.extend({
-  GEMINI_API_KEY: z.string().trim().min(1, "GEMINI_API_KEY is required"),
+  GEMINI_API_KEYS: z.string().trim().min(1, "GEMINI_API_KEYS is required").transform(val => val.split(',').map(s => s.trim()).filter(Boolean)),
+  GROQ_API_KEY: z.string().trim().optional().transform(val => val ? val.split(',').map(s => s.trim()).filter(Boolean) : []),
   // Optional: when absent the app falls back to FakeStore product data.
   SERPER_API_KEY: z.string().trim().optional(),
 });
@@ -45,7 +46,7 @@ const envSchema = isServer ? serverEnvSchema : clientEnvSchema;
 const rawEnv = {
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  ...(isServer ? { GEMINI_API_KEY: process.env.GEMINI_API_KEY, SERPER_API_KEY: process.env.SERPER_API_KEY } : {}),
+  ...(isServer ? { GEMINI_API_KEYS: process.env.GEMINI_API_KEYS, GROQ_API_KEY: process.env.GROQ_API_KEY, SERPER_API_KEY: process.env.SERPER_API_KEY } : {}),
 };
 
 const parsedResult = envSchema.safeParse(rawEnv);
@@ -64,7 +65,11 @@ if (!parsedResult.success && isServer && isProduction) {
 const fallbackEnv = {
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-  ...(isServer ? { GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? "", SERPER_API_KEY: process.env.SERPER_API_KEY } : {}),
+  ...(isServer ? { 
+    GEMINI_API_KEYS: (process.env.GEMINI_API_KEYS || "").split(',').map(s => s.trim()).filter(Boolean),
+    GROQ_API_KEY: (process.env.GROQ_API_KEY || "").split(',').map(s => s.trim()).filter(Boolean),
+    SERPER_API_KEY: process.env.SERPER_API_KEY 
+  } : {}),
 };
 
 export const env = (parsedResult.success ? parsedResult.data : fallbackEnv) as z.infer<typeof serverEnvSchema>;
