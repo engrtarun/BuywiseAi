@@ -45,6 +45,7 @@ import { checkSemanticCache, storeInSemanticCache } from "@/lib/caching/semantic
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEYS[0]);
 
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   let userMessage = "";
