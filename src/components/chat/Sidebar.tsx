@@ -11,6 +11,7 @@ import { ChatSession, ChatMode } from "@/types/chat";
 import { useSidebarResize } from "./useSidebarResize";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useTheme } from "@/hooks/useTheme";
+import { useI18n } from "@/contexts/I18nContext";
 import { THEME_PRESETS, generateCustomTheme } from "@/lib/themes";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip as ShadcnTooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -423,8 +424,9 @@ interface NewChatButtonProps {
 }
 
 function NewChatButton({ onClick, isCollapsed }: NewChatButtonProps) {
+  const { t } = useI18n();
   return (
-    <Tooltip text="New Chat" isCollapsed={isCollapsed}>
+    <Tooltip text={t("sidebar.newChat")} isCollapsed={isCollapsed}>
       <button
         onClick={onClick}
         className={`
@@ -435,10 +437,10 @@ function NewChatButton({ onClick, isCollapsed }: NewChatButtonProps) {
           active:scale-[0.98] transition-all duration-200 touch-manipulation cursor-pointer
           ${isCollapsed ? "size-10 shrink-0" : "w-full px-4 py-3"}
         `}
-        aria-label="New Chat"
+        aria-label={t("sidebar.newChat")}
       >
         <PlusIcon className={`transition-transform duration-300 group-hover:rotate-90 ${isCollapsed ? "size-5" : ""}`} />
-        {!isCollapsed && "New Chat"}
+        {!isCollapsed && t("sidebar.newChat")}
       </button>
     </Tooltip>
   );
@@ -737,6 +739,7 @@ function SidebarContent({
   const [menuRect, setMenuRect] = React.useState<DOMRect | null>(null);
   const { theme, setTheme, mode, setMode, customSeedColor, setCustomSeedColor } = useTheme();
   const { openPremium } = usePremium();
+  const { t } = useI18n();
 
   useEffect(() => {
     async function loadUserProfile() {
@@ -929,13 +932,13 @@ function SidebarContent({
         `}
       >
         <p className="px-4 mb-2 text-[11px] font-mono text-text-secondary uppercase tracking-wider">
-          Recent chats
+          {t("sidebar.recentChats")}
         </p>
         <ScrollArea className="h-full px-2">
           <div className="flex flex-col gap-0.5">
             {filteredHistory.length === 0 ? (
               <p className="px-3 py-4 text-[12px] text-text-secondary/60 text-center font-sans italic">
-                {searchQuery ? "No matching chats." : "No chats yet. Start one!"}
+                {searchQuery ? "No matching chats." : t("sidebar.noHistory")}
               </p>
             ) : (
               filteredHistory.map((session) => (
@@ -1019,7 +1022,7 @@ function SidebarContent({
               className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-text-primary-dark hover:bg-white/[0.06] transition-all select-none cursor-pointer"
             >
               <SettingsIcon className="text-text-secondary group-hover:text-marigold group-hover:rotate-45 transition-all duration-300" />
-              <span>Settings</span>
+              <span>{t("sidebar.settings")}</span>
             </button>
             
             <button 
@@ -1096,7 +1099,7 @@ function SidebarContent({
               className="group flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-sans text-chili hover:bg-chili/10 transition-all font-semibold select-none cursor-pointer"
             >
               <LogOutIcon className="text-chili/70 group-hover:text-chili group-hover:-translate-x-0.5 transition-all duration-300" />
-              <span>Log out</span>
+              <span>{t("sidebar.logOut")}</span>
             </button>
           </div>,
           document.body

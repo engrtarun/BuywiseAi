@@ -221,6 +221,54 @@ export default function Page() {
   const [showQuickBuy, setShowQuickBuy] = useState(false);
   const [showFoodQuickBuy, setShowFoodQuickBuy] = useState(false);
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
+  const [dynamicPrompts, setDynamicPrompts] = useState<string[]>([
+    "Find best wireless headphones under ₹5,000",
+    "Compare top 3 washing machines",
+    "Best budget smartphones under ₹15,000",
+    "Suggest a gift for a 25-year-old"
+  ]);
+
+  // Dynamic Prompts Fetching Logic
+  useEffect(() => {
+    // Only fetch if we are sitting on the empty chat screen
+    const activeSession = chatSessions.find((s) => s.id === activeChatId);
+    const hasNoActiveMessages = !activeSession || activeSession.messages.length === 0;
+    
+    if (isTyping || !hasNoActiveMessages) return;
+
+    let intervalId: NodeJS.Timeout;
+
+    const fetchPrompts = async () => {
+      try {
+        // Summarize history: take last 5 session titles
+        const historySummaries = chatSessions
+          .filter(s => s.title !== "New Chat" && s.messages.length > 0)
+          .map(s => s.title)
+          .slice(0, 5);
+          
+        const res = await fetch('/api/suggested-prompts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ historySummaries })
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          if (data.prompts && Array.isArray(data.prompts) && data.prompts.length === 4) {
+            setDynamicPrompts(data.prompts);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch dynamic prompts:", err);
+      }
+    };
+
+    // Fetch immediately on mount, then every 60s
+    fetchPrompts();
+    intervalId = setInterval(fetchPrompts, 60000);
+
+    return () => clearInterval(intervalId);
+  }, [isTyping, activeChatId, chatSessions]);
 
   // Guest access hook
   const {
@@ -1075,6 +1123,7 @@ export default function Page() {
             setShowFoodQuickBuy(true);
           }}
           onCloseFoodQuickBuy={() => setShowFoodQuickBuy(false)}
+          dynamicPrompts={dynamicPrompts}
         />
       </div>
 
