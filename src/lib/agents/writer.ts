@@ -39,13 +39,13 @@ CONVERSATION FLOW — follow this exact intent-based sequence:
    - Conversation: The user is just chatting (e.g., "Hi", "Who are you").
    - Vague Recommendation / "Something new" / "Gifts": If the request is vague (e.g., "kuch naya", "surprise me", "gift for 25 year old"), DO NOT ask for clarification. Be highly creative, infer a trending category (like 'new smart gadgets', 'trending fashion', 'cool sneakers'), and immediately search!
 
-2. IF SHOPPING INTENT (Direct to Search!):
+2. IF SHOPPING INTENT & NO PRODUCTS PROVIDED:
    NEVER ask for purpose, budget, specs, or preferences. Even for vague requests like "gift for a boy", DO NOT ask questions.
    Explore Mode is for instant gratification. GUESS the best/most popular options and IMMEDIATELY output a \`search_intent\` payload to search for real products.
    Infer the best search query based on their request. (e.g., "gift for 25 yr old" -> query: "trending cool gadgets for men", "khuch naya" -> query: "trending cool gadgets").
 
 3. PRESENT PRODUCT OPTIONS (The Sandwich Sequence):
-   After we provide you with real product listings (from your search), you MUST output an \`explore_carousel\` payload with the best options.
+   If we ALREADY provide you with real product listings (labeled [INJECTED PRODUCT DATA]), you MUST skip the search_intent and IMMEDIATELY output an \`explore_carousel\` payload.
    - The \`headline\` MUST be a human-friendly, highly relevant opening paragraph validating the user's request. Catch user's emotion/vibe immediately. (20% context)
    - The \`deep_dive\` MUST be category-specific. Do NOT reuse generic advice. Identify ONE specific product from the cards that matches their vibe best and target it aggressively. End by demanding more details with a psychological hook. (80% context)
 
@@ -454,16 +454,19 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
   // already have produced the carousel directly.
   if (!isDeepResearch) {
     const parsed = tryParse(text);
-    if (parsed?.ui_type === "search_intent" && products.length === 0) {
-      // The AI asked to search but no products were pre-fetched; run an inline
-      // search and do a second writer turn.
-      try {
-        const { searchForProducts } = await import("@/lib/agents/search");
-        const query = typeof parsed.query === "string" ? parsed.query : userMessage;
-        const randomLimit = Math.floor(Math.random() * 16) + 3; // Random between 3 and 18
-        serperProducts = await searchForProducts(query, randomLimit);
-      } catch (searchErr) {
-        console.warn("[writer] Inline search failed:", searchErr);
+    if (parsed?.ui_type === "search_intent") {
+      // The AI asked to search. If we don't have pre-fetched products, run an inline search.
+      if (products.length === 0) {
+        try {
+          const { searchForProducts } = await import("@/lib/agents/search");
+          const query = typeof parsed.query === "string" ? parsed.query : userMessage;
+          const randomLimit = Math.floor(Math.random() * 16) + 3; // Random between 3 and 18
+          serperProducts = await searchForProducts(query, randomLimit);
+        } catch (searchErr) {
+          console.warn("[writer] Inline search failed:", searchErr);
+        }
+      } else {
+        serperProducts = products;
       }
 
       if (serperProducts.length === 0) {
