@@ -124,7 +124,11 @@ export function ChatInput({
   }, [cooldownUntil]);
 
   const handleSend = () => {
-    if (guestLimitReached || dailyLimitReached) return;
+    if (guestLimitReached) {
+      if (onLoginClick) onLoginClick();
+      return;
+    }
+    if (dailyLimitReached) return;
     if (timeLeft > 0) {
       setShowUpgradeToast(true);
       setTimeout(() => setShowUpgradeToast(false), 5000);
