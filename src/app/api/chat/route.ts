@@ -50,6 +50,7 @@ const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEYS[0]);
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
+  console.log("POST /api/chat: Handler started");
   let userMessage = "";
   let userHistory: ChatHistoryMessage[] = [];
   let mode = "explore";
@@ -591,19 +592,11 @@ function logGeminiFailure(error: unknown) {
   const sanitized = sanitizeError(error);
 
   if (isRateLimitError(error)) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("Gemini API rate limit hit. Serving fallback response.", sanitized);
-    } else {
-      console.error("Gemini API rate limit hit. Serving fallback response.");
-    }
+    console.error("Gemini API rate limit hit. Serving fallback response.", sanitized);
     return;
   }
 
-  if (process.env.NODE_ENV === "development") {
-    console.error("Gemini API failed. Serving fallback response.", sanitized);
-  } else {
-    console.error("Gemini API failed. Serving fallback response.");
-  }
+  console.error("Gemini API failed. Serving fallback response.", sanitized);
 }
 
 function isRateLimitError(error: unknown): boolean {
