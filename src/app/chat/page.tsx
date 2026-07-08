@@ -119,6 +119,8 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
         aiMsg.deepResearchResults = {
           summary: parsedJson.summary,
           finalVerdict: parsedJson.final_verdict,
+          recommendedPickReason: parsedJson.recommended_pick_reason,
+          recommendedPickId: parsedJson.recommended_pick_id,
           comparison: Array.isArray(parsedJson.comparison) ? parsedJson.comparison : [],
         };
         

@@ -593,6 +593,22 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
                 </div>
               )}
 
+              {/* 3.5. Recommended Pick Reason */}
+              {message.deepResearchResults.recommendedPickReason && (
+                <div className="bg-brand-accent/10 border border-brand-accent/30 rounded-2xl p-4 text-[14px] sm:text-[15px] leading-relaxed break-words font-ai text-brand-accent shadow-xl backdrop-blur-md">
+                  <div className="flex items-center gap-2 mb-2 font-bold uppercase tracking-wider text-sm">
+                    <CheckCircle className="size-4" /> Recommended Pick
+                  </div>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    components={markdownComponents}
+                  >
+                    {message.deepResearchResults.recommendedPickReason}
+                  </ReactMarkdown>
+                </div>
+              )}
+
               {/* 4. Recommended Products Carousel */}
               {message.products && message.products.length > 0 && (
                 <div className="ml-[-8px] sm:ml-[-12px] p-1 bg-zinc-950/40 rounded-2xl border border-white/5 shadow-inner mt-2">

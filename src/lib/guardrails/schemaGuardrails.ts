@@ -86,6 +86,8 @@ export const DeepResearchResultsSchema = z.object({
   ui_type: z.literal("deep_research_results"),
   summary: z.string().optional(),
   final_verdict: z.string().optional(),
+  recommended_pick_reason: z.string().optional(),
+  recommended_pick_id: z.string().optional(),
   recommended_products: z.array(z.object({
     id: z.string().optional(),
     name: z.string().optional(),
@@ -156,7 +158,9 @@ export function validateAndSanitizeOutput(rawText: string): any {
            ...parsedObject,
            recommended_products: parsedObject.recommended_products || [],
            summary: parsedObject.summary || "",
-           final_verdict: parsedObject.final_verdict || ""
+           final_verdict: parsedObject.final_verdict || "",
+           recommended_pick_reason: parsedObject.recommended_pick_reason || undefined,
+           recommended_pick_id: parsedObject.recommended_pick_id || undefined
          }
       }
       if (parsedObject.ui_type === 'clarifying_question') {
