@@ -373,39 +373,8 @@ export default function Page() {
 
         setChatSessions(formattedSessions);
 
-        // 3. Find or create the active session
-        const activeSid = await getOrCreateActiveSession();
-        setActiveChatId(activeSid);
-
-        // If the active session is not in our list (e.g. freshly created), fetch it
-        if (!formattedSessions.some((s) => s.id === activeSid)) {
-          const freshHistory = await getChatHistory(activeSid);
-          const freshMessages: Message[] = freshHistory.map((m) => {
-            if (m.sender === "user") {
-              return {
-                id: m.id,
-                role: "user",
-                content: m.message,
-              };
-            }
-            return parseAiMessageContent(m.id, m.message);
-          });
-
-          // Find the active session mode from database directly if needed, or default
-          const freshSessionRecord = sessions.find(s => s.id === activeSid);
-          const freshMode = freshSessionRecord?.mode || "explore";
-
-          const freshSession: ChatSession = {
-            id: activeSid,
-            title: freshMessages[0]?.content ? generateTitle(freshMessages[0].content) : "New Chat",
-            messages: freshMessages,
-            createdAt: Date.now(),
-            mode: freshMode,
-            pinned: false,
-          };
-
-          setChatSessions((prev) => [freshSession, ...prev]);
-        }
+        // Always start with a new chat on fresh load
+        setActiveChatId(null);
 
       } catch (err) {
         console.error("Failed to initialize chat from Supabase:", err);

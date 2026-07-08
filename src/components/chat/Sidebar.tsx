@@ -865,11 +865,14 @@ function SidebarContent({
           </Tooltip>
 
           {!isCollapsed && (
-            <div className="flex items-center gap-2.5 min-w-0 transition-opacity duration-300">
-              <div className="size-8 shrink-0 rounded-lg bg-marigold flex items-center justify-center shadow-sm">
+            <div 
+              className="flex items-center gap-2.5 min-w-0 transition-opacity duration-300 cursor-pointer group"
+              onClick={() => { onNewChat(); onClose(); }}
+            >
+              <div className="size-8 shrink-0 rounded-lg bg-marigold flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
                 <span className="text-ink-deeper font-heading font-extrabold text-sm">B</span>
               </div>
-              <span className="font-heading font-bold text-[15px] text-text-primary-dark tracking-tight truncate">
+              <span className="font-heading font-bold text-[15px] text-text-primary-dark tracking-tight truncate group-hover:text-marigold transition-colors">
                 BuyWise AI
               </span>
             </div>
@@ -1255,9 +1258,9 @@ function SidebarContent({
             `}
           >
             {loadingProfile ? (
-              <div className="size-8 rounded-full bg-white/[0.08] animate-pulse shrink-0" />
+              <div className="size-8 rounded-full bg-white/[0.08] animate-pulse shrink-0 aspect-square" />
             ) : (
-              <div className="relative size-10 flex items-center justify-center shrink-0">
+              <div className="relative size-10 rounded-full flex items-center justify-center shrink-0 aspect-square">
                 {/* SVG circular progress ring */}
                 <svg className="absolute inset-0 size-full -rotate-90">
                   <circle
@@ -1280,21 +1283,22 @@ function SidebarContent({
                 </svg>
 
                 {/* Avatar inside ring */}
-                <div className="size-7 rounded-full overflow-hidden flex items-center justify-center bg-white/[0.05]">
+                <div className="size-7 rounded-full overflow-hidden flex items-center justify-center bg-white/[0.05] shrink-0 aspect-square">
                   {profile?.avatar_url ? (
                     <img 
                       src={profile.avatar_url} 
                       alt={profile.full_name || "Avatar"} 
-                      className="size-full object-cover"
+                      className="w-full h-full object-cover rounded-full"
                     />
                   ) : (
-                    <div className="size-full bg-marigold/10 flex items-center justify-center">
+                    <div className="w-full h-full bg-marigold/10 flex items-center justify-center rounded-full">
                       <Logo showText={false} iconClassName="size-4 text-marigold" />
                     </div>
                   )}
                 </div>
               </div>
             )}
+            
             
             {!isCollapsed && (
               <div className="flex-1 min-w-0 text-left flex items-center justify-between gap-2">

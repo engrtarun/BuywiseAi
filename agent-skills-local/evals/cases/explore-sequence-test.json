@@ -1,0 +1,14 @@
+{
+  "name": "Explore Mode Strict Sandwich Sequence Test",
+  "description": "Ensures AI follows 20% text (vibe+fomo), then renders cards, then 80% hard target push",
+  "category": "context-engineering",
+  "steps": [
+    {
+      "user_input": "hello, bas aise hi dekh raha hu",
+      "expected_output_pattern": {
+        "must_contain_sections": ["20%_vibe_fomo", "product_cards_ui", "80%_hard_sales_push"],
+        "min_questions_asked": 1
+      }
+    }
+  ]
+}
