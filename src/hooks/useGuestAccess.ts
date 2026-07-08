@@ -60,7 +60,7 @@ export function useGuestAccess() {
       }
 
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+      if (session && !session.user?.is_anonymous) {
         console.log("[useGuestAccess] User is authenticated. Resetting guest state.");
         resetGuestAccess();
       }
@@ -71,7 +71,7 @@ export function useGuestAccess() {
     const supabase = createClient();
     if (supabase) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
-        if (event === 'SIGNED_IN' || session) {
+        if ((event === 'SIGNED_IN' || session) && !session?.user?.is_anonymous) {
           console.log("[useGuestAccess] Auth state changed to signed in. Resetting guest state.");
           resetGuestAccess();
         } else if (event === 'SIGNED_OUT') {
