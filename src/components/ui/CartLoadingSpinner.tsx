@@ -12,7 +12,7 @@ export const CartLoadingSpinner: React.FC = () => {
         <div className="relative flex flex-col items-center justify-center w-full animate-cart-shake">
           
           {/* Falling Items Spawner Layer */}
-          <div className="absolute -top-8 w-12 h-16 overflow-visible pointer-events-none z-20">
+          <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-12 h-16 overflow-visible pointer-events-none z-20">
             {/* Item 1: Marigold Square */}
             <div className="absolute left-[25%] w-3 h-3 bg-[#D4AF37] rounded-sm shadow-sm animate-drop-merge-1 mix-blend-screen" />
             {/* Item 2: Simple White Circle */}
@@ -39,7 +39,7 @@ export const CartLoadingSpinner: React.FC = () => {
             </svg>
 
             {/* Solid Filling Dynamic Layer (Clips cleanly into the base bounds) */}
-            <div className="absolute bottom-3 left-4 right-2 h-8 bg-gradient-to-t from-[#D4AF37]/40 to-[#D4AF37]/10 origin-bottom scale-y-0 animate-fill z-0 rounded-b-sm" />
+            <div className="absolute bottom-3 left-4 right-2 h-8 bg-gradient-to-t from-[#D4AF37]/40 to-[#D4AF37]/10 origin-bottom animate-fill z-0 rounded-b-sm" />
           </div>
           
         </div>
