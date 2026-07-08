@@ -43,7 +43,18 @@ export async function searchForProducts(
 ): Promise<SearchedProduct[]> {
   const raw = await searchShoppingIndia(keywords);
 
-  return raw.slice(0, limit).map((item) => ({
+  // Group by store and limit to 2 per store
+  const storeCounts: Record<string, number> = {};
+  const diverseProducts = raw.filter((item) => {
+    const store = (item.platform || "Google Shopping").toLowerCase();
+    storeCounts[store] = (storeCounts[store] || 0) + 1;
+    return storeCounts[store] <= 2;
+  });
+
+  // Shuffle the diverse products to ensure variety on regenerate
+  const shuffled = diverseProducts.sort(() => Math.random() - 0.5);
+
+  return shuffled.slice(0, limit).map((item) => ({
     title: item.name,
     price: item.price,
     rating: item.rating,

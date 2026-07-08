@@ -125,7 +125,32 @@ export function MessageActions({ message, isLastAiMessage, onRegenerate, onFeedb
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(message.content);
+      let copyText = message.content || "";
+      
+      // Explore Mode pieces
+      if (message.exploreIntro || message.exploreDeepDive) {
+        copyText = [message.exploreIntro, message.exploreDeepDive].filter(Boolean).join("\n\n");
+      }
+
+      // Deep Research pieces
+      if (message.deepResearchResults) {
+        const dr = message.deepResearchResults;
+        const parts = [];
+        if (dr.summary) parts.push(dr.summary);
+        if (dr.finalVerdict) parts.push("Verdict: " + dr.finalVerdict);
+        if (dr.recommendedPickReason) parts.push("Recommendation: " + dr.recommendedPickReason);
+        copyText = parts.join("\n\n");
+      }
+
+      // Products
+      if (message.products && message.products.length > 0) {
+        copyText += "\n\nProducts:\n";
+        message.products.forEach(p => {
+          copyText += `- ${p.name || "Product"} (${p.price}) on ${p.platform}: ${p.link}\n`;
+        });
+      }
+
+      await navigator.clipboard.writeText(copyText.trim());
       setCopiedId(message.id);
       setTimeout(() => setCopiedId(null), 1500);
     } catch (err) {
