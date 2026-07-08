@@ -1,4 +1,3 @@
-export const maxDuration = 60;
 
 /**
  * CHAT MODES CONVENTION DOCUMENTATION:
