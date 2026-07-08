@@ -144,6 +144,7 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
         savedIds = savedIds.filter(id => id !== product.id);
       }
       localStorage.setItem("buywise_quickbuy_saved", JSON.stringify(savedIds));
+      window.dispatchEvent(new CustomEvent("cart-updated"));
     } catch (err) {
       console.error("Failed to sync cart state to database:", err);
     }

@@ -296,6 +296,9 @@ export function useQuickBuy() {
       if (prev.includes(productId)) return prev;
       const next = [...prev, productId];
       localStorage.setItem(SAVED_ITEMS_KEY, JSON.stringify(next));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("cart-updated"));
+      }
       return next;
     });
 
@@ -325,6 +328,9 @@ export function useQuickBuy() {
     setSavedItemIds((prev) => {
       const next = prev.filter((id) => id !== productId);
       localStorage.setItem(SAVED_ITEMS_KEY, JSON.stringify(next));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("cart-updated"));
+      }
       return next;
     });
     setItemQuantities((prev) => {
@@ -349,6 +355,9 @@ export function useQuickBuy() {
     setItemQuantities({});
     localStorage.removeItem(SAVED_ITEMS_KEY);
     localStorage.removeItem(QUANTITIES_KEY);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("cart-updated"));
+    }
   }, []);
 
   const moveToSavedForLater = useCallback((productId: string) => {
@@ -356,6 +365,9 @@ export function useQuickBuy() {
     setSavedItemIds((prev) => {
       const next = prev.filter((id) => id !== productId);
       localStorage.setItem(SAVED_ITEMS_KEY, JSON.stringify(next));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("cart-updated"));
+      }
       return next;
     });
     // Add to saved for later
@@ -380,6 +392,9 @@ export function useQuickBuy() {
       if (prev.includes(productId)) return prev;
       const next = [...prev, productId];
       localStorage.setItem(SAVED_ITEMS_KEY, JSON.stringify(next));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("cart-updated"));
+      }
       return next;
     });
   }, []);
