@@ -17,13 +17,13 @@ import { searchShoppingIndia } from "@/lib/providers/serper";
 
 /** The clean shape returned by this agent. */
 export interface SearchedProduct {
-  title: string;
+  name: string;
   price: number;        // INR integer; 0 when not available
   rating: number | null;
   reviewCount: number | null;
   image: string;
-  store: string;        // e.g. "Amazon", "Flipkart", "Google Shopping"
-  url: string;
+  platform: string;     // e.g. "Amazon", "Flipkart", "Google Shopping"
+  link: string;
 }
 
 /**
@@ -55,12 +55,12 @@ export async function searchForProducts(
   const shuffled = diverseProducts.sort(() => Math.random() - 0.5);
 
   return shuffled.slice(0, limit).map((item) => ({
-    title: item.name,
+    name: item.name,
     price: item.price,
     rating: item.rating,
     reviewCount: item.reviewCount,
     image: item.image,
-    store: item.platform,
-    url: item.url,
+    platform: item.platform,
+    link: item.url,
   }));
 }

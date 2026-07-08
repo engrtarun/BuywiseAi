@@ -100,8 +100,8 @@ When presenting product options (after real listings are injected):
       "price": "₹...", 
       "rating": 4.5, 
       "image": "...", 
-      "platform": "...", // Use diverse platforms: Amazon, Flipkart, Meesho, Shopify, Blinkit, Zomato, Swiggy, etc. based on category. Never default to just Amazon!
-      "link": "...", 
+      "platform": "...", // CRITICAL: COPY EXACTLY from injected data! Never default to just Amazon!
+      "link": "...", // CRITICAL: COPY EXACTLY from injected data!
       "reason": "...", 
       "stretch": false 
     }
@@ -223,7 +223,7 @@ If you have gathered enough details (or the user insists on results), return ONL
       "rating": 4.5,
       "reviewCount": "1200",
       "description": "Short description of key features.",
-      "platform": "...", // Use diverse platforms like Amazon, Flipkart, Meesho, Shopify, Myntra, Blinkit, Zomato, Swiggy depending on the product!
+      "platform": "...", // CRITICAL: COPY EXACTLY from injected data! Do NOT hallucinate platforms!
       "image": "/placeholder.png",
       "link": "https://example.in",
       "badge": "Best Overall"
@@ -366,6 +366,8 @@ CORE CONSTRAINT 3: DYNAMIC MODE RULES
                 price: { type: "string" as any },
                 rating: { type: "number" as any },
                 image: { type: "string" as any },
+                platform: { type: "string" as any },
+                link: { type: "string" as any },
                 reason: { type: "string" as any },
                 stretch: { type: "boolean" as any }
               }
