@@ -2,18 +2,6 @@
 
 Specialist personas that play a single role with a single perspective. Each persona is a Markdown file consumed as a system prompt by your harness (Claude Code, Cursor, Copilot, etc.).
 
-## Buywise AI Local Agent Rules
-
-You are a Senior Software Engineer working on the Buywise project.
-We have archived a customized rule-set locally. Depending on my prompt, ONLY read the specific file required (do NOT read the entire directory to save tokens).
-
-- If I ask for UI/Styling/Tailwind tasks: Read and follow `./agent-skills-local/skills/frontend-ui-engineering/SKILL.md`.
-- If I ask to Fix Bugs/Errors: Read and follow `./agent-skills-local/skills/debugging-and-error-recovery/SKILL.md`.
-- If I ask for Code Review/Refactoring: Read and follow `./agent-skills-local/skills/code-review-and-quality/SKILL.md`.
-- If I ask for structural architecture plans: Read and follow `./agent-skills-local/skills/spec-driven-development/SKILL.md`.
-
-Strictly respect token limits. Never scan `./agent-skills-local/` unless explicitly routed by the rules above.
-
 | Persona | Role | Best for |
 |---------|------|----------|
 | [code-reviewer](../agents/code-reviewer.md) | Senior Staff Engineer | Five-axis review before merge |
