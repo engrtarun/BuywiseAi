@@ -327,28 +327,7 @@ export async function POST(req: NextRequest) {
           for await (const chunk of writerStream) {
             const chunkText = chunk || "";
             fullResponse += chunkText;
-
-            if (fullResponse.includes("|||PRODUCT_DATA_START|||")) {
-              dataTagFound = true;
-              // Split out what belongs to the chat text vs what belongs to the raw JSON string
-              const parts = chunkText.split("|||PRODUCT_DATA_START|||");
-
-              if (parts[0] && !fullResponse.split("|||PRODUCT_DATA_START|||")[0].includes("[")) {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: parts[0] })}\n\n`));
-              }
-              if (parts[1]) {
-                jsonBuffer += parts[1];
-              } else if (parts.length === 1 && dataTagFound) {
-                // If the tag was already found in a previous chunk, the whole chunk belongs to JSON
-                if (!chunkText.includes("|||PRODUCT_DATA_START|||")) {
-                  jsonBuffer += chunkText;
-                }
-              }
-            } else {
-              if (!dataTagFound && !fullResponse.includes("[")) {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: chunkText })}\n\n`));
-              }
-            }
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: chunkText })}\n\n`));
           }
 
           // Once the stream finishes, save the full response to context
@@ -420,11 +399,7 @@ export async function POST(req: NextRequest) {
             const activeGroqKey = process.env.GROQ_API_KEY;
             if (!activeGroqKey) throw new Error("Groq credentials pool unavailable.");
 
-            const systemInstruction = `
-              You are BuyWise AI. You must adhere strictly to these rules:
-              1. If the query yields products, write your natural chat message response first.
-              2. At the absolute end of your response, if product items are present, insert the exact separator tag: |||PRODUCT_DATA_START||| followed immediately by the raw JSON string containing the structured products object array (with id, name, price, rating, image, platform, link, reason). Do not add markdown code fences (like \`\`\`json) inside or around the separator tag block.
-            `;
+            const systemInstruction = "You are BuyWise AI. Follow your strict mode instructions.";
 
             const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
               method: "POST",
@@ -463,24 +438,7 @@ export async function POST(req: NextRequest) {
                     const parsed = JSON.parse(line.slice(6));
                     const textDelta = parsed.choices[0]?.delta?.content || "";
                     fullResponse += textDelta;
-
-                    if (fullResponse.includes("|||PRODUCT_DATA_START|||")) {
-                      fallbackDataTagFound = true;
-                      const parts = textDelta.split("|||PRODUCT_DATA_START|||");
-
-                      if (parts[0] && !fullResponse.split("|||PRODUCT_DATA_START|||")[0].includes("[")) {
-                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: parts[0] })}\n\n`));
-                      }
-                      if (parts[1]) {
-                        fallbackJsonBuffer += parts[1];
-                      } else if (parts.length === 1 && fallbackDataTagFound) {
-                        if (!textDelta.includes("|||PRODUCT_DATA_START|||")) fallbackJsonBuffer += textDelta;
-                      }
-                    } else {
-                      if (!fallbackDataTagFound && !fullResponse.includes("[")) {
-                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: textDelta })}\n\n`));
-                      }
-                    }
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: textDelta })}\n\n`));
                   } catch (e) { }
                 }
               }
