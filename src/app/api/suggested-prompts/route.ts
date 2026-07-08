@@ -33,13 +33,12 @@ export async function POST(req: Request) {
         Authorization: `Bearer ${groqApiKey}`,
       },
       body: JSON.stringify({
-        model: "llama3-8b-8192", // Fast and cheap model for this
+        model: "llama-3.1-8b-instant", // Fast and cheap model for this
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userMessage }
         ],
-        temperature: 0.7,
-        response_format: { type: "json_object" } // Enforce JSON if possible, but Groq doesn't strictly support json_object for all models. We will parse it manually if needed. Wait, Llama3 on Groq supports JSON mode if prompted. Let's just ask for an array and parse.
+        temperature: 0.7
       }),
     });
 
