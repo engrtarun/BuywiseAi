@@ -77,6 +77,7 @@ export function useQuickBuy() {
   const [itemQuantities, setItemQuantities] = useState<Record<string, number>>({});
   const [totalSpent, setTotalSpent] = useState<number>(0);
   const [productCache, setProductCache] = useState<Record<string, QuickBuyProduct>>({});
+  const [cartItems, setCartItems] = useState<any[]>([]);
   const [isLocalInitializing, setIsLocalInitializing] = useState(true);
 
   const isInitializing = isProfilesInitializing || isLocalInitializing;
@@ -129,6 +130,13 @@ export function useQuickBuy() {
             setProductCache(JSON.parse(storedCache));
           }
         }
+
+        const storedCart = localStorage.getItem("buywise_cart_items");
+        if (storedCart) {
+          if (isMounted) {
+            setCartItems(JSON.parse(storedCart));
+          }
+        }
       } catch (err) {
         console.error("Failed to load QuickBuy state from localStorage", err);
       } finally {
@@ -142,6 +150,25 @@ export function useQuickBuy() {
 
     return () => {
       isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      try {
+        const storedCart = localStorage.getItem("buywise_cart_items");
+        if (storedCart) {
+          setCartItems(JSON.parse(storedCart));
+        } else {
+          setCartItems([]);
+        }
+      } catch (err) {
+        console.error("Failed to update cartItems in hook:", err);
+      }
+    };
+    window.addEventListener("cart-updated", handleCartUpdate);
+    return () => {
+      window.removeEventListener("cart-updated", handleCartUpdate);
     };
   }, []);
 
@@ -298,6 +325,23 @@ export function useQuickBuy() {
       localStorage.setItem(SAVED_ITEMS_KEY, JSON.stringify(next));
       return next;
     });
+    setCartItems((prev) => {
+      if (prev.some((item) => item.id === productId)) return prev;
+      const newProduct = product || { id: productId, name: "Product", price: 0, image: "/placeholder.svg", platform: "Store" };
+      const next = [...prev, {
+        id: newProduct.id,
+        name: newProduct.name,
+        price: newProduct.price,
+        image: newProduct.image,
+        platform: (newProduct as any).platform || "Store"
+      }];
+      localStorage.setItem("buywise_cart_items", JSON.stringify(next));
+      return next;
+    });
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("cart-updated"));
+    }
 
     if (!product) {
       console.warn("Quick Buy save skipped because product data was not available in the current catalog.");
@@ -327,6 +371,14 @@ export function useQuickBuy() {
       localStorage.setItem(SAVED_ITEMS_KEY, JSON.stringify(next));
       return next;
     });
+    setCartItems((prev) => {
+      const next = prev.filter((item) => item.id !== productId);
+      localStorage.setItem("buywise_cart_items", JSON.stringify(next));
+      return next;
+    });
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("cart-updated"));
+    }
     setItemQuantities((prev) => {
       const next = { ...prev };
       delete next[productId];
@@ -346,9 +398,14 @@ export function useQuickBuy() {
 
   const clearCart = useCallback(() => {
     setSavedItemIds([]);
+    setCartItems([]);
     setItemQuantities({});
     localStorage.removeItem(SAVED_ITEMS_KEY);
+    localStorage.removeItem("buywise_cart_items");
     localStorage.removeItem(QUANTITIES_KEY);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("cart-updated"));
+    }
   }, []);
 
   const moveToSavedForLater = useCallback((productId: string) => {
@@ -358,6 +415,14 @@ export function useQuickBuy() {
       localStorage.setItem(SAVED_ITEMS_KEY, JSON.stringify(next));
       return next;
     });
+    setCartItems((prev) => {
+      const next = prev.filter((item) => item.id !== productId);
+      localStorage.setItem("buywise_cart_items", JSON.stringify(next));
+      return next;
+    });
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("cart-updated"));
+    }
     // Add to saved for later
     setSavedForLaterIds((prev) => {
       if (prev.includes(productId)) return prev;
@@ -382,6 +447,22 @@ export function useQuickBuy() {
       localStorage.setItem(SAVED_ITEMS_KEY, JSON.stringify(next));
       return next;
     });
+    setCartItems((prev) => {
+      if (prev.some((item) => item.id === productId)) return prev;
+      const cached = savedForLaterProducts.find(p => p.id === productId) || allProducts.find(p => p.id === productId) || productCache[productId];
+      const next = [...prev, {
+        id: productId,
+        name: cached?.name || "Product",
+        price: cached?.price || 0,
+        image: cached?.image || "/placeholder.svg",
+        platform: (cached as any)?.platform || "Store"
+      }];
+      localStorage.setItem("buywise_cart_items", JSON.stringify(next));
+      return next;
+    });
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("cart-updated"));
+    }
   }, []);
 
   const addExpense = useCallback((product: QuickBuyProduct) => {
@@ -414,10 +495,8 @@ export function useQuickBuy() {
     return allProducts;
   }, [allProducts]);
 
-  // Derived saved items list using cache and allProducts
-  const savedProducts = savedItemIds
-    .map((id) => allProducts.find((p) => p.id === id) || productCache[id])
-    .filter((p): p is QuickBuyProduct => p !== undefined);
+  // Derived saved items list using cartItems loaded directly from localStorage
+  const savedProducts = cartItems;
 
   const savedForLaterProducts = savedForLaterIds
     .map((id) => allProducts.find((p) => p.id === id) || productCache[id])

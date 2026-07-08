@@ -87,7 +87,7 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
         reviewCount: String(p.reviewCount || "42"),
         description: String(p.description || "Recommended product matching your request."),
         platform: p.platform === "Flipkart" ? "Flipkart" : "Amazon",
-        image: String(p.image || "/placeholder.png"),
+        image: String(p.image || "/placeholder.svg"),
         link: String(p.link || "https://amazon.in"),
       }));
     } else if (parsedJson.ui_type === "deep_research_results" || parsedJson.type === "deep_research_results" || parsedJson.ui_type === "results") {
@@ -134,7 +134,7 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
         reviewCount: String(p.reviewCount || "100+"),
         description: String(p.description || "Recommended product matching your request."),
         platform: String(p.platform || "Amazon"),
-        image: String(p.image || "/placeholder.png"),
+        image: String(p.image || "/placeholder.svg"),
         link: String(p.link || "https://amazon.in"),
         badge: String(p.badge || "Recommended")
       }));

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <linearGradient id="placeholderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#312e81" stop-opacity="0.8"/>
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" rx="20" fill="url(#placeholderGrad)"/>
+  <rect width="100%" height="100%" rx="20" fill="none" stroke="#4338ca" stroke-width="2" opacity="0.3"/>
+  <g transform="translate(150, 140)" stroke="#FC8019" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.85">
+    <!-- Shopping Bag Icon -->
+    <path d="M16 11V7a4 4 0 00-8 0v4M5 9h22l2 20H3L5 9z" stroke-width="3" />
+    <circle cx="16" cy="18" r="3" fill="#FC8019" />
+  </g>
+  <text x="50%" y="270" text-anchor="middle" fill="#f4f4f5" font-family="system-ui, sans-serif" font-size="14" font-weight="600" letter-spacing="1.5" opacity="0.7">
+    BUYWISE SELECT
+  </text>
+  <text x="50%" y="295" text-anchor="middle" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11" font-weight="500" letter-spacing="0.5" opacity="0.6">
+    Live Product Preview
+  </text>
+</svg>

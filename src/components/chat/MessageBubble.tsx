@@ -266,7 +266,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
               reviewCount: String(p.reviewCount || "42"),
               description: String(p.description || "Recommended product matching your request."),
               platform: String(p.platform || p.store || fallbackPlatform),
-              image: p.image && !String(p.image).includes("placeholder.png") ? String(p.image) : getCuratedProductImage(productName),
+              image: p.image && !String(p.image).includes("placeholder.svg") ? String(p.image) : getCuratedProductImage(productName),
               link: String(p.link || p.url || `https://${fallbackPlatform.toLowerCase()}.in`),
             };
           });
@@ -325,7 +325,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
     exploreDeepDiveText = message.exploreDeepDive || "";
     exploreProductsList = message.products.map(p => ({
       ...p,
-      image: p.image && !p.image.includes("placeholder.png") ? p.image : getCuratedProductImage(p.name || "")
+      image: p.image && !p.image.includes("placeholder.svg") ? p.image : getCuratedProductImage(p.name || "")
     }));
   }
 

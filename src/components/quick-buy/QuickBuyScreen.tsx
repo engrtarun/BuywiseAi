@@ -1,321 +1,227 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuickBuy } from "@/hooks/useQuickBuy";
-import { SizeBudgetForm } from "./SizeBudgetForm";
-import { SwipeCardDeck } from "./SwipeCardDeck";
-import { SavedItemsList } from "./SavedItemsList";
-import { X, Settings2, Heart, Mic, ShoppingCart } from "lucide-react";
-import { ProfileSwitcher } from "./ProfileSwitcher";
-import { QuickBuyLockedState } from "./QuickBuyLockedState";
-import { ErrorMessageCard } from "../chat/ErrorMessageCard";
+import { X, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { CheckoutFlow } from "../checkout/CheckoutFlow";
+import { ProductImageModal } from "../chat/ProductImageModal";
 
 interface QuickBuyScreenProps {
   onClose: () => void;
 }
 
 export function QuickBuyScreen({ onClose }: QuickBuyScreenProps) {
-  const { 
-    isInitializing, 
-    isLoadingProducts,
-    preferences, 
-    savePreferences,
-    savedItemIds, 
-    savedProducts, 
-    savedForLaterIds,
-    savedForLaterProducts,
-    cartItemCount,
-    itemQuantities,
-    saveItem, 
-    removeSavedItem, 
-    updateQuantity,
-    clearCart,
-    moveToSavedForLater,
-    moveToCart,
-    getFilteredProducts,
-    hasMore,
-    fetchNextPage,
-    totalSpent,
-    addExpense,
-    profiles,
-    activeProfile,
-    createProfile,
-    switchProfile,
-    updateProfile,
-    deleteProfile,
-    fetchError,
-    retryFetch
-  } = useQuickBuy();
+  const { savedProducts, removeSavedItem, clearCart } = useQuickBuy();
   
-  const [showSettings, setShowSettings] = useState(false);
-  const previousGhostRef = React.useRef<string | null>(null);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [checkoutItems, setCheckoutItems] = useState<any[]>([]);
+  const [zoomedImage, setZoomedImage] = useState<{ url: string; name: string } | null>(null);
 
-  React.useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const root = document.documentElement;
-    previousGhostRef.current = root.getAttribute('data-ghost');
-    root.setAttribute('data-ghost', 'true');
+  const parsePrice = (priceStr: string | number): number => {
+    if (typeof priceStr === "number") return priceStr;
+    const numeric = parseFloat(priceStr.replace(/[^0-9.]/g, ""));
+    return isNaN(numeric) ? 0 : numeric;
+  };
 
-    return () => {
-      if (previousGhostRef.current === null) {
-        root.removeAttribute('data-ghost');
-      } else {
-        root.setAttribute('data-ghost', previousGhostRef.current);
-      }
-    };
-  }, []);
-  const [showAddProfileForm, setShowAddProfileForm] = useState(false);
-  const [showOnboardingForm, setShowOnboardingForm] = useState(false);
-  const [showSaved, setShowSaved] = useState(false);
+  const totalPrice = savedProducts.reduce((sum, item) => {
+    return sum + parsePrice(item.price);
+  }, 0);
 
-  const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean>(false);
+  const handleBuyClick = (item: any) => {
+    setCheckoutItems([{
+      id: item.id,
+      name: item.name,
+      price: parsePrice(item.price),
+      image: item.image,
+      quantity: 1
+    }]);
+    setIsCheckoutOpen(true);
+  };
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setHasSeenOnboarding(localStorage.getItem("buywise_quickbuy_has_seen_onboarding") === "true");
-    }
-  }, []);
-
-  // Still loading profiles or local storage
-  if (isInitializing) {
-    return (
-      <div className="absolute inset-0 z-[100] bg-bg-main flex items-center justify-center">
-        <div className="size-8 rounded-full border-4 border-brand-accent/20 border-t-brand-accent animate-spin" />
-      </div>
-    );
-  }
-
-  const isFirstTime = profiles.length === 0 && !hasSeenOnboarding;
-  const isEditingOrAdding = showSettings || showAddProfileForm || showOnboardingForm;
-
-  // Onboarding, Add or Edit Profile Form State
-  if (isFirstTime || isEditingOrAdding) {
-    const isAdding = showAddProfileForm;
-    const isEditing = showSettings;
-    const isCreatingFromLocked = showOnboardingForm;
-
-    let initialPrefs = null;
-    let initialName = "";
-    let requireName = false;
-    let onSkipProp = undefined;
-
-    if (isEditing && activeProfile) {
-      initialPrefs = preferences;
-      initialName = activeProfile.name;
-      requireName = !activeProfile.isDefault;
-    } else if (isAdding) {
-      requireName = true;
-    } else if (isFirstTime) {
-      onSkipProp = () => {
-        localStorage.setItem("buywise_quickbuy_has_seen_onboarding", "true");
-        setHasSeenOnboarding(true);
-      };
-    }
-
-    const handleFormSave = async (prefs: any, profileName?: string) => {
-      if (isEditing && activeProfile) {
-        await updateProfile(activeProfile.id, {
-          sizes: prefs.sizes,
-          preferredCategories: prefs.preferredCategories,
-          maxBudget: prefs.maxBudget,
-          name: profileName
-        });
-        setShowSettings(false);
-      } else if (isAdding) {
-        await createProfile({
-          name: profileName || "Shopper",
-          sizes: prefs.sizes,
-          preferredCategories: prefs.preferredCategories,
-          maxBudget: prefs.maxBudget
-        });
-        setShowAddProfileForm(false);
-      } else if (isCreatingFromLocked) {
-        await createProfile({
-          name: "You",
-          sizes: prefs.sizes,
-          preferredCategories: prefs.preferredCategories,
-          maxBudget: prefs.maxBudget
-        });
-        setShowOnboardingForm(false);
-      } else if (isFirstTime) {
-        localStorage.setItem("buywise_quickbuy_has_seen_onboarding", "true");
-        setHasSeenOnboarding(true);
-        await createProfile({
-          name: "You",
-          sizes: prefs.sizes,
-          preferredCategories: prefs.preferredCategories,
-          maxBudget: prefs.maxBudget
-        });
-      }
-    };
-
-    return (
-      <div className="absolute inset-0 z-[100] bg-bg-main flex flex-col">
-        {/* Simple header for settings/add profile */}
-        {(profiles.length > 0 || hasSeenOnboarding) && (
-          <div className="flex items-center justify-between px-4 py-4 border-b border-border-light bg-bg-main/80 backdrop-blur-md shrink-0">
-            <button 
-              onClick={() => {
-                setShowSettings(false);
-                setShowAddProfileForm(false);
-                setShowOnboardingForm(false);
-              }} 
-              className="p-2 -ml-2 rounded-full hover:bg-white/5 text-text-primary-light transition-colors cursor-pointer"
-            >
-              <X className="size-6" />
-            </button>
-            <div className="font-bold text-text-primary-light">
-              {isEditing ? "Quick Buy Settings" : "Create Shopper Profile"}
-            </div>
-            <div className="w-10" />
-          </div>
-        )}
-        
-        <SizeBudgetForm 
-          initialPreferences={initialPrefs} 
-          requireName={requireName}
-          initialName={initialName}
-          onSkip={onSkipProp}
-          onSave={handleFormSave} 
-        />
-        
-        {/* Allow closing the entire screen if they don't want to set preferences or back out */}
-        {profiles.length === 0 && !hasSeenOnboarding && (
-          <button 
-            onClick={onClose} 
-            className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white z-50 transition-all active:scale-95 cursor-pointer"
-          >
-            <X className="size-6" />
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  // Locked state if user skipped onboarding and has zero profiles
-  if (profiles.length === 0 && hasSeenOnboarding) {
-    return (
-      <QuickBuyLockedState
-        onCreateProfile={() => setShowOnboardingForm(true)}
-        onClose={onClose}
-      />
-    );
-  }
-
-  if (showSaved) {
-    return (
-      <div className="absolute inset-0 z-[100] bg-bg-main">
-        <SavedItemsList 
-          items={savedProducts} 
-          savedForLaterItems={savedForLaterProducts}
-          itemQuantities={itemQuantities}
-          onBack={() => setShowSaved(false)} 
-          onRemove={removeSavedItem} 
-          onUpdateQuantity={updateQuantity}
-          onClearCart={clearCart}
-          onMoveToSavedForLater={moveToSavedForLater}
-          onMoveToCart={moveToCart}
-        />
-      </div>
-    );
-  }
-
-  const filteredProducts = getFilteredProducts();
+  const handleCheckoutAll = () => {
+    if (savedProducts.length === 0) return;
+    setCheckoutItems(savedProducts.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: parsePrice(item.price),
+      image: item.image,
+      quantity: 1
+    })));
+    setIsCheckoutOpen(true);
+  };
 
   return (
-    <div className="absolute inset-0 z-[100] bg-bg-main flex flex-col overflow-hidden animate-in fade-in duration-300">
-      
-      {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 sm:py-4 border-b border-border-light bg-bg-main/80 backdrop-blur-md relative z-10">
-        <button
+    <>
+      <div className="fixed inset-0 z-[150] flex justify-end">
+        {/* Backdrop (Dark overlay with blur) */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           onClick={onClose}
-          className="flex items-center gap-2 px-3 py-2 -ml-3 rounded-full hover:bg-white/5 text-text-primary-light transition-colors font-medium"
-        >
-          <X className="size-5" />
-          <span className="hidden sm:inline">Back to Chat</span>
-        </button>
-        
-        <div className="flex items-center gap-2 sm:gap-3">
-          {profiles.length >= 1 && activeProfile && (
-            <ProfileSwitcher
-              profiles={profiles}
-              activeProfile={activeProfile}
-              switchProfile={switchProfile}
-              deleteProfile={deleteProfile}
-              onAddProfile={() => setShowAddProfileForm(true)}
-              onEditProfile={() => setShowSettings(true)}
-            />
-          )}
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+        />
 
-          <div className="flex flex-col gap-1 relative group" title="Change Budget & Sizes">
-            <button
-              onClick={() => setShowSettings(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 transition-colors"
-            >
-              <span className="text-xs font-medium text-text-secondary hidden sm:inline">Budget:</span>
-              <span className="text-sm font-bold text-brand-accent">
-                {preferences?.maxBudget ? `₹${preferences.maxBudget}` : "Any"}
-              </span>
-              <Settings2 className="size-3.5 text-text-secondary group-hover:text-text-primary-light" />
-            </button>
-            
-            {/* Dynamic Budget Progress Bar */}
-            {preferences?.maxBudget ? (
-              <div className="w-full bg-black/40 h-[4px] rounded-full overflow-hidden absolute -bottom-1 left-0 shadow-inner">
-                {(() => {
-                  const max = preferences.maxBudget;
-                  const spent = totalSpent;
-                  const percentage = Math.min((spent / max) * 100, 100);
-                  let colorClass = "bg-green-500";
-                  if (percentage >= 80) colorClass = "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)] animate-pulse";
-                  else if (percentage >= 50) colorClass = "bg-brand-accent";
-                  
-                  return (
-                    <div 
-                      className={`h-full transition-all duration-500 ease-out ${colorClass}`}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  );
-                })()}
+        {/* Drawer Panel */}
+        <motion.div
+          initial={{ x: "100%" }}
+          animate={{ x: 0 }}
+          exit={{ x: "100%" }}
+          transition={{ type: "spring", damping: 25, stiffness: 220 }}
+          className="relative w-full max-w-md bg-bg-main border-l border-white/10 h-full flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.8)] z-10"
+        >
+          {/* Header */}
+          <div className="shrink-0 flex items-center justify-between px-6 py-5 border-b border-white/5 bg-black/10">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-brand-accent/10 border border-brand-accent/20 text-brand-accent">
+                <ShoppingBag className="size-5" />
               </div>
-            ) : null}
+              <div>
+                <h2 className="font-heading font-bold text-lg text-text-ondark">Your Cart</h2>
+                <p className="text-xs text-text-dim-ondark mt-0.5">
+                  {savedProducts.length} {savedProducts.length === 1 ? "item" : "items"} selected
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white transition-all active:scale-95 cursor-pointer"
+              aria-label="Close cart"
+            >
+              <X className="size-5" />
+            </button>
           </div>
-          <button
-            onClick={() => setShowSaved(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-text-primary-light transition-colors relative"
-          >
-            <ShoppingCart className="size-4.5 text-brand-accent" />
-            {cartItemCount > 0 && (
-              <span className="font-bold text-[13px]">{cartItemCount}</span>
+
+          {/* Cart Items List */}
+          <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-4 scrollbar-hide">
+            {savedProducts.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-8">
+                <div className="size-16 rounded-full bg-white/[0.03] border border-white/5 flex items-center justify-center text-text-dim-ondark mb-5">
+                  <ShoppingBag className="size-8 stroke-[1.5]" />
+                </div>
+                <h3 className="font-heading font-bold text-lg text-text-ondark mb-2">Your cart is empty</h3>
+                <p className="text-sm text-text-secondary max-w-xs leading-relaxed">
+                  Browse products and click the add-to-cart button to see recommendations and items listed here.
+                </p>
+                <button
+                  onClick={onClose}
+                  className="mt-6 px-6 py-2.5 rounded-xl bg-brand-accent text-bg-main font-bold text-sm hover:brightness-110 active:scale-95 transition-all shadow-lg cursor-pointer"
+                >
+                  Start Shopping
+                </button>
+              </div>
+            ) : (
+              savedProducts.map((item) => (
+                <div
+                  key={item.id}
+                  className="group flex gap-4 p-4 bg-zinc-900/40 hover:bg-zinc-900/60 border border-white/5 rounded-2xl transition-all duration-300 relative overflow-hidden"
+                >
+                  {/* Product Image */}
+                  <div 
+                    onClick={() => setZoomedImage({ url: item.image, name: item.name })}
+                    className="size-20 rounded-xl bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center shrink-0 cursor-zoom-in relative"
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-cover select-none group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+
+                  {/* Details */}
+                  <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                    <div>
+                      <h4 className="font-sans font-bold text-sm text-text-ondark leading-tight truncate group-hover:text-brand-accent transition-colors" title={item.name}>
+                        {item.name}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] font-bold text-text-dim-ondark uppercase tracking-wider font-mono bg-white/5 border border-white/5 px-1.5 py-0.5 rounded">
+                          {item.platform}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-base font-mono font-black text-brand-accent">
+                      {String(item.price).startsWith("₹")
+                        ? String(item.price)
+                        : `₹${Number(item.price).toLocaleString()}`}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex flex-col items-end justify-between ml-2 shrink-0">
+                    <button
+                      onClick={() => removeSavedItem(item.id)}
+                      className="p-1.5 rounded-lg text-text-secondary hover:text-chili hover:bg-chili/10 transition-colors cursor-pointer"
+                      title="Remove from cart"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+
+                    <button
+                      onClick={() => handleBuyClick(item)}
+                      className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-brand-accent hover:text-bg-main hover:border-brand-accent transition-all duration-300 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      Buy Now
+                    </button>
+                  </div>
+                </div>
+              ))
             )}
-          </button>
-        </div>
+          </div>
+
+          {/* Footer / Summary */}
+          {savedProducts.length > 0 && (
+            <div className="shrink-0 p-6 border-t border-white/5 bg-black/10 flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-text-secondary font-medium">Subtotal</span>
+                <span className="text-xl font-mono font-black text-brand-accent">
+                  ₹{totalPrice.toLocaleString()}
+                </span>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={clearCart}
+                  className="w-1/3 py-4 rounded-xl border border-white/10 font-bold text-xs text-text-secondary hover:bg-white/5 hover:text-white transition-colors flex items-center justify-center cursor-pointer"
+                >
+                  Clear Cart
+                </button>
+                <button
+                  onClick={handleCheckoutAll}
+                  className="w-2/3 py-4 rounded-xl bg-brand-accent text-bg-main font-bold text-xs hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,176,103,0.3)] cursor-pointer"
+                >
+                  Checkout All
+                  <ArrowRight className="size-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </motion.div>
       </div>
 
-      {/* Swipe Deck */}
-      {fetchError ? (
-        <div className="flex-1 flex items-center justify-center p-6">
-          <ErrorMessageCard 
-            errorType="generic" 
-            onRetry={retryFetch} 
-          />
-        </div>
-      ) : isLoadingProducts ? (
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <div className="size-8 rounded-full border-4 border-brand-accent/20 border-t-brand-accent animate-spin mb-4" />
-          <p className="text-text-secondary font-medium animate-pulse">Loading live collection...</p>
-        </div>
-      ) : (
-        <SwipeCardDeck 
-          products={filteredProducts} 
-          onSave={saveItem} 
-          onOpenSettings={() => setShowSettings(true)}
-          hasMore={hasMore}
-          onPrefetch={fetchNextPage}
-          onBuy={addExpense}
+      {/* Checkout Modal Flow */}
+      <CheckoutFlow
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        items={checkoutItems}
+        onSuccess={() => {
+          setIsCheckoutOpen(false);
+          clearCart();
+        }}
+      />
+
+      {/* Zoom Image Modal */}
+      {zoomedImage && (
+        <ProductImageModal
+          isOpen={!!zoomedImage}
+          onClose={() => setZoomedImage(null)}
+          imageUrl={zoomedImage.url}
+          productName={zoomedImage.name}
         />
       )}
-
-    </div>
+    </>
   );
 }

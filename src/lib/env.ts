@@ -36,7 +36,7 @@ const clientEnvSchema = z
 
 const serverEnvSchema = clientEnvSchema.extend({
   GEMINI_API_KEYS: z.string().trim().min(1, "GEMINI_API_KEYS is required").transform(val => val.split(',').map(s => s.trim()).filter(Boolean)),
-  GROQ_API_KEY: z.string().trim().optional().transform(val => val ? val.split(',').map(s => s.trim()).filter(Boolean) : []),
+  GROQ_API_KEY: z.string().trim().optional().transform(val => val ? val.split(',').map(s => s.trim()).filter(k => k.startsWith("gsk_")) : []),
   // Optional: when absent the app falls back to FakeStore product data.
   SERPER_API_KEY: z.string().trim().optional(),
   UPSTASH_VECTOR_REST_URL: z.string().trim().optional(),
@@ -69,7 +69,7 @@ const fallbackEnv = {
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
   ...(isServer ? { 
     GEMINI_API_KEYS: (process.env.GEMINI_API_KEYS || "").split(',').map(s => s.trim()).filter(Boolean),
-    GROQ_API_KEY: (process.env.GROQ_API_KEY || "").split(',').map(s => s.trim()).filter(Boolean),
+    GROQ_API_KEY: (process.env.GROQ_API_KEY || "").split(',').map(s => s.trim()).filter(k => k.startsWith("gsk_")),
     SERPER_API_KEY: process.env.SERPER_API_KEY,
     UPSTASH_VECTOR_REST_URL: process.env.UPSTASH_VECTOR_REST_URL,
     UPSTASH_VECTOR_REST_TOKEN: process.env.UPSTASH_VECTOR_REST_TOKEN

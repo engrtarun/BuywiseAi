@@ -9,6 +9,31 @@ interface QuickBuyButtonProps {
 }
 
 export function QuickBuyButton({ onClick }: QuickBuyButtonProps) {
+  const [count, setCount] = React.useState(0);
+
+  const updateCount = React.useCallback(() => {
+    try {
+      const stored = localStorage.getItem("buywise_cart_items");
+      if (stored) {
+        setCount(JSON.parse(stored).length);
+      } else {
+        setCount(0);
+      }
+    } catch {
+      setCount(0);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    updateCount();
+    window.addEventListener("cart-updated", updateCount);
+    window.addEventListener("storage", updateCount);
+    return () => {
+      window.removeEventListener("cart-updated", updateCount);
+      window.removeEventListener("storage", updateCount);
+    };
+  }, [updateCount]);
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -26,6 +51,14 @@ export function QuickBuyButton({ onClick }: QuickBuyButtonProps) {
         >
           <ShoppingBag className="size-4.5 text-text-primary-dark group-hover:text-brand-accent transition-colors duration-300" />
           
+          {count > 0 && (
+            <span className="
+              absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-chili px-1 text-[9px] font-bold text-white shadow-md animate-in zoom-in duration-200
+            ">
+              {count}
+            </span>
+          )}
+
           {/* Subtle glow effect on hover */}
           <div className="absolute inset-0 rounded-full bg-brand-accent opacity-0 group-hover:opacity-20 blur-md transition-opacity duration-300 pointer-events-none" />
         </button>

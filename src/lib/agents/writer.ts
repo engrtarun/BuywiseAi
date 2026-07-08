@@ -154,7 +154,6 @@ Step 3 — OFFER ONE STRETCH OPTION.
 After in-budget options, offer exactly one product ~10-15% above budget.
 Frame as "worth mentioning", give a clear reason, reassure in-budget options are solid too.
 Skip entirely if user asked for "cheapest" or showed strong price sensitivity.
-
 Step 4 — HANDLING FOLLOW-UPS & PIVOTS (CRITICAL).
 If the user asks a follow-up question (e.g., "What about a cheaper one?", "Does it have 16GB RAM?"), OR if they change their requirements entirely, DO NOT just re-show the same products.
 - If their new request is ambiguous or you need more details, YOU MUST GO BACK TO STEP 1 and output a \`clarifying_question\`.
@@ -213,7 +212,7 @@ If you have gathered enough details (or the user insists on results), return ONL
       "reviewCount": "1200",
       "description": "Short description of key features.",
       "platform": "...", // CRITICAL: COPY EXACTLY from injected data! Do NOT hallucinate platforms!
-      "image": "/placeholder.png",
+      "image": "/placeholder.svg",
       "link": "https://example.in",
       "badge": "Best Overall"
     }
@@ -439,6 +438,8 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
     const groqData = await groqRes.json();
     text = groqData.choices[0].message.content;
   }
+
+  console.log("[writer] Raw LLM text output:", text);
 
   let responseTexts: string[] = [text];
   let serperProducts: SearchedProduct[] = products;
