@@ -296,11 +296,12 @@ export function useQuickBuy() {
       if (prev.includes(productId)) return prev;
       const next = [...prev, productId];
       localStorage.setItem(SAVED_ITEMS_KEY, JSON.stringify(next));
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("cart-updated"));
-      }
       return next;
     });
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("cart-updated"));
+    }
 
     if (!product) {
       console.warn("Quick Buy save skipped because product data was not available in the current catalog.");
@@ -328,11 +329,11 @@ export function useQuickBuy() {
     setSavedItemIds((prev) => {
       const next = prev.filter((id) => id !== productId);
       localStorage.setItem(SAVED_ITEMS_KEY, JSON.stringify(next));
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("cart-updated"));
-      }
       return next;
     });
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("cart-updated"));
+    }
     setItemQuantities((prev) => {
       const next = { ...prev };
       delete next[productId];
@@ -365,11 +366,11 @@ export function useQuickBuy() {
     setSavedItemIds((prev) => {
       const next = prev.filter((id) => id !== productId);
       localStorage.setItem(SAVED_ITEMS_KEY, JSON.stringify(next));
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("cart-updated"));
-      }
       return next;
     });
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("cart-updated"));
+    }
     // Add to saved for later
     setSavedForLaterIds((prev) => {
       if (prev.includes(productId)) return prev;
@@ -392,11 +393,11 @@ export function useQuickBuy() {
       if (prev.includes(productId)) return prev;
       const next = [...prev, productId];
       localStorage.setItem(SAVED_ITEMS_KEY, JSON.stringify(next));
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("cart-updated"));
-      }
       return next;
     });
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("cart-updated"));
+    }
   }, []);
 
   const addExpense = useCallback((product: QuickBuyProduct) => {
