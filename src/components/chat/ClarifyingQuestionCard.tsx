@@ -32,7 +32,8 @@ export function ClarifyingQuestionCard({
   const [hasAnswered, setHasAnswered] = useState(false);
 
   // Normalize options array into a standard array of objects
-  const normalizedOptions = options.map((opt, idx) => {
+  const safeOptions = Array.isArray(options) ? options : [];
+  const normalizedOptions = safeOptions.map((opt, idx) => {
     if (typeof opt === "string") {
       return { id: String(idx + 1), label: opt, value: opt };
     }
