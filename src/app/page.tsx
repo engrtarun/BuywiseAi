@@ -440,6 +440,23 @@ export default function Page() {
           return;
         }
 
+        const contentType = response.headers.get("Content-Type") || "";
+        if (contentType.includes("application/json")) {
+          const errorData = await response.json();
+          // Generate a temporary ID
+          const tempMsgId = generateId();
+          const fallbackText = Array.isArray(errorData.text) ? errorData.text[0] : (errorData.text || "An error occurred.");
+          const aiMsg = parseAiMessageContent(tempMsgId, fallbackText);
+          
+          setChatSessions((prev) =>
+            prev.map((s) =>
+              s.id === chatId ? { ...s, messages: [...s.messages, aiMsg] } : s
+            )
+          );
+          setIsTyping(false);
+          return;
+        }
+
         const reader = response.body?.getReader();
         if (!reader) throw new Error("No readable stream available");
         
