@@ -61,6 +61,15 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
         category: parsedJson.category || "category",
         key_attributes: Array.isArray(parsedJson.key_attributes) ? parsedJson.key_attributes : [],
       };
+    } else if (parsedJson.ui_type === "clarifying_question" || parsedJson.ui_type === "questionnaire") {
+      aiMsg.content = rawContent; // Allow MessageBubble to parse the raw JSON for the clarifying question
+      aiMsg.clarifyingQuestion = {
+        acknowledgement: parsedJson.thought || "",
+        question: parsedJson.question || "",
+        options: parsedJson.options || [],
+        allow_skip: parsedJson.allow_skip,
+        allow_custom: parsedJson.allow_custom
+      };
     } else if (parsedJson.ui_type === "explore_carousel") {
       const combinedText = `${parsedJson.headline || ""}\n\n${parsedJson.deep_dive || ""}`;
       const parts = getExploreLayoutParts(combinedText);
