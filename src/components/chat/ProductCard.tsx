@@ -167,6 +167,12 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
           alt={product.name}
           decoding="async"
           onLoad={() => setImageLoaded(true)}
+          onError={(e) => {
+            if (!e.currentTarget.src.includes('unsplash')) {
+              e.currentTarget.src = "https://images.unsplash.com/photo-1555529771-835f59fc5efe?auto=format&fit=crop&w=500&q=80";
+              setImageLoaded(true);
+            }
+          }}
           className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           loading="lazy"
         />

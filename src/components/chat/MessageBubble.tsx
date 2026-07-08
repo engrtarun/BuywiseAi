@@ -366,18 +366,18 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
     }
 
     // Fixed Sandwich Sequence parsing
-    const feeling20Match = exploreIntroText.match(/<feeling_20>([\s\S]*?)<\/feeling_20>/);
+    const feeling20Match = exploreIntroText.match(/<feeling_20>?([\s\S]*?)(?:<\/feeling_20>|$)/);
     if (feeling20Match) {
       exploreIntroText = feeling20Match[1].trim();
     } else {
-      exploreIntroText = exploreIntroText.replace(/<\/?feeling_20>/g, "").trim();
+      exploreIntroText = exploreIntroText.replace(/<\/?feeling_20>?/g, "").trim();
     }
 
-    const target80Match = exploreDeepDiveTextToRender.match(/<target_80>([\s\S]*?)<\/target_80>/);
+    const target80Match = exploreDeepDiveTextToRender.match(/<target_80>?([\s\S]*?)(?:<\/target_80>|$)/);
     if (target80Match) {
       exploreDeepDiveTextToRender = target80Match[1].trim();
     } else {
-      exploreDeepDiveTextToRender = exploreDeepDiveTextToRender.replace(/<\/?target_80>/g, "").trim();
+      exploreDeepDiveTextToRender = exploreDeepDiveTextToRender.replace(/<\/?target_80>?/g, "").trim();
     }
   }
 

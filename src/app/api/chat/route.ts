@@ -37,7 +37,8 @@ import fs from "fs";
 import path from "path";
 // removed routerAgent import
 import { searchForProducts, type SearchedProduct } from "@/lib/agents/search";
-import { runWriter } from "@/lib/agents/writer";
+import { runWriter, EXPLORE_SYSTEM_PROMPT, DEEP_RESEARCH_SYSTEM_PROMPT } from "@/lib/agents/writer";
+import { getNextGroqKey } from "@/lib/agents/keyManager";
 import { executeRerankedSearch } from "@/lib/providers/test-serper";
 import type { RerankedContext } from "@/lib/retrieval/index";
 import { executeGenerativeOrchestration } from "@/lib/guardrails/apiOrchestrator";
@@ -194,7 +195,7 @@ export async function POST(req: NextRequest) {
           systemInstruction: explanationPrompt,
           formattedHistory,
           effectiveUserMessage: "Provide explanation",
-          groqApiKey: process.env.GROQ_API_KEY,
+          groqApiKey: getNextGroqKey(),
           historyForGroq: history.map((m) => ({ role: m.role ?? "user", content: m.content ?? "" }))
         });
 
@@ -396,10 +397,13 @@ export async function POST(req: NextRequest) {
         } catch (streamErr: any) {
           console.warn("Switching to Groq streaming fallback orchestration channel...", streamErr.message || streamErr);
           try {
-            const activeGroqKey = process.env.GROQ_API_KEY;
+            const activeGroqKey = getNextGroqKey();
             if (!activeGroqKey) throw new Error("Groq credentials pool unavailable.");
 
-            const systemInstruction = "You are BuyWise AI. Follow your strict mode instructions.";
+            let systemInstruction = mode === "deep_research" ? DEEP_RESEARCH_SYSTEM_PROMPT : EXPLORE_SYSTEM_PROMPT;
+            if (backendContext.context && Object.keys(backendContext.context).length > 0) {
+              systemInstruction += `\\n\\nUser's accumulated session context (including linguistic fingerprint): ${JSON.stringify(backendContext.context)}`;
+            }
 
             const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
               method: "POST",
