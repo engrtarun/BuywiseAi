@@ -3,7 +3,6 @@ import { Product } from "@/types/product";
 import { Star, ExternalLink, ShoppingCart, Loader2, ChevronRight, Check } from "lucide-react";
 import { CheckoutFlow } from "../checkout/CheckoutFlow";
 import { ProductBottomSheet } from "./ProductBottomSheet";
-import { getCuratedProductImage } from "@/utils/productImage";
 
 interface ProductCardProps {
   product: Product;
@@ -68,32 +67,6 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [inCart, setInCart] = useState(false);
-  
-  const [imageSrc, setImageSrc] = useState<string>(() => {
-    const rawImg = product.image || "";
-    if (!rawImg || rawImg.includes("placeholder.png")) {
-      return getCuratedProductImage(product.name);
-    }
-    return rawImg;
-  });
-
-  const handleImageError = () => {
-    const fallbackImg = getCuratedProductImage(product.name);
-    if (imageSrc !== fallbackImg) {
-      setImageSrc(fallbackImg);
-    } else {
-      setImageLoaded(true);
-    }
-  };
-
-  useEffect(() => {
-    const rawImg = product.image || "";
-    if (!rawImg || rawImg.includes("placeholder.png")) {
-      setImageSrc(getCuratedProductImage(product.name));
-    } else {
-      setImageSrc(rawImg);
-    }
-  }, [product.image, product.name]);
   
   // Hydrate local state from local storage persistence
   useEffect(() => {
@@ -190,11 +163,10 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
         
         {/* Image */}
         <img
-          src={imageSrc}
+          src={product.image}
           alt={product.name}
           decoding="async"
           onLoad={() => setImageLoaded(true)}
-          onError={handleImageError}
           className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           loading="lazy"
         />
