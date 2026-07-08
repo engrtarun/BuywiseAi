@@ -61,18 +61,41 @@ export function repairPartialJson(jsonString: string): string {
   return repaired;
 }
 
+function extractJsonBlock(text: string): string {
+  // First try to extract from markdown code blocks
+  const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (jsonMatch && jsonMatch[1]) {
+    return jsonMatch[1].trim();
+  }
+  
+  // If still streaming or no closing block, find the first '{' or '['
+  const firstBrace = text.indexOf('{');
+  const firstBracket = text.indexOf('[');
+  let startIndex = -1;
+  if (firstBrace !== -1 && firstBracket !== -1) startIndex = Math.min(firstBrace, firstBracket);
+  else if (firstBrace !== -1) startIndex = firstBrace;
+  else if (firstBracket !== -1) startIndex = firstBracket;
+
+  if (startIndex !== -1) {
+    return text.substring(startIndex).replace(/```$/, "").trim();
+  }
+
+  // Fallback to old behavior
+  return text.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
+}
+
 /**
  * Attempts to parse an incomplete JSON string by virtually repairing it first.
  * Returns parsed object or null if it cannot be repaired.
  */
 export function parsePartialJson<T = any>(jsonString: string): T | null {
   try {
-    const cleaned = jsonString.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
+    const cleaned = extractJsonBlock(jsonString);
     if (!cleaned) return null;
     return JSON.parse(cleaned) as T;
   } catch (e1) {
     try {
-      const cleaned = jsonString.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
+      const cleaned = extractJsonBlock(jsonString);
       const repaired = repairPartialJson(cleaned);
       return JSON.parse(repaired) as T;
     } catch (e2) {

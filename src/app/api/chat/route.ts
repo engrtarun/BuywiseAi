@@ -358,7 +358,24 @@ export async function POST(req: NextRequest) {
           // Once the stream finishes, save the full response to context
           let assistantCleanText = "";
           let confirmedCategory: string | null = null;
-          let fullJsonResponse = fullResponse.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
+          let fullJsonResponse = fullResponse;
+          const jsonBlockMatch = fullResponse.match(/```(?:json)?\s*([\s\S]*?)```/i);
+          if (jsonBlockMatch && jsonBlockMatch[1]) {
+            fullJsonResponse = jsonBlockMatch[1].trim();
+          } else {
+            const firstBrace = fullResponse.indexOf('{');
+            const firstBracket = fullResponse.indexOf('[');
+            let startIndex = -1;
+            if (firstBrace !== -1 && firstBracket !== -1) startIndex = Math.min(firstBrace, firstBracket);
+            else if (firstBrace !== -1) startIndex = firstBrace;
+            else if (firstBracket !== -1) startIndex = firstBracket;
+            
+            if (startIndex !== -1) {
+              fullJsonResponse = fullResponse.substring(startIndex).replace(/```$/, "").trim();
+            } else {
+              fullJsonResponse = fullResponse.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
+            }
+          }
           try {
             const parsedRes = JSON.parse(fullJsonResponse);
             if (parsedRes.fingerprint && parsedRes.fingerprint.language) {
