@@ -62,8 +62,7 @@ export function DeepResearchClarifyingCard({
   // Normalize options array into a standard array of objects
   const normalizedOptions = React.useMemo(() => {
     if (!currentQ) return [];
-    const safeOptions = Array.isArray(currentQ.options) ? currentQ.options : [];
-    return safeOptions.map((opt, idx) => {
+    return currentQ.options.map((opt, idx) => {
       if (typeof opt === "string") {
         return { id: String(idx + 1), label: opt, value: opt };
       }

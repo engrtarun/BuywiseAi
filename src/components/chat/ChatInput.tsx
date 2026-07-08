@@ -249,15 +249,15 @@ export function ChatInput({
 
   if (guestLimitReached || dailyLimitReached) {
     return (
-      <div className="shrink-0 bg-bg-main border-t border-border-light px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-4 z-20 transition-opacity duration-300">
+      <div className="shrink-0 bg-background border-t border-border px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-4 z-20 transition-opacity duration-300">
         <div className="w-full max-w-3xl mx-auto">
           {guestLimitReached ? (
             <button
               onClick={onLoginClick}
               className="
                 w-full flex items-center justify-between gap-3 px-4 py-3.5 
-                rounded-2xl bg-white/[0.03] border border-marigold/30 
-                text-text-secondary text-[15px] cursor-pointer hover:bg-white/[0.05] 
+                rounded-2xl bg-muted/40 border border-primary/30 
+                text-muted-foreground text-[15px] cursor-pointer hover:bg-muted/65 
                 transition-colors group
               "
             >
@@ -279,7 +279,7 @@ export function ChatInput({
 
   if (userMessageCount >= 50) {
     return (
-      <div className="shrink-0 bg-bg-main border-t border-border-light px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-6 z-20 transition-opacity duration-300">
+      <div className="shrink-0 bg-background border-t border-border px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-6 z-20 transition-opacity duration-300">
         <div className="w-full max-w-md mx-auto flex flex-col items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <button
             onClick={() => onNewChat && onNewChat(mode || "explore")}
@@ -301,14 +301,14 @@ export function ChatInput({
   }
 
   return (
-    <div className={`shrink-0 bg-bg-main border-t border-border-light px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-4 z-20 transition-opacity duration-300 ${guestLimitReached ? "opacity-60" : ""}`}>
+    <div className={`shrink-0 bg-background border-t border-border px-3 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] sm:px-4 sm:py-4 z-20 transition-opacity duration-300 ${guestLimitReached ? "opacity-60" : ""}`}>
       <div className="w-full max-w-3xl mx-auto flex flex-col gap-2 relative">
       
         {/* Smart UX Trigger Toast */}
         {showUpgradeToast && (
           <div className="absolute bottom-[calc(100%+12px)] left-0 right-0 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-none">
-            <div className="mx-auto w-fit bg-bg-input border border-border-light shadow-none rounded-xl px-5 py-3 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 pointer-events-auto">
-              <span className="text-white text-[13px] font-medium text-center sm:text-left">
+            <div className="mx-auto w-fit bg-card border border-border shadow-none rounded-xl px-5 py-3 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 pointer-events-auto">
+              <span className="text-foreground text-[13px] font-medium text-center sm:text-left">
                 Tired of waiting? Get Pro for Instant Responses!
               </span>
               <button
@@ -316,7 +316,7 @@ export function ChatInput({
                   setShowUpgradeToast(false);
                   openPremium();
                 }}
-                className="bg-bg-main hover:bg-white/5 text-text-primary-light font-bold text-xs px-4 py-2 rounded-lg transition-all whitespace-nowrap active:scale-95 border border-border-light"
+                className="bg-background hover:bg-muted text-foreground font-bold text-xs px-4 py-2 rounded-lg transition-all whitespace-nowrap active:scale-95 border border-border"
               >
                 Upgrade Now
               </button>
@@ -330,8 +330,8 @@ export function ChatInput({
             onClick={onStop}
             className="
               self-center flex items-center gap-2 px-4 py-2 rounded-lg
-              bg-bg-input border border-border-light text-text-secondary text-[13px] font-sans
-              hover:border-border-dark hover:text-text-primary-light active:scale-[0.97]
+              bg-card border border-border text-muted-foreground text-[13px] font-sans
+              hover:border-border hover:text-foreground active:scale-[0.97]
               transition-all duration-200 touch-manipulation cursor-pointer
               animate-in fade-in slide-in-from-bottom-1 duration-200
             "
@@ -341,19 +341,19 @@ export function ChatInput({
           </button>
         )}
  
-        <div className="flex flex-col bg-bg-input rounded-xl border border-border-light focus-within:border-brand-accent/50 transition-colors shadow-none overflow-hidden">
+        <div className="flex flex-col bg-card rounded-xl border border-border focus-within:border-primary/50 transition-colors shadow-none overflow-hidden">
           {/* Toolbar with Mode Badge and Formatting Options */}
-          <div className="flex items-center justify-between px-3 py-1.5 border-b border-border-light bg-black/[0.03] dark:bg-black/15 select-none">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs font-semibold text-text-primary-light animate-in fade-in duration-200">
+          <div className="flex items-center justify-between px-3 py-1.5 border-b border-border bg-muted/40 select-none">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted border border-border text-xs font-semibold text-foreground animate-in fade-in duration-200">
               {mode === "deep_research" ? (
                 <>
-                  <Brain className="size-3 text-marigold" />
-                  <span className="text-text-secondary">Deep Research</span>
+                  <Brain className="size-3 text-primary" />
+                  <span className="text-muted-foreground">Deep Research</span>
                 </>
               ) : (
                 <>
-                  <Compass className="size-3 text-marigold" />
-                  <span className="text-text-secondary">Explore Mode</span>
+                  <Compass className="size-3 text-primary" />
+                  <span className="text-muted-foreground">Explore Mode</span>
                 </>
               )}
             </div>
@@ -365,7 +365,7 @@ export function ChatInput({
                     type="button"
                     onClick={handleEnhancePrompt}
                     disabled={!inputText.trim()}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-brand-accent bg-brand-accent/10 hover:bg-brand-accent/20 transition-colors active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border border-brand-accent/20"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-primary bg-primary/10 hover:bg-primary/20 transition-colors active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border border-primary/20"
                     aria-label="Enhance Prompt"
                   >
                     <Sparkles className="size-4" />
@@ -388,7 +388,7 @@ export function ChatInput({
                 }
                 setIsQuickMenuOpen(!isQuickMenuOpen);
               }}
-              className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-text-secondary hover:text-text-primary-light self-end mb-[2px] ${isDisabled ? "opacity-40 cursor-not-allowed" : ""}`}
+              className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-muted border border-border hover:bg-muted/80 transition-colors text-muted-foreground hover:text-foreground self-end mb-[2px] ${isDisabled ? "opacity-40 cursor-not-allowed" : ""}`}
               aria-label="Quick Actions"
               data-tour-id="mode-selector"
             >
@@ -406,9 +406,9 @@ export function ChatInput({
             <div className="relative flex-1 flex min-h-[44px] sm:min-h-[48px]" data-tour-id="tour-chat-input">
               {/* Slash Commands Popover */}
               {showSlashCommands && availableCommands.length > 0 && (
-                <div className="absolute bottom-full left-0 mb-2 w-64 bg-[#1a1b26]/95 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
-                  <div className="px-3 py-2 border-b border-white/10 bg-black/20">
-                    <span className="text-[10px] font-sans font-bold text-text-secondary uppercase tracking-wider">Quick Actions</span>
+                <div className="absolute bottom-full left-0 mb-2 w-64 bg-card/95 backdrop-blur-md border border-border rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+                  <div className="px-3 py-2 border-b border-border bg-muted/40">
+                    <span className="text-[10px] font-sans font-bold text-muted-foreground uppercase tracking-wider">Quick Actions</span>
                   </div>
                   <div className="flex flex-col py-1">
                     {availableCommands.map((cmd, idx) => {
@@ -417,12 +417,12 @@ export function ChatInput({
                         <button
                           key={cmd.id}
                           onClick={() => executeSlashCommand(cmd)}
-                          className={`flex items-center gap-3 px-3 py-2 text-left w-full transition-colors ${idx === slashSelectedIndex ? "bg-white/10" : "hover:bg-white/5"}`}
+                          className={`flex items-center gap-3 px-3 py-2 text-left w-full transition-colors ${idx === slashSelectedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
                         >
-                          <Icon className={`size-4 ${idx === slashSelectedIndex ? "text-marigold" : "text-text-secondary"}`} />
+                          <Icon className={`size-4 ${idx === slashSelectedIndex ? "text-primary" : "text-muted-foreground"}`} />
                           <div className="flex flex-col">
-                            <span className={`text-[13px] font-sans font-medium ${idx === slashSelectedIndex ? "text-text-primary-light" : "text-text-primary-light/80"}`}>{cmd.label}</span>
-                            <span className="text-[10px] text-text-secondary">{cmd.description}</span>
+                            <span className={`text-[13px] font-sans font-medium ${idx === slashSelectedIndex ? "text-foreground" : "text-foreground/80"}`}>{cmd.label}</span>
+                            <span className="text-[10px] text-muted-foreground">{cmd.description}</span>
                           </div>
                         </button>
                       );
@@ -435,14 +435,14 @@ export function ChatInput({
               {!inputText && (
                 <div className="absolute inset-0 pointer-events-none px-4 flex items-center overflow-hidden">
                   {isClarifyingActive ? (
-                    <span className="absolute left-4 right-4 text-[15px] text-text-secondary font-sans truncate opacity-100">
+                    <span className="absolute left-4 right-4 text-[15px] text-muted-foreground font-sans truncate opacity-100">
                       Or reply directly...
                     </span>
                   ) : placeholders.map((text, i) => (
                     <span
                       key={i}
                       className={`
-                      absolute left-4 right-4 text-[15px] text-text-secondary font-sans truncate
+                      absolute left-4 right-4 text-[15px] text-muted-foreground font-sans truncate
                       transition-all duration-500 ease-in-out
                       ${i === placeholderIndex
                           ? "opacity-100 translate-y-0"
@@ -470,7 +470,7 @@ export function ChatInput({
                 minRows={1}
                 maxRows={5}
                 disabled={guestLimitReached || dailyLimitReached}
-                className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-text-primary-light outline-none font-sans resize-none z-10 self-center scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${(guestLimitReached || dailyLimitReached) ? "cursor-not-allowed placeholder:text-text-destructive/80" : ""}`}
+                className={`w-full bg-transparent px-4 py-3 sm:py-3.5 text-[15px] text-foreground outline-none font-sans resize-none z-10 self-center scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${(guestLimitReached || dailyLimitReached) ? "cursor-not-allowed placeholder:text-text-destructive/80" : ""}`}
               />
             </div>
 
@@ -488,7 +488,7 @@ export function ChatInput({
               }}
               aria-label="Send message"
               disabled={isDisabled || guestLimitReached || timeLeft > 0}
-              className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-brand-accent text-white transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || isDisabled || guestLimitReached || timeLeft > 0 ? "opacity-40 cursor-not-allowed" : "hover:scale-105 hover:brightness-110 active:scale-95 cursor-pointer"
+              className={`flex items-center justify-center size-10 shrink-0 rounded-full bg-primary text-white transition-all duration-200 shadow-md touch-manipulation mb-[2px] ${!inputText.trim() || isDisabled || guestLimitReached || timeLeft > 0 ? "opacity-40 cursor-not-allowed" : "hover:scale-105 hover:brightness-110 active:scale-95 cursor-pointer"
                 }`}
             >
               {timeLeft > 0 ? (
