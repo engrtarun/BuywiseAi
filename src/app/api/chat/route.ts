@@ -165,7 +165,7 @@ export async function POST(req: NextRequest) {
         backendContext.memory.preferredCategories.push(String(requirements.category));
       }
     }
-    
+
     // Save current state before LLM call
     fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
 
@@ -252,12 +252,12 @@ export async function POST(req: NextRequest) {
     let shoppingSearchFailed = false;
 
     if (requirementsReady || mode === "explore") {
-      const query = mode === "deep_research" 
+      const query = mode === "deep_research"
         ? [
-            requirements?.category,
-            requirements?.use_case,
-            requirements?.budget ? `under ${requirements.budget}` : "",
-          ].filter(Boolean).join(" ")
+          requirements?.category,
+          requirements?.use_case,
+          requirements?.budget ? `under ${requirements.budget}` : "",
+        ].filter(Boolean).join(" ")
         : userMessage;
 
       try {
@@ -300,11 +300,11 @@ export async function POST(req: NextRequest) {
         ...backendContext.context,
         ...requirements,
         chatMemory: backendContext.memory,
-        reranked_context: rerankedContext 
+        reranked_context: rerankedContext
           ? {
-              primary: rerankedContext.primary.map(c => c.text),
-              secondary: rerankedContext.secondary.map(c => c.text)
-            }
+            primary: rerankedContext.primary.map(c => c.text),
+            secondary: rerankedContext.secondary.map(c => c.text)
+          }
           : undefined
       },
       isRegenerate,
@@ -314,7 +314,7 @@ export async function POST(req: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         let fullResponse = "";
-        
+
         // Send initial metadata (products array for frontend fallback)
         if (searchResults && searchResults.length > 0) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'metadata', products: searchResults })}\n\n`));
@@ -323,7 +323,7 @@ export async function POST(req: NextRequest) {
         try {
           let dataTagFound = false;
           let jsonBuffer = "";
-          
+
           for await (const chunk of writerStream) {
             const chunkText = chunk || "";
             fullResponse += chunkText;
@@ -332,17 +332,17 @@ export async function POST(req: NextRequest) {
               dataTagFound = true;
               // Split out what belongs to the chat text vs what belongs to the raw JSON string
               const parts = chunkText.split("|||PRODUCT_DATA_START|||");
-              
+
               if (parts[0] && !fullResponse.split("|||PRODUCT_DATA_START|||")[0].includes("[")) {
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: parts[0] })}\n\n`));
               }
               if (parts[1]) {
                 jsonBuffer += parts[1];
               } else if (parts.length === 1 && dataTagFound) {
-                 // If the tag was already found in a previous chunk, the whole chunk belongs to JSON
-                 if (!chunkText.includes("|||PRODUCT_DATA_START|||")) {
-                    jsonBuffer += chunkText;
-                 }
+                // If the tag was already found in a previous chunk, the whole chunk belongs to JSON
+                if (!chunkText.includes("|||PRODUCT_DATA_START|||")) {
+                  jsonBuffer += chunkText;
+                }
               }
             } else {
               if (!dataTagFound && !fullResponse.includes("[")) {
@@ -376,7 +376,7 @@ export async function POST(req: NextRequest) {
           if (!assistantCleanText.trim()) {
             assistantCleanText = "Hello! How can I assist you?";
           }
-          
+
           // Save the full JSON response in history so the frontend can parse UI elements (carousel, deep_dive, etc.)
           backendContext.history.push({ role: "assistant", content: fullJsonResponse });
           backendContext.messageCount = backendContext.history.length;
@@ -394,12 +394,12 @@ export async function POST(req: NextRequest) {
 
           // Parse out the filled jsonBuffer to attach to metadata tracking database hooks
           if (jsonBuffer.trim()) {
-             try {
-                const parsedProducts = JSON.parse(jsonBuffer.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'metadata', products: parsedProducts })}\n\n`));
-             } catch (err) {
-                console.warn("Failed to parse split-boundary JSON buffer:", err);
-             }
+            try {
+              const parsedProducts = JSON.parse(jsonBuffer.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'metadata', products: parsedProducts })}\n\n`));
+            } catch (err) {
+              console.warn("Failed to parse split-boundary JSON buffer:", err);
+            }
           }
 
           fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
@@ -441,7 +441,7 @@ export async function POST(req: NextRequest) {
             });
 
             if (!groqResponse.ok) throw new Error(`Groq stream connection error: ${groqResponse.status}`);
-            
+
             const reader = groqResponse.body?.getReader();
             const decoder = new TextDecoder();
             if (!reader) throw new Error("Failed to extract active reader stream descriptor.");
@@ -455,7 +455,7 @@ export async function POST(req: NextRequest) {
 
               const chunkStr = decoder.decode(value, { stream: true });
               const lines = chunkStr.split("\n").filter(line => line.trim() !== "");
-              
+
               for (const line of lines) {
                 if (line.includes("data: [DONE]")) break;
                 if (line.startsWith("data: ")) {
@@ -463,11 +463,11 @@ export async function POST(req: NextRequest) {
                     const parsed = JSON.parse(line.slice(6));
                     const textDelta = parsed.choices[0]?.delta?.content || "";
                     fullResponse += textDelta;
-                    
+
                     if (fullResponse.includes("|||PRODUCT_DATA_START|||")) {
                       fallbackDataTagFound = true;
                       const parts = textDelta.split("|||PRODUCT_DATA_START|||");
-                      
+
                       if (parts[0] && !fullResponse.split("|||PRODUCT_DATA_START|||")[0].includes("[")) {
                         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: parts[0] })}\n\n`));
                       }
@@ -481,16 +481,16 @@ export async function POST(req: NextRequest) {
                         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: textDelta })}\n\n`));
                       }
                     }
-                  } catch (e) {}
+                  } catch (e) { }
                 }
               }
             }
-            
+
             if (fallbackJsonBuffer.trim()) {
-               try {
-                  const parsedProducts = JSON.parse(fallbackJsonBuffer.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'metadata', products: parsedProducts })}\n\n`));
-               } catch (err) {}
+              try {
+                const parsedProducts = JSON.parse(fallbackJsonBuffer.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim());
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'metadata', products: parsedProducts })}\n\n`));
+              } catch (err) { }
             }
           } catch (fallbackError: any) {
             console.error("Critical Execution Fault across both pipelines:", fallbackError);
