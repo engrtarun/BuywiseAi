@@ -6,6 +6,7 @@ import { motion, AnimatePresence, useAnimation, PanInfo } from "framer-motion";
 import { X, Star, ShoppingBag, ShieldCheck, Layers, ChevronRight } from "lucide-react";
 import { Product } from "@/types/product";
 import { useRouter } from "next/navigation";
+import { ProductImageModal } from "./ProductImageModal";
 
 interface ProductBottomSheetProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface ProductBottomSheetProps {
 
 export function ProductBottomSheet({ isOpen, onClose, product, onBuy }: ProductBottomSheetProps) {
   const [mounted, setMounted] = useState(false);
+  const [isImageZoomOpen, setIsImageZoomOpen] = useState(false);
   const controls = useAnimation();
   const router = useRouter();
 
@@ -93,7 +95,10 @@ export function ProductBottomSheet({ isOpen, onClose, product, onBuy }: ProductB
 
             <div className="overflow-y-auto flex-1 scrollbar-hide">
               {/* Product Image Gallery (Mock single image) */}
-              <div className="w-full h-[35vh] min-h-[300px] relative bg-white/5">
+              <div 
+                onClick={() => setIsImageZoomOpen(true)}
+                className="w-full h-[35vh] min-h-[300px] relative bg-white/5 cursor-zoom-in"
+              >
                 <img
                   src={product.image}
                   alt={product.name}
@@ -205,6 +210,13 @@ export function ProductBottomSheet({ isOpen, onClose, product, onBuy }: ProductB
               </button>
             </div>
           </motion.div>
+
+          <ProductImageModal
+            isOpen={isImageZoomOpen}
+            onClose={() => setIsImageZoomOpen(false)}
+            imageUrl={product.image}
+            productName={product.name}
+          />
         </div>
       )}
     </AnimatePresence>,

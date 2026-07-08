@@ -3,6 +3,7 @@ import { Product } from "@/types/product";
 import { Star, ExternalLink, ShoppingCart, Loader2, ChevronRight, Check } from "lucide-react";
 import { CheckoutFlow } from "../checkout/CheckoutFlow";
 import { ProductBottomSheet } from "./ProductBottomSheet";
+import { ProductImageModal } from "./ProductImageModal";
 
 interface ProductCardProps {
   product: Product;
@@ -65,6 +66,7 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
   const isAmazon = product.platform === "Amazon";
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [inCart, setInCart] = useState(false);
   
@@ -92,6 +94,11 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('a')) return;
     setIsBottomSheetOpen(true);
+  };
+
+  const handleImageClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsImageModalOpen(true);
   };
 
   const handleCartToggle = async (e: React.MouseEvent) => {
@@ -156,7 +163,10 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
       `}
     >
       {/* --- Image Panel (Top) --- */}
-      <div className="relative w-full pb-[100%] bg-black/40 overflow-hidden border-b border-white/5">
+      <div 
+        onClick={handleImageClick}
+        className="relative w-full pb-[100%] bg-black/40 overflow-hidden border-b border-white/5 cursor-zoom-in"
+      >
         
         {/* Shimmer skeleton */}
         <div className={`absolute inset-0 bg-white/5 animate-pulse transition-opacity duration-500 ${imageLoaded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} />
@@ -277,6 +287,13 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
           if (onBuyCallback) onBuyCallback(prod);
           setIsCheckoutOpen(true);
         }}
+      />
+
+      <ProductImageModal
+        isOpen={isImageModalOpen}
+        onClose={() => setIsImageModalOpen(false)}
+        imageUrl={product.image}
+        productName={product.name}
       />
     </div>
   );
