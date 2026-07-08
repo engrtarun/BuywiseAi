@@ -36,48 +36,36 @@ export function ThinkingIndicator({ mode = "explore" }: ThinkingIndicatorProps) 
   }, [stages.length]);
 
   return (
-    <div className="flex flex-col gap-2 w-full max-w-[85%] sm:max-w-[75%] md:max-w-[65%] animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="flex items-end gap-2 w-full">
-        <Avatar className="size-7 sm:size-8 shrink-0 shadow-sm border border-marigold/20">
-          <AvatarFallback className="bg-marigold text-ink-deeper font-heading font-bold text-[10px] sm:text-xs">
-            B
-          </AvatarFallback>
-        </Avatar>
+    <div className="flex flex-col gap-2 w-full animate-in fade-in duration-300 py-2">
+      <div className="flex items-center gap-3 w-full px-2">
+        <div className="relative flex items-center justify-center shrink-0">
+          {mode === "deep_research" ? (
+            <Brain className="size-5 text-brand-accent animate-pulse" />
+          ) : (
+            <Sparkles className="size-5 text-brand-accent animate-pulse" />
+          )}
+          <div className="absolute inset-0 rounded-full bg-brand-accent/20 animate-ping opacity-75" style={{ animationDuration: '2s' }} />
+        </div>
 
-        <div className="bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-2xl rounded-bl-sm px-4 py-2.5 flex items-center shadow-sm relative overflow-hidden group min-w-[220px]">
-          {/* Subtle animated background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent shimmer-bg" />
-
-          {/* Icon */}
-          <div className="relative flex items-center justify-center mr-3 shrink-0">
-            {mode === "deep_research" ? (
-              <Brain className="size-4 text-brand-accent animate-pulse" />
-            ) : (
-              <Compass className="size-4 text-brand-accent animate-pulse" />
-            )}
-            <Sparkles className="absolute -top-1 -right-1 size-2 text-marigold animate-[ping_2s_ease-in-out_infinite]" />
-          </div>
-
-          {/* Cycling Label with Fade Transition */}
-          <div className="relative flex-1 h-6 overflow-hidden">
-            {stages.map((stage, idx) => (
-              <span
-                key={stage}
-                className={`
-                  absolute inset-0 flex items-center text-[13px] font-sans text-foreground/90 tracking-wide
-                  transition-all duration-500 ease-in-out
-                  ${idx === stageIndex 
-                    ? "opacity-100 translate-y-0" 
-                    : idx === (stageIndex - 1 + stages.length) % stages.length 
-                      ? "opacity-0 -translate-y-2" 
-                      : "opacity-0 translate-y-2"
-                  }
-                `}
-              >
-                {stage}
-              </span>
-            ))}
-          </div>
+        {/* Cycling Label with Fade Transition */}
+        <div className="relative flex-1 h-6 overflow-hidden">
+          {stages.map((stage, idx) => (
+            <span
+              key={stage}
+              className={`
+                absolute inset-0 flex items-center text-[14px] font-medium font-sans text-foreground/80 tracking-wide
+                transition-all duration-500 ease-in-out
+                ${idx === stageIndex 
+                  ? "opacity-100 translate-y-0" 
+                  : idx === (stageIndex - 1 + stages.length) % stages.length 
+                    ? "opacity-0 -translate-y-2" 
+                    : "opacity-0 translate-y-2"
+                }
+              `}
+            >
+              {stage}
+            </span>
+          ))}
         </div>
       </div>
 

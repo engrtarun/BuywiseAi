@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
           chatId: parsed.chatId || chatId,
           messageCount: parsed.messageCount ?? history.length,
           lastActive: parsed.lastActive || new Date().toISOString(),
-          history: parsed.history || history || [],
+          history: isRegenerate ? (history || []) : (parsed.history || history || []),
           context: { ...parsed.context, ...requirements },
           memory: parsed.memory || {}
         };
@@ -145,15 +145,11 @@ export async function POST(req: NextRequest) {
 
     // Dynamically detect language from the user's prompt to store in memory
     const userPromptLower = userMessage.toLowerCase();
-    if (
-      userPromptLower.includes("kya") ||
-      userPromptLower.includes("hai") ||
-      userPromptLower.includes("chahiye") ||
-      userPromptLower.includes("batao") ||
-      userPromptLower.includes("krde") ||
-      userPromptLower.includes("thik")
-    ) {
+    const hindiKeywords = ["kya", "hai", "chahiye", "batao", "krde", "thik", "mujhe", "dekha", "kaise", "nahi", "kyon", "bhai", "samjhao"];
+    if (hindiKeywords.some(word => userPromptLower.includes(word))) {
       backendContext.memory.userLanguagePreference = "Hinglish/Hindi";
+    } else if (userPromptLower.trim().split(/\s+/).length >= 2) {
+      backendContext.memory.userLanguagePreference = "English";
     }
 
     // Update memory summary based on categories or items searched

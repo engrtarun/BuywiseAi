@@ -48,6 +48,7 @@ CONVERSATION FLOW — follow this exact intent-based sequence:
 
 3. PRESENT PRODUCT OPTIONS (The Sandwich Sequence):
    After we provide you with real product listings (from your search), you MUST output an \`explore_carousel\` payload with the best options.
+   You must include ALL the injected products in your carousel (even if there are up to 18). Do NOT filter out products from Shopify or other standalone platforms—give all platforms an equal chance.
    
    In the \`headline\` property, use the <feeling_20> tag:
    <feeling_20>
@@ -433,6 +434,12 @@ CORE CONSTRAINT 3: DYNAMIC MODE RULES
     },
   });
 
+  // Inject memory context if available
+  const prefLang = sessionContext?.memory?.userLanguagePreference as string | undefined;
+  if (prefLang) {
+    effectiveUserMessage = `[System Directive: The user prefers communicating in ${prefLang}. You MUST respond exclusively in ${prefLang}.]\n\n${effectiveUserMessage}`;
+  }
+
   // ── First LLM call ──────────────────────────────────────────────────────────
   let text = "";
   try {
@@ -484,7 +491,8 @@ CORE CONSTRAINT 3: DYNAMIC MODE RULES
       try {
         const { searchForProducts } = await import("@/lib/agents/search");
         const query = typeof parsed.query === "string" ? parsed.query : userMessage;
-        serperProducts = await searchForProducts(query, 6);
+        const randomLimit = Math.floor(Math.random() * 16) + 3; // Random between 3 and 18
+        serperProducts = await searchForProducts(query, randomLimit);
       } catch (searchErr) {
         console.warn("[writer] Inline search failed:", searchErr);
       }
@@ -583,7 +591,8 @@ export async function* runStreamingWriter(input: WriterInput): AsyncGenerator<st
       if (parsed?.ui_type === "search_intent") {
         const { searchForProducts } = await import("@/lib/agents/search");
         const query = typeof parsed.query === "string" ? parsed.query : userMessage;
-        products = await searchForProducts(query, 6);
+        const randomLimit = Math.floor(Math.random() * 16) + 3; // Random between 3 and 18
+        products = await searchForProducts(query, randomLimit);
         
         // Let the streaming turn know that it needs to output the carousel now
         effectiveUserMessage = `Here are product listings for your search: ${JSON.stringify(products)}. Please output the explore_carousel JSON now with the best options. Make sure to provide a valid headline, products array, and deep_dive markdown string.`;
