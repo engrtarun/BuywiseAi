@@ -35,7 +35,8 @@ import { getFallbackChatResponse } from "@/lib/fallbackResponses";
 import { enforceChatAccess } from "@/lib/chatAccess";
 import fs from "fs";
 import path from "path";
-// removed routerAgent import
+import { createClient } from "@/lib/supabase/server";
+import { determineIntent } from "@/lib/agents/router";
 import { searchForProducts, type SearchedProduct } from "@/lib/agents/search";
 import { runWriter } from "@/lib/agents/writer";
 import { executeRerankedSearch } from "@/lib/providers/test-serper";
@@ -213,8 +214,27 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── Step 1: Router determines mode (already done above) ──────────────────
-    // `mode` is now set to "explore" or "deep_research" by determineIntent.
+    // ── Step 1: Router determines mode ──────────────────
+    const originalMode = mode;
+    if (mode === "explore") {
+      try {
+        const determinedMode = await determineIntent(userMessage, userHistory);
+        if (determinedMode === "deep_research") {
+          mode = "deep_research";
+          // Update the session mode in Supabase so future messages stay in deep_research
+          const supabase = await createClient();
+          const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(chatId);
+          if (isUUID) {
+            await supabase
+              .from("chat_sessions")
+              .update({ mode: "deep_research" })
+              .eq("id", chatId);
+          }
+        }
+      } catch (routerErr) {
+        console.warn("Failed to determine intent dynamically:", routerErr);
+      }
+    }
 
     // ── Step 2: Cache check ───────────────────────────────────────────────────
     // Skip cache for regenerate requests and buy_explanation (handled above).
@@ -311,9 +331,16 @@ export async function POST(req: NextRequest) {
       async start(controller) {
         let fullResponse = "";
 
-        // Send initial metadata (products array for frontend fallback)
+        // Send initial metadata (products array and/or mode override for frontend)
+        const initialMetadata: any = { type: 'metadata' };
         if (searchResults && searchResults.length > 0) {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'metadata', products: searchResults })}\n\n`));
+          initialMetadata.products = searchResults;
+        }
+        if (mode !== originalMode) {
+          initialMetadata.mode = mode;
+        }
+        if (initialMetadata.products || initialMetadata.mode) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(initialMetadata)}\n\n`));
         }
 
         try {

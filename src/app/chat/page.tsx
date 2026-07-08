@@ -456,6 +456,7 @@ export default function Page() {
         let newRequirements = currentReqs || session?.requirements || {};
         let fallbackProducts: any[] = [];
         let buffer = "";
+        let streamMode: ChatMode | undefined = undefined;
         
         // Generate a temporary ID for the streaming message
         const tempMsgId = generateId();
@@ -487,6 +488,9 @@ export default function Page() {
                 
                 if (eventData.type === "metadata") {
                   if (eventData.products) fallbackProducts = eventData.products;
+                  if (eventData.mode && (eventData.mode === "explore" || eventData.mode === "deep_research")) {
+                     streamMode = eventData.mode;
+                  }
                   if (eventData.confirmed_category && typeof eventData.confirmed_category === "string") {
                      newRequirements = { ...newRequirements, confirmed_category: eventData.confirmed_category, category: eventData.confirmed_category };
                      updateSessionRequirements(chatId, newRequirements).catch(e => console.error("Failed to update confirmed_category", e));
@@ -518,6 +522,7 @@ export default function Page() {
                    ? { 
                        ...s, 
                        requirements: newRequirements,
+                       mode: streamMode || s.mode,
                        messages: s.messages.map(m => m.id === tempMsgId ? aiMsg : m) 
                      } 
                    : s
@@ -560,6 +565,7 @@ export default function Page() {
               ? { 
                   ...s, 
                   requirements: newRequirements,
+                  mode: streamMode || s.mode,
                   messages: s.messages.map(m => m.id === tempMsgId ? finalAiMsg : m) 
                 } 
               : s

@@ -131,7 +131,7 @@ For general text replies:
 
 Return ONLY the raw JSON string. Do not wrap in markdown code blocks.`;
 
-const DEEP_RESEARCH_SYSTEM_PROMPT = `You are a shopping consultant's intake specialist for BuyWise AI.
+export const DEEP_RESEARCH_SYSTEM_PROMPT = `You are a shopping consultant's intake specialist for BuyWise AI.
 The user is in Deep Research Mode — an interactive, guided, multi-turn flow.
 
 1. LANGUAGE MATCHING: You must respond in the exact language, dialect, and script spoken by the user in their latest message.
