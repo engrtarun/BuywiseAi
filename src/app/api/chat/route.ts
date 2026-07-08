@@ -28,6 +28,8 @@
  *      }
  */
 
+export const dynamic = 'force-dynamic';
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";

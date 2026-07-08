@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getNextGroqKey } from "@/lib/agents/keyManager";
 
+export const dynamic = 'force-dynamic';
+
 const SYSTEM_PROMPT = `
 You are BuyWise AI's onboarding assistant. Your job is to generate EXACTLY 4 short, natural, and varied shopping-related suggested prompts for the user to click on.
 

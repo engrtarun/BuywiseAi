@@ -4,6 +4,8 @@ import { checkAndIncrementMessageLimit } from "@/app/actions/chat";
 import { createClient } from "@/lib/supabase/server";
 import { executeWithGeminiFailover } from "@/lib/agents/keyManager";
 
+export const dynamic = 'force-dynamic';
+
 const GUEST_MODE_KEY = "buywise_guest_mode";
 const GUEST_COUNT_KEY = "buywise_guest_message_count";
 const FREE_MESSAGE_LIMIT = 3;
