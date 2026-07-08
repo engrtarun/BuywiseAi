@@ -333,7 +333,7 @@ export function MessageBubble({ message, isLastAiMessage = false, onRegenerate, 
   const isExploreModeLayout = isExploreCarousel || !!message.searchTag;
   
   const exploreProductsToShow = isExploreCarousel 
-    ? exploreProductsList 
+    ? (exploreProductsList.length > 0 ? exploreProductsList : (message.products || []))
     : (message.searchTag ? exploreProducts : []);
 
   const hasExploreProducts = exploreProductsToShow && exploreProductsToShow.length > 0;
