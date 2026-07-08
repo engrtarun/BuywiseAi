@@ -62,16 +62,12 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
         key_attributes: Array.isArray(parsedJson.key_attributes) ? parsedJson.key_attributes : [],
       };
     } else if (parsedJson.ui_type === "explore_carousel") {
-      aiMsg.content = parsedJson.headline || "Here are some recommendations:";
-      aiMsg.exploreIntro = parsedJson.headline || "Here are some recommendations:";
-      aiMsg.exploreDeepDive = parsedJson.deep_dive || "";
+      const combinedText = `${parsedJson.headline || ""}\n\n${parsedJson.deep_dive || ""}`;
+      const parts = getExploreLayoutParts(combinedText);
 
-      // If deep_dive is empty in JSON but headline itself has splits, parse it:
-      if (!aiMsg.exploreDeepDive && aiMsg.exploreIntro) {
-        const parts = getExploreLayoutParts(aiMsg.exploreIntro);
-        aiMsg.exploreIntro = parts.intro;
-        aiMsg.exploreDeepDive = parts.deepDive;
-      }
+      aiMsg.content = parts.intro || "Here are some recommendations:";
+      aiMsg.exploreIntro = parts.intro || "Here are some recommendations:";
+      aiMsg.exploreDeepDive = parts.deepDive || "";
 
       const items = Array.isArray(parsedJson.products) ? parsedJson.products : [];
       aiMsg.products = items.map((p: any) => ({
