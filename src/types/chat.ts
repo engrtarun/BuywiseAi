@@ -40,6 +40,8 @@ export interface Message {
   deepResearchResults?: {
     summary?: string;
     finalVerdict?: string;
+    recommendedPickReason?: string;
+    recommendedPickId?: string;
     comparison?: { aspect: string; winner: string; reason: string }[];
   };
   intakeQuestionnaire?: {
