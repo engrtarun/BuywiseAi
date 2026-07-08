@@ -55,6 +55,8 @@ CONVERSATION FLOW — follow this exact intent-based sequence:
 5. IF TRULY UNABLE TO INFER ANYTHING OR GIBBERISH:
    Return a simple \`text_response\` payload asking them to clarify. Do NOT use any questionnaire or button formats.
 
+CRITICAL CONSTRAINT: YOU MUST NEVER OUTPUT A \`clarifying_question\` PAYLOAD IN EXPLORE MODE. NEVER output \`options\` or \`question\` fields. If you need to ask a question, you MUST use \`ui_type: "text_response"\`.
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 LINGUISTIC FINGERPRINTING & TONE MATCHING:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -311,7 +313,12 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
       responseSchema: {
         type: "object" as any,
         properties: {
-          ui_type: { type: "string" as any },
+          ui_type: { 
+            type: "string" as any,
+            enum: isDeepResearch 
+              ? ["search_intent", "clarifying_question", "deep_research_results", "text_response", "intake_questionnaire"] 
+              : ["search_intent", "explore_carousel", "text_response"]
+          },
           text: { type: "string" as any },
           query: { type: "string" as any },
           headline: { type: "string" as any },
