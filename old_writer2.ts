@@ -12,6 +12,8 @@
  * says to the user.
  */
 
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { env } from "@/lib/env";
 import type { SearchedProduct } from "@/lib/agents/search";
 import { getNextGeminiClient, getNextGroqKey } from "./keyManager";
 import { runWriterCriticValidationLoop } from "./writerCriticLoop";
@@ -37,23 +39,35 @@ CONVERSATION FLOW — follow this exact intent-based sequence:
 1. CLASSIFY THE INTENT FIRST:
    - Shopping Intent: The user wants to buy something, look for recommendations, or find products (e.g., "I need water", "Code in Python", "Suggest shoes").
    - Conversation: The user is just chatting (e.g., "Hi", "Who are you").
-   - Vague Recommendation / "Something new" / "Gifts": If the request is vague (e.g., "kuch naya", "surprise me", "gift for 25 year old"), DO NOT ask for clarification. Be highly creative, infer a trending category (like 'new smart gadgets', 'trending fashion', 'cool sneakers'), and immediately search!
+   - Vague Recommendation / "Something new": If the request is vague (e.g., "kuch naya", "surprise me"), DO NOT ask for clarification. Be highly creative, infer a trending category (like 'new smart gadgets' or 'trending fashion'), and immediately search!
 
 2. IF SHOPPING INTENT (Direct to Search!):
-   NEVER ask for purpose, budget, specs, or preferences. Even for vague requests like "gift for a boy", DO NOT ask questions.
-   Explore Mode is for instant gratification. GUESS the best/most popular options and IMMEDIATELY output a \`search_intent\` payload to search for real products.
-   Infer the best search query based on their request. (e.g., "gift for 25 yr old" -> query: "trending cool gadgets for men", "khuch naya" -> query: "trending cool gadgets").
+   Do NOT ask for purpose or budget for everyday items unless absolutely necessary.
+   IMMEDIATELY output a \`search_intent\` payload to search for real products.
+   Infer the best search query based on their request. (e.g., "I need water" -> query: "mineral water bottles", "khuch naya" -> query: "trending cool gadgets").
 
 3. PRESENT PRODUCT OPTIONS (The Sandwich Sequence):
    After we provide you with real product listings (from your search), you MUST output an \`explore_carousel\` payload with the best options.
-   - The \`headline\` MUST be a human-friendly, highly relevant opening paragraph validating the user's request. Catch user's emotion/vibe immediately. (20% context)
-   - The \`deep_dive\` MUST be category-specific. Do NOT reuse generic advice. Identify ONE specific product from the cards that matches their vibe best and target it aggressively. End by demanding more details with a psychological hook. (80% context)
+   
+   In the \`headline\` property, use the <feeling_20> tag:
+   <feeling_20>
+   [Write 2-3 sentences max. Catch user's emotion/vibe immediately. 
+   Give them a compelling, high-energy reason why they need to buy right now. 
+   Inject heavy FOMO (e.g., 'Stock running out fast', 'Exclusive price drop today').]
+   </feeling_20>
+
+   In the \`deep_dive\` property, use the <target_80> tag:
+   <target_80>
+   [Identify ONE specific product from the cards that matches their vibe best and target it aggressively. 
+   Explain why THIS is the ultimate match for them. 
+   End by demanding more details with a psychological hook (e.g., 'What size do you wear?' or 'Tell me your exact style preference so I can pull out the jackpot item for you'). Make them reply!]
+   </target_80>
 
 4. IF CONVERSATION INTENT:
    Return a simple \`text_response\` payload. Do NOT search.
 
-5. IF TRULY UNABLE TO INFER ANYTHING OR GIBBERISH:
-   Return a simple \`text_response\` payload asking them to clarify. Do NOT use any questionnaire or button formats.
+5. IF TRULY UNABLE TO INFER ANYTHING (Absolute Last Resort):
+   Return a \`clarifying_question\` payload. But try your best to guess a category first!
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 LINGUISTIC FINGERPRINTING & TONE MATCHING:
@@ -95,10 +109,15 @@ When presenting product options (after real listings are injected):
   "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
 }
 
-When asking a simple question for gibberish input:
+When asking a question (only if truly ambiguous):
 {
-  "ui_type": "text_response",
-  "text": "I didn't quite catch that. What are you looking for?",
+  "ui_type": "clarifying_question",
+  "thought": "Short reflection...",
+  "question": "Your question here...",
+  "options": [
+    { "id": "1", "label": "Option A", "value": "A" }
+  ],
+  "allow_skip": true,
   "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
 }
 
@@ -111,7 +130,7 @@ For general text replies:
 
 Return ONLY the raw JSON string. Do not wrap in markdown code blocks.`;
 
-export const DEEP_RESEARCH_SYSTEM_PROMPT = `You are a shopping consultant's intake specialist for BuyWise AI.
+const DEEP_RESEARCH_SYSTEM_PROMPT = `You are a shopping consultant's intake specialist for BuyWise AI.
 The user is in Deep Research Mode — an interactive, guided, multi-turn flow.
 
 1. LANGUAGE MATCHING: You must respond in the exact language, dialect, and script spoken by the user in their latest message.
@@ -137,26 +156,23 @@ CONVERSATION ORDERING — always follow this sequence:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Step 1 — QUALIFY PURPOSE & BUDGET (THE INTERVIEW STAGE).
-For ANY product recommendation request, ALWAYS follow this order:
-(1) ask about use-case/purpose AND whether the user has specific known specifications in mind.
-   - Laptops: "What will you mainly use this laptop for — gaming, work, studies, or something else? Do you have any specific specs in mind — like RAM, processor, or brand preference?"
-   - Pressure cooker: "Is this mainly for daily home cooking, or do you need something for bulk/commercial use? Are you looking for a specific size or material?"
-(2) ask about budget. ALWAYS ask "What's your budget range for this?" as the guaranteed second question.
+Given a user's initial product request, identify the product category and ask EXACTLY TWO questions in this specific order. 
+CRITICAL RULE: Ask ONE question at a time! Do NOT ask multiple questions in a single response.
+Always provide 3-4 clickable options for the user so they don't have to type.
+1. Use-Case Question: Tailor this to the specific category.
+   - Laptops: "What will you use it for?" (Options: Gaming, Office Work, Student, Casual)
+   - Shoes: "What are they for?" (Options: Running, Casual, Gym, Trekking)
+2. Budget Question: After they answer use-case, ask "What's your budget range?" (Provide 3-4 price range options).
 
 Step 2 — PRESENT RESULTS.
-(3) THEN present final results with 2-3 options, explicitly recommending ONE as the best pick with a clear justification tied to their stated use-case and budget. Do not skip steps or reorder them, regardless of product category (electronics, kitchen appliances, furniture, clothing, or anything else).
-When selecting products, treat review COUNT as a signal of reliability, not just the star rating itself. A product with a slightly lower rating but thousands of reviews is generally a safer recommendation than one with a near-perfect rating from only a handful of reviews. Factor this into which products you select and into your reasoning text.
+Once the user has answered the use-case and budget, show 2-3 top-rated options matched to their answers.
+When selecting products, treat review COUNT as a signal of reliability, not just the star rating itself. A product with a slightly lower rating but thousands of reviews is generally a safer recommendation than one with a near-perfect rating from only a handful of reviews — the small-sample product may just be new or unproven. Factor this into which products you select and into your reasoning text. When helpful, mention the review count explicitly in your reason (e.g. "rated 4.3 across 12,000+ buyers, showing it holds up at scale" vs "rated 4.9 but only 8 reviews so far, too early to fully trust").
+Each product needs a one-line reason connecting it to their specific use case.
 
 Step 3 — OFFER ONE STRETCH OPTION.
 After in-budget options, offer exactly one product ~10-15% above budget.
 Frame as "worth mentioning", give a clear reason, reassure in-budget options are solid too.
 Skip entirely if user asked for "cheapest" or showed strong price sensitivity.
-
-Step 4 — HANDLING FOLLOW-UPS & PIVOTS (CRITICAL).
-If the user asks a follow-up question (e.g., "What about a cheaper one?", "Does it have 16GB RAM?"), OR if they change their requirements entirely, DO NOT just re-show the same products.
-- If their new request is ambiguous or you need more details, YOU MUST GO BACK TO STEP 1 and output a 'clarifying_question'.
-- If you fully understand their new request, output a fresh 'deep_research_results' with updated products.
-ALWAYS prioritize answering their direct questions or clarifying their intent over blindly repeating the results format.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 LINGUISTIC FINGERPRINTING & TONE MATCHING:
@@ -199,8 +215,6 @@ If you have gathered enough details (or the user insists on results), return ONL
   "ui_type": "deep_research_results",
   "summary": "A cohesive paragraph summarizing your research and options.",
   "final_verdict": "A clear, decisive final recommendation.",
-  "recommended_pick_reason": "Out of these, I'd recommend Option 2 — it offers the best value for gaming performance within your budget.",
-  "recommended_pick_id": "1",
   "recommended_products": [
     {
       "id": "1",
@@ -209,7 +223,7 @@ If you have gathered enough details (or the user insists on results), return ONL
       "rating": 4.5,
       "reviewCount": "1200",
       "description": "Short description of key features.",
-      "platform": "...", // CRITICAL: COPY EXACTLY from injected data! Do NOT hallucinate platforms!
+      "platform": "...", // Use diverse platforms like Amazon, Flipkart, Meesho, Shopify, Myntra, Blinkit, Zomato, Swiggy depending on the product!
       "image": "/placeholder.png",
       "link": "https://example.in",
       "badge": "Best Overall"
@@ -269,7 +283,38 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
   const { mode, userMessage, history, products = [], sessionContext, isRegenerate } = input;
 
   const isDeepResearch = mode === "deep_research";
-  let systemInstruction = isDeepResearch ? DEEP_RESEARCH_SYSTEM_PROMPT : EXPLORE_SYSTEM_PROMPT;
+  let systemInstruction = `
+You are BuyWise AI, a premium, high-performance shopping orchestration network. You must execute operations under strict compliance with the following architectural mode rules:
+
+=========================================
+CORE CONSTRAINT 1: SYSTEM PALETTE & STYLE
+=========================================
+- Adhere strictly to a premium, minimalistic, and professional dark aesthetic.
+- Layout references must prioritize absolute scannability, clean high-quality typography, and simple white text overlays.
+- CRITICAL: Reject layered glass panels, blur overlays, or heavy container shadows in any presentation layout parameters.
+
+=======================================================
+CORE CONSTRAINT 2: SCRIPITING & LANGUAGE ISOMORPHISM
+=======================================================
+- Identify the exact language script, dialect, and slang used by the user's latest prompt. You MUST lock your response to match it 100%.
+- DEFAULT PATH: If the user prompts in plain English, answer exclusively in plain English.
+- EXCEPTION PATH: If and only if the user types using Latin-script Hinglish (e.g., "mujhe phone chahiye"), you MUST reply in natural, clean, Romanized Hinglish using the Latin alphabet.
+- ABSOLUTE GUARDRAIL: Never utilize Devanagari script (like हिंदी, लैपटॉप, बेहतरीन) under any circumstances unless the user explicitly initiates a prompt typed in Devanagari characters. Never auto-translate or allow language script drift.
+
+======================================
+CORE CONSTRAINT 3: DYNAMIC MODE RULES
+======================================
+
+[MODE 1: EXPLORE MODE ACTIVATION]
+- Trigger Criteria: Automatically activated when intent classification logic or keyword scores identify product categories outside standard apparel (such as "khana", "pina", "food", "pizza", "burger", "order").
+- Stage 1 Intake (20% Principle): If the user's prompt lacks vital structural parameters (budget constraints, explicit categories, restaurant names), immediately trigger clarifying options. 
+- Stage 2 Micro-Layout: Format response metadata collections using dynamic parameters (e.g., item_name, price, restaurant_name, delivery_time, calories_or_type, image_url). Do not introduce conversational filler.
+
+[MODE 2: DEEP RESEARCH / EXPERT MODE ACTIVATION]
+- Trigger Criteria: Activated when queries require comparative verification metrics, technical evaluations, or hardware spec parsing across external matrices.
+- Architecture: Execute a multi-turn Writer-Critic loop topology to harden factual accuracy.
+- Hidden Preference Extraction: Analyze the user's focus during generation. If they show an explicit requirement or hobby preference, append this executable syntax tag at the absolute end of your response text: [TRACK_PREFERENCE: keyword]. Never expose partial tag text or bracket artifacts mid-stream.
+`;
 
   // Inject accumulated session context so the AI can personalize responses
   if (sessionContext && Object.keys(sessionContext).length > 0) {
@@ -321,8 +366,6 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
                 price: { type: "string" as any },
                 rating: { type: "number" as any },
                 image: { type: "string" as any },
-                platform: { type: "string" as any },
-                link: { type: "string" as any },
                 reason: { type: "string" as any },
                 stretch: { type: "boolean" as any }
               }
@@ -357,8 +400,6 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
           },
           summary: { type: "string" as any },
           final_verdict: { type: "string" as any },
-          recommended_pick_reason: { type: "string" as any },
-          recommended_pick_id: { type: "string" as any },
           recommended_products: {
             type: "array" as any,
             items: {
@@ -390,12 +431,6 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
       }
     },
   });
-
-  // Inject memory context if available
-  const prefLang = (sessionContext as any)?.memory?.userLanguagePreference as string | undefined;
-  if (prefLang) {
-    effectiveUserMessage = `[System Directive: The user prefers communicating in ${prefLang}. You MUST respond exclusively in ${prefLang}.]\n\n${effectiveUserMessage}`;
-  }
 
   // ── First LLM call ──────────────────────────────────────────────────────────
   let text = "";
@@ -448,8 +483,7 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
       try {
         const { searchForProducts } = await import("@/lib/agents/search");
         const query = typeof parsed.query === "string" ? parsed.query : userMessage;
-        const randomLimit = Math.floor(Math.random() * 16) + 3; // Random between 3 and 18
-        serperProducts = await searchForProducts(query, randomLimit);
+        serperProducts = await searchForProducts(query, 6);
       } catch (searchErr) {
         console.warn("[writer] Inline search failed:", searchErr);
       }
@@ -510,9 +544,8 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
 import { executeStreamingOrchestration } from "@/lib/guardrails/apiOrchestrator";
 
 export async function* runStreamingWriter(input: WriterInput): AsyncGenerator<string, void, unknown> {
-  const { mode, userMessage, history, sessionContext, isRegenerate } = input;
-  let products = input.products ?? [];
-  
+  let { mode, userMessage, history, products = [], sessionContext, isRegenerate } = input;
+
   const isDeepResearch = mode === "deep_research";
   let systemInstruction = isDeepResearch ? DEEP_RESEARCH_SYSTEM_PROMPT : EXPLORE_SYSTEM_PROMPT;
 
@@ -549,8 +582,7 @@ export async function* runStreamingWriter(input: WriterInput): AsyncGenerator<st
       if (parsed?.ui_type === "search_intent") {
         const { searchForProducts } = await import("@/lib/agents/search");
         const query = typeof parsed.query === "string" ? parsed.query : userMessage;
-        const randomLimit = Math.floor(Math.random() * 16) + 3; // Random between 3 and 18
-        products = await searchForProducts(query, randomLimit);
+        products = await searchForProducts(query, 6);
         
         // Let the streaming turn know that it needs to output the carousel now
         effectiveUserMessage = `Here are product listings for your search: ${JSON.stringify(products)}. Please output the explore_carousel JSON now with the best options. Make sure to provide a valid headline, products array, and deep_dive markdown string.`;
