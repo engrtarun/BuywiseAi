@@ -43,11 +43,10 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // 1. Unauthenticated users:
-  // Redirect to /login if trying to access protected paths ("/welcome")
-  // The root path "/" is intentionally public to serve as the marketing landing page/chat interface.
-  if (!user) {
+  // Redirect to /login if trying to access protected paths or the root path without being a guest.
+  if (!user || user.is_anonymous) {
     const isGuest = request.cookies.get("buywise_guest_mode")?.value === "true";
-    if (!isGuest && (pathname === "/welcome")) {
+    if (!isGuest && (pathname === "/" || pathname === "/welcome")) {
       const url = request.nextUrl.clone()
       url.pathname = "/login"
       return NextResponse.redirect(url)
