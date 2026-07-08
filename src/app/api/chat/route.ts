@@ -43,6 +43,7 @@ import { executeRerankedSearch } from "@/lib/providers/test-serper";
 import type { RerankedContext } from "@/lib/retrieval/index";
 import { executeGenerativeOrchestration } from "@/lib/guardrails/apiOrchestrator";
 import { checkSemanticCache, storeInSemanticCache } from "@/lib/caching/semanticCache";
+import { getNextGroqKey } from "@/lib/agents/keyManager";
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEYS[0]);
 
@@ -191,7 +192,7 @@ export async function POST(req: NextRequest) {
           systemInstruction: explanationPrompt,
           formattedHistory,
           effectiveUserMessage: "Provide explanation",
-          groqApiKey: process.env.GROQ_API_KEY,
+          groqApiKey: getNextGroqKey(),
           historyForGroq: history.map((m) => ({ role: m.role ?? "user", content: m.content ?? "" }))
         });
 
@@ -419,7 +420,7 @@ export async function POST(req: NextRequest) {
         } catch (streamErr: any) {
           console.warn("Switching to Groq streaming fallback orchestration channel...", streamErr.message || streamErr);
           try {
-            const activeGroqKey = process.env.GROQ_API_KEY;
+            const activeGroqKey = getNextGroqKey();
             if (!activeGroqKey) throw new Error("Groq credentials pool unavailable.");
 
             const { EXPLORE_SYSTEM_PROMPT, DEEP_RESEARCH_SYSTEM_PROMPT } = await import('@/lib/agents/writer');
