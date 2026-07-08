@@ -35,7 +35,10 @@ export function ProductImageModal({ isOpen, onClose, imageUrl, productName }: Pr
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div 
+          onClick={(e) => e.stopPropagation()}
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+        >
           {/* Backdrop (Dark overlay with blur) */}
           <motion.div
             initial={{ opacity: 0 }}
