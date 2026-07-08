@@ -24,7 +24,14 @@ function gatherSequentialEnvKeys(prefix: string, filterFn?: (val: string) => boo
     const valNoUnderscore = process.env[`${prefix}${index}`];
     const val = valWithUnderscore || valNoUnderscore;
     if (val) {
-      const trimmed = val.trim();
+      let trimmed = val.trim();
+      // Strip any leading/trailing single or double quotes
+      if (
+        (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+        (trimmed.startsWith("'") && trimmed.endsWith("'"))
+      ) {
+        trimmed = trimmed.substring(1, trimmed.length - 1).trim();
+      }
       if (!filterFn || filterFn(trimmed)) {
         keys.push(trimmed);
       }
@@ -40,7 +47,16 @@ function gatherSequentialEnvKeys(prefix: string, filterFn?: (val: string) => boo
     if (legacyVal) {
       return legacyVal
         .split(",")
-        .map((s) => s.trim())
+        .map((s) => {
+          let trimmed = s.trim();
+          if (
+            (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+            (trimmed.startsWith("'") && trimmed.endsWith("'"))
+          ) {
+            trimmed = trimmed.substring(1, trimmed.length - 1).trim();
+          }
+          return trimmed;
+        })
         .filter(Boolean)
         .filter((k) => !filterFn || filterFn(k));
     }
