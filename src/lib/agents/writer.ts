@@ -13,7 +13,7 @@
  */
 
 import type { SearchedProduct } from "@/lib/agents/search";
-import { getNextGeminiClient, getNextGroqKey } from "./keyManager";
+import { executeWithGeminiFailover, getNextGroqKey } from "./keyManager";
 import { runWriterCriticValidationLoop } from "./writerCriticLoop";
 
 // ─── System Prompts ───────────────────────────────────────────────────────────
@@ -294,110 +294,6 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
     parts: [{ text: msg.content || "" }],
   }));
 
-  const genAI = getNextGeminiClient();
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
-    systemInstruction,
-  });
-
-  const chat = model.startChat({
-    history: formattedHistory,
-    generationConfig: {
-      maxOutputTokens: 1500,
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: "object" as any,
-        properties: {
-          ui_type: { 
-            type: "string" as any,
-            enum: isDeepResearch 
-              ? ["search_intent", "clarifying_question", "deep_research_results", "text_response", "intake_questionnaire"] 
-              : ["search_intent", "explore_carousel", "text_response"]
-          },
-          text: { type: "string" as any },
-          query: { type: "string" as any },
-          headline: { type: "string" as any },
-          deep_dive: { type: "string" as any },
-          products: {
-            type: "array" as any,
-            items: {
-              type: "object" as any,
-              properties: {
-                id: { type: "string" as any },
-                name: { type: "string" as any },
-                price: { type: "string" as any },
-                rating: { type: "number" as any },
-                image: { type: "string" as any },
-                platform: { type: "string" as any },
-                link: { type: "string" as any },
-                reason: { type: "string" as any },
-                stretch: { type: "boolean" as any }
-              }
-            }
-          },
-          thought: { type: "string" as any },
-          question: { type: "string" as any },
-          options: {
-            type: "array" as any,
-            items: {
-              type: "object" as any,
-              properties: {
-                id: { type: "string" as any },
-                label: { type: "string" as any },
-                value: { type: "string" as any }
-              }
-            }
-          },
-          allow_skip: { type: "boolean" as any },
-          allow_custom: { type: "boolean" as any },
-          confirmed_category: { type: "string" as any },
-          category: { type: "string" as any },
-          key_attributes: {
-            type: "array" as any,
-            items: {
-              type: "object" as any,
-              properties: {
-                name: { type: "string" as any },
-                question: { type: "string" as any }
-              }
-            }
-          },
-          summary: { type: "string" as any },
-          final_verdict: { type: "string" as any },
-          recommended_pick_reason: { type: "string" as any },
-          recommended_pick_id: { type: "string" as any },
-          recommended_products: {
-            type: "array" as any,
-            items: {
-              type: "object" as any,
-              properties: {
-                id: { type: "string" as any },
-                name: { type: "string" as any },
-                price: { type: "string" as any },
-                rating: { type: "number" as any },
-                reviewCount: { type: "string" as any },
-                description: { type: "string" as any },
-                platform: { type: "string" as any },
-                image: { type: "string" as any },
-                link: { type: "string" as any },
-                badge: { type: "string" as any }
-              }
-            }
-          },
-          fingerprint: {
-            type: "object" as any,
-            properties: {
-              language: { type: "string" as any },
-              tone: { type: "string" as any },
-              verbosity: { type: "string" as any }
-            }
-          }
-        },
-        required: ["ui_type"]
-      }
-    },
-  });
-
   // Inject memory context if available
   const prefLang = ((sessionContext as any)?.chatMemory || (sessionContext as any)?.memory)?.userLanguagePreference as string | undefined;
   if (prefLang) {
@@ -406,9 +302,117 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
 
   // ── First LLM call ──────────────────────────────────────────────────────────
   let text = "";
+  let chatSession: any = null;
   try {
-    const result = await chat.sendMessage(effectiveUserMessage);
-    text = result.response.text();
+    const res = await executeWithGeminiFailover(async (genAI) => {
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        systemInstruction,
+      });
+
+      const chat = model.startChat({
+        history: formattedHistory,
+        generationConfig: {
+          maxOutputTokens: 1500,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "object" as any,
+            properties: {
+              ui_type: { 
+                type: "string" as any,
+                enum: isDeepResearch 
+                  ? ["search_intent", "clarifying_question", "deep_research_results", "text_response", "intake_questionnaire"] 
+                  : ["search_intent", "explore_carousel", "text_response"]
+              },
+              text: { type: "string" as any },
+              query: { type: "string" as any },
+              headline: { type: "string" as any },
+              deep_dive: { type: "string" as any },
+              products: {
+                type: "array" as any,
+                items: {
+                  type: "object" as any,
+                  properties: {
+                    id: { type: "string" as any },
+                    name: { type: "string" as any },
+                    price: { type: "string" as any },
+                    rating: { type: "number" as any },
+                    image: { type: "string" as any },
+                    platform: { type: "string" as any },
+                    link: { type: "string" as any },
+                    reason: { type: "string" as any },
+                    stretch: { type: "boolean" as any }
+                  }
+                }
+              },
+              thought: { type: "string" as any },
+              question: { type: "string" as any },
+              options: {
+                type: "array" as any,
+                items: {
+                  type: "object" as any,
+                  properties: {
+                    id: { type: "string" as any },
+                    label: { type: "string" as any },
+                    value: { type: "string" as any }
+                  }
+                }
+              },
+              allow_skip: { type: "boolean" as any },
+              allow_custom: { type: "boolean" as any },
+              confirmed_category: { type: "string" as any },
+              category: { type: "string" as any },
+              key_attributes: {
+                type: "array" as any,
+                items: {
+                  type: "object" as any,
+                  properties: {
+                    name: { type: "string" as any },
+                    question: { type: "string" as any }
+                  }
+                }
+              },
+              summary: { type: "string" as any },
+              final_verdict: { type: "string" as any },
+              recommended_pick_reason: { type: "string" as any },
+              recommended_pick_id: { type: "string" as any },
+              recommended_products: {
+                type: "array" as any,
+                items: {
+                  type: "object" as any,
+                  properties: {
+                    id: { type: "string" as any },
+                    name: { type: "string" as any },
+                    price: { type: "string" as any },
+                    rating: { type: "number" as any },
+                    reviewCount: { type: "string" as any },
+                    description: { type: "string" as any },
+                    platform: { type: "string" as any },
+                    image: { type: "string" as any },
+                    link: { type: "string" as any },
+                    badge: { type: "string" as any }
+                  }
+                }
+              },
+              fingerprint: {
+                type: "object" as any,
+                properties: {
+                  language: { type: "string" as any },
+                  tone: { type: "string" as any },
+                  verbosity: { type: "string" as any }
+                }
+              }
+            },
+            required: ["ui_type"]
+          }
+        },
+      });
+
+      const result = await chat.sendMessage(effectiveUserMessage);
+      return { text: result.response.text(), chat };
+    });
+    text = res.text;
+    chatSession = res.chat;
   } catch (geminiErr) {
     console.warn("[writer] Gemini failed, trying Groq fallback...", geminiErr);
     const currentGroqApiKey = getNextGroqKey();
@@ -474,10 +478,14 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
       } else {
         const searchContextMessage = `Here are product listings for your search: ${JSON.stringify(serperProducts)}. Please output the explore_carousel JSON now with the best options. Make sure to provide a valid headline, products array, and deep_dive markdown string.`;
         try {
-          const secondResult = await chat.sendMessage(searchContextMessage);
-          const carouselText = secondResult.response.text();
-          responseTexts = [carouselText];
-          text = carouselText;
+          if (chatSession) {
+            const secondResult = await chatSession.sendMessage(searchContextMessage);
+            const carouselText = secondResult.response.text();
+            responseTexts = [carouselText];
+            text = carouselText;
+          } else {
+            throw new Error("No active Gemini chat session for second-turn carousel");
+          }
         } catch (secondErr) {
           console.warn("[writer] Second-turn carousel failed, using inline fallback:", secondErr);
           responseTexts = [JSON.stringify({
@@ -498,9 +506,13 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
     if (!validationReport.is_valid) {
       console.warn("[writer] Critic validation failed, retrying...", validationReport.error_diagnostic_trace);
       try {
-        const retryResult = await chat.sendMessage(`Critic validation failed: ${validationReport.error_diagnostic_trace}. Please return strictly a valid JSON payload matching the contract.`);
-        text = retryResult.response.text();
-        responseTexts = [text];
+        if (chatSession) {
+          const retryResult = await chatSession.sendMessage(`Critic validation failed: ${validationReport.error_diagnostic_trace}. Please return strictly a valid JSON payload matching the contract.`);
+          text = retryResult.response.text();
+          responseTexts = [text];
+        } else {
+          throw new Error("No active Gemini chat session for retry");
+        }
       } catch {
         // Emit a safe fallback
         responseTexts = [JSON.stringify({
@@ -543,19 +555,20 @@ export async function* runStreamingWriter(input: WriterInput): AsyncGenerator<st
   // and inject them before streaming the final carousel.
   if (!isDeepResearch && products.length === 0) {
     try {
-      const genAI = getNextGeminiClient();
-      const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
-        systemInstruction,
-        generationConfig: { responseMimeType: "application/json" }
+      const text = await executeWithGeminiFailover(async (genAI) => {
+        const model = genAI.getGenerativeModel({
+          model: "gemini-2.5-flash",
+          systemInstruction,
+          generationConfig: { responseMimeType: "application/json" }
+        });
+        const formattedHistory = history.map((msg) => ({
+          role: msg.role === "assistant" ? "model" : "user",
+          parts: [{ text: msg.content || "" }],
+        }));
+        const chat = model.startChat({ history: formattedHistory });
+        const result = await chat.sendMessage(effectiveUserMessage);
+        return result.response.text();
       });
-      const formattedHistory = history.map((msg) => ({
-        role: msg.role === "assistant" ? "model" : "user",
-        parts: [{ text: msg.content || "" }],
-      }));
-      const chat = model.startChat({ history: formattedHistory });
-      const result = await chat.sendMessage(effectiveUserMessage);
-      const text = result.response.text();
       const parsed = tryParse(text);
 
       if (parsed?.ui_type === "search_intent") {

@@ -1,9 +1,8 @@
 import { env } from "@/lib/env";
 import { Index } from "@upstash/vector";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { SearchedProduct } from "@/lib/agents/search";
+import { executeWithGeminiFailover } from "@/lib/agents/keyManager";
 
-const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEYS[0]);
 // Ensure we don't crash if tokens aren't provided, just silently disable caching.
 const index = env.UPSTASH_VECTOR_REST_URL && env.UPSTASH_VECTOR_REST_TOKEN
   ? new Index({
@@ -29,10 +28,12 @@ const CACHE_SIMILARITY_THRESHOLD_HARD = 0.95;
 const CACHE_SIMILARITY_THRESHOLD_SOFT = 0.85;
 
 async function generateEmbedding(text: string): Promise<number[]> {
-  // Using Google's text-embedding-004 model
-  const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
-  const result = await model.embedContent(text);
-  return result.embedding.values;
+  // Using Google's text-embedding-004 model with key failover
+  return await executeWithGeminiFailover(async (genAI) => {
+    const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+    const result = await model.embedContent(text);
+    return result.embedding.values;
+  });
 }
 
 export async function checkSemanticCache(

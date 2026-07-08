@@ -1,10 +1,9 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import { checkAndIncrementMessageLimit } from "@/app/actions/chat";
 import { createClient } from "@/lib/supabase/server";
+import { executeWithGeminiFailover } from "@/lib/agents/keyManager";
 
-const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEYS[0]);
 const GUEST_MODE_KEY = "buywise_guest_mode";
 const GUEST_COUNT_KEY = "buywise_guest_message_count";
 const FREE_MESSAGE_LIMIT = 3;
@@ -41,27 +40,27 @@ export async function POST(req: NextRequest) {
     
     const prompt = `Act as a savage fashion influencer and rate this outfit combination in 2 lines: [${itemsList}]. Output a numeric match score from 0-100, your 2-line witty commentary, and an array of 1-2 short reasons why the items match or don't match (e.g. "Colors clash", "Perfect for summer", "Fits your style").`;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        maxOutputTokens: 200,
-        temperature: 0.8,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "object" as any, // SchemaType.OBJECT if we imported it, "object" string works in generative-ai
-          properties: {
-            score: { type: "integer" as any },
-            commentary: { type: "string" as any },
-            reasons: { type: "array" as any, items: { type: "string" as any } },
+    const responseText = await executeWithGeminiFailover(async (genAI) => {
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          maxOutputTokens: 200,
+          temperature: 0.8,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "object" as any, // SchemaType.OBJECT if we imported it, "object" string works in generative-ai
+            properties: {
+              score: { type: "integer" as any },
+              commentary: { type: "string" as any },
+              reasons: { type: "array" as any, items: { type: "string" as any } },
+            },
+            required: ["score", "commentary", "reasons"],
           },
-          required: ["score", "commentary", "reasons"],
         },
-      },
+      });
+      return result.response.text();
     });
-
-    const responseText = result.response.text();
     
     // Parse the response with a fallback
     let score = 50;

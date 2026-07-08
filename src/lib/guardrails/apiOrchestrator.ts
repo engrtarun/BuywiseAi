@@ -1,8 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "@/lib/env";
 import { validateAndSanitizeOutput } from "./schemaGuardrails";
-
-const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEYS[0]);
+import { executeWithGeminiFailover } from "../agents/keyManager";
 
 interface OrchestratorInput {
   systemInstruction: string;
@@ -46,24 +44,29 @@ export async function* executeStreamingOrchestration(input: OrchestratorInput): 
   } catch (groqErr) {
     console.warn("Groq streaming failed, falling back to Gemini:", groqErr);
     
-    // Fallback to Gemini Streaming
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      systemInstruction: input.systemInstruction,
-    });
-    
-    const chat = model.startChat({
-      history: input.formattedHistory,
-    });
-    
-    const result = await chat.sendMessageStream(input.effectiveUserMessage);
-    for await (const chunk of result.stream) {
-      const chunkText = chunk.text();
-      if (chunkText) {
-        yield chunkText;
+    // Fallback to Gemini Streaming with automatic key failover
+    try {
+      const result = await executeWithGeminiFailover(async (genAI) => {
+        const model = genAI.getGenerativeModel({
+          model: "gemini-2.5-flash",
+          systemInstruction: input.systemInstruction,
+        });
+        const chat = model.startChat({
+          history: input.formattedHistory,
+        });
+        return await chat.sendMessageStream(input.effectiveUserMessage);
+      });
+
+      for await (const chunk of result.stream) {
+        const chunkText = chunk.text();
+        if (chunkText) {
+          yield chunkText;
+        }
       }
+    } catch (geminiErr) {
+      console.error("Gemini fallback streaming failed completely across all keys:", geminiErr);
     }
-    return; // Exit generator after Gemini finishes successfully
+    return; // Exit generator after Gemini finishes
   }
 
 
@@ -122,31 +125,34 @@ export async function* executeStreamingOrchestration(input: OrchestratorInput): 
 export async function executeGenerativeOrchestration(input: OrchestratorInput): Promise<string> {
   let rawText = "";
 
-  // 1. Primary Engine Execution (Google Gemini)
+  // 1. Primary Engine Execution (Google Gemini) with automatic key failover
   try {
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      systemInstruction: input.systemInstruction,
+    rawText = await executeWithGeminiFailover(async (genAI) => {
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        systemInstruction: input.systemInstruction,
+      });
+
+      const chat = model.startChat({
+        history: input.formattedHistory,
+        generationConfig: {
+          maxOutputTokens: 1500,
+          responseMimeType: "application/json",
+        },
+      });
+
+      // Enforce latency bounds (GUARD-RANK-GAMMA)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+      try {
+        const result = await chat.sendMessage(input.effectiveUserMessage, { signal: controller.signal } as any);
+        return result.response.text();
+      } finally {
+        clearTimeout(timeoutId);
+      }
     });
-
-    const chat = model.startChat({
-      history: input.formattedHistory,
-      generationConfig: {
-        maxOutputTokens: 1500,
-        responseMimeType: "application/json",
-      },
-    });
-
-    // Enforce latency bounds (GUARD-RANK-GAMMA)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000);
-
-    const result = await chat.sendMessage(input.effectiveUserMessage, { signal: controller.signal } as any);
-    clearTimeout(timeoutId);
-
-    rawText = result.response.text();
   } catch (geminiErr) {
-    console.warn("[Orchestrator] Primary engine failed. Triggering cascading fallback to Groq...", geminiErr);
+    console.warn("[Orchestrator] Primary engine failed completely across all Gemini keys. Triggering cascading fallback to Groq...", geminiErr);
     
     // 2. Cascading Fallback (Groq)
     if (!input.groqApiKey) {

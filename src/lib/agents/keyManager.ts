@@ -21,3 +21,30 @@ export function getNextGroqKey() {
   groqKeyIndex++;
   return key;
 }
+
+export async function executeWithGeminiFailover<T>(
+  fn: (client: GoogleGenerativeAI) => Promise<T>
+): Promise<T> {
+  const keys = env.GEMINI_API_KEYS;
+  if (!keys || keys.length === 0) {
+    throw new Error("No Gemini API keys configured");
+  }
+
+  let lastError: any = null;
+  for (let i = 0; i < keys.length; i++) {
+    const targetIndex = (geminiKeyIndex + i) % keys.length;
+    const currentKey = keys[targetIndex];
+    const client = new GoogleGenerativeAI(currentKey);
+    try {
+      const result = await fn(client);
+      // Update index so that subsequent queries start with the successful key
+      geminiKeyIndex = targetIndex;
+      return result;
+    } catch (err: any) {
+      console.warn(`[keyManager] Gemini API call failed with key index ${targetIndex}, trying next:`, err.message || err);
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error("All Gemini API keys failed");
+}

@@ -1,7 +1,4 @@
-import { env } from "@/lib/env";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEYS[0]);
+import { executeWithGeminiFailover } from "./keyManager";
 
 export interface RouterOutput {
   target_mode: "explore" | "deep_research";
@@ -25,19 +22,20 @@ Contract schema:
   "reasoning_trace": "short analytical comment"
 }`;
 
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
-    generationConfig: { responseMimeType: "application/json" },
-    systemInstruction: routerPrompt,
-  });
-
   const startTime = performance.now();
   try {
-    const payloadResponse = await model.generateContent(`History context: ${contextHistory} \n Message: ${userMessage}`);
-    const targetText = payloadResponse.response.text().trim();
+    const targetText = await executeWithGeminiFailover(async (genAI) => {
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        generationConfig: { responseMimeType: "application/json" },
+        systemInstruction: routerPrompt,
+      });
+      const payloadResponse = await model.generateContent(`History context: ${contextHistory} \n Message: ${userMessage}`);
+      return payloadResponse.response.text().trim();
+    });
     return JSON.parse(targetText) as RouterOutput;
   } catch (error) {
-    console.error("[routerAgent] Routing execution failed:", error);
+    console.error("[routerAgent] Routing execution failed completely across all keys:", error);
     // Safe fallback to explore mode to keep the conversation going
     return {
       target_mode: "explore",
