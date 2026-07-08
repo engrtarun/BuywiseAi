@@ -91,9 +91,18 @@ export async function POST(req: NextRequest) {
     // Do NOT override it with the router agent, otherwise Deep Research mode gets hijacked into Explore mode.
 
     // Backend JSON file logic (Msg Quality Improvement & History Tracking like Gemini Ecosystem)
-    const chatDataDir = path.join(process.cwd(), "chat_data");
-    if (!fs.existsSync(chatDataDir)) {
-      fs.mkdirSync(chatDataDir);
+    // On serverless environments (Netlify, Vercel, AWS Lambda), write to /tmp/chat_data instead of process.cwd()/chat_data.
+    const isServerless = !!(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL);
+    const chatDataDir = isServerless
+      ? path.join("/tmp", "chat_data")
+      : path.join(process.cwd(), "chat_data");
+
+    try {
+      if (!fs.existsSync(chatDataDir)) {
+        fs.mkdirSync(chatDataDir, { recursive: true });
+      }
+    } catch (e) {
+      console.warn("Failed to create chat_data directory:", e);
     }
     const contextFilePath = path.join(chatDataDir, `${chatId}.json`);
 
@@ -117,7 +126,14 @@ export async function POST(req: NextRequest) {
       memory: {}
     };
 
-    if (fs.existsSync(contextFilePath)) {
+    let fileExists = false;
+    try {
+      fileExists = fs.existsSync(contextFilePath);
+    } catch (e) {
+      console.warn("Failed to check if chat file exists:", e);
+    }
+
+    if (fileExists) {
       try {
         const fileContent = fs.readFileSync(contextFilePath, "utf8");
         const parsed = JSON.parse(fileContent);
@@ -130,7 +146,7 @@ export async function POST(req: NextRequest) {
           memory: parsed.memory || {}
         };
       } catch (e) {
-        console.warn("Failed to parse backend JSON file:", e);
+        console.warn("Failed to read/parse backend JSON file:", e);
       }
     }
 
@@ -165,7 +181,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Save current state before LLM call
-    fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
+    try {
+      fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
+    } catch (e) {
+      console.warn("Failed to write initial chat session state to file:", e);
+    }
 
     const access = await enforceChatAccess(req);
     if (access.response) {
@@ -422,7 +442,11 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
+          try {
+            fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
+          } catch (e) {
+            console.warn("Failed to update final chat session state to file:", e);
+          }
 
           if (confirmedCategory) {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'metadata', confirmed_category: confirmedCategory })}\n\n`));
