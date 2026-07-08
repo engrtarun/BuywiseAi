@@ -8,16 +8,46 @@
  *
  * Import `env` from this file instead of using `process.env` directly —
  * you get full TypeScript autocomplete and a guarantee the value exists.
- *
- * Usage:
- *   import { env } from "@/lib/env";
- *   env.GEMINI_API_KEY  // ✅ typed string, guaranteed non-empty
  */
 
 import { z } from "zod";
 
 const isServer = typeof window === "undefined";
 const isProduction = process.env.NODE_ENV === "production";
+
+function gatherSequentialEnvKeys(prefix: string, filterFn?: (val: string) => boolean): string[] {
+  if (!isServer) return [];
+  const keys: string[] = [];
+  let index = 1;
+  while (true) {
+    const valWithUnderscore = process.env[`${prefix}_${index}`];
+    const valNoUnderscore = process.env[`${prefix}${index}`];
+    const val = valWithUnderscore || valNoUnderscore;
+    if (val) {
+      const trimmed = val.trim();
+      if (!filterFn || filterFn(trimmed)) {
+        keys.push(trimmed);
+      }
+      index++;
+    } else {
+      break;
+    }
+  }
+  
+  // Fallback to legacy single comma-separated variable if no sequential ones exist
+  if (keys.length === 0) {
+    const legacyVal = process.env[`${prefix}S`] || process.env[prefix];
+    if (legacyVal) {
+      return legacyVal
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .filter((k) => !filterFn || filterFn(k));
+    }
+  }
+  
+  return keys;
+}
 
 const clientEnvSchema = z
   .object({
@@ -35,8 +65,8 @@ const clientEnvSchema = z
   .strict();
 
 const serverEnvSchema = clientEnvSchema.extend({
-  GEMINI_API_KEYS: z.string().trim().min(1, "GEMINI_API_KEYS is required").transform(val => val.split(',').map(s => s.trim()).filter(Boolean)),
-  GROQ_API_KEY: z.string().trim().optional().transform(val => val ? val.split(',').map(s => s.trim()).filter(k => k.startsWith("gsk_")) : []),
+  GEMINI_API_KEYS: z.array(z.string().min(1)).min(1, "At least one GEMINI_API_KEY is required"),
+  GROQ_API_KEY: z.array(z.string()).default([]),
   // Optional: when absent the app falls back to FakeStore product data.
   SERPER_API_KEY: z.string().trim().optional(),
   UPSTASH_VECTOR_REST_URL: z.string().trim().optional(),
@@ -45,10 +75,19 @@ const serverEnvSchema = clientEnvSchema.extend({
 
 const envSchema = isServer ? serverEnvSchema : clientEnvSchema;
 
+const geminiKeys = gatherSequentialEnvKeys("GEMINI_API_KEY");
+const groqKeys = gatherSequentialEnvKeys("GROQ_API_KEY", (k) => k.startsWith("gsk_"));
+
 const rawEnv = {
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  ...(isServer ? { GEMINI_API_KEYS: process.env.GEMINI_API_KEYS, GROQ_API_KEY: process.env.GROQ_API_KEY, SERPER_API_KEY: process.env.SERPER_API_KEY, UPSTASH_VECTOR_REST_URL: process.env.UPSTASH_VECTOR_REST_URL, UPSTASH_VECTOR_REST_TOKEN: process.env.UPSTASH_VECTOR_REST_TOKEN } : {}),
+  ...(isServer ? { 
+    GEMINI_API_KEYS: geminiKeys, 
+    GROQ_API_KEY: groqKeys, 
+    SERPER_API_KEY: process.env.SERPER_API_KEY, 
+    UPSTASH_VECTOR_REST_URL: process.env.UPSTASH_VECTOR_REST_URL, 
+    UPSTASH_VECTOR_REST_TOKEN: process.env.UPSTASH_VECTOR_REST_TOKEN 
+  } : {}),
 };
 
 const parsedResult = envSchema.safeParse(rawEnv);
@@ -68,8 +107,8 @@ const fallbackEnv = {
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
   ...(isServer ? { 
-    GEMINI_API_KEYS: (process.env.GEMINI_API_KEYS || "").split(',').map(s => s.trim()).filter(Boolean),
-    GROQ_API_KEY: (process.env.GROQ_API_KEY || "").split(',').map(s => s.trim()).filter(k => k.startsWith("gsk_")),
+    GEMINI_API_KEYS: geminiKeys,
+    GROQ_API_KEY: groqKeys,
     SERPER_API_KEY: process.env.SERPER_API_KEY,
     UPSTASH_VECTOR_REST_URL: process.env.UPSTASH_VECTOR_REST_URL,
     UPSTASH_VECTOR_REST_TOKEN: process.env.UPSTASH_VECTOR_REST_TOKEN
@@ -78,3 +117,4 @@ const fallbackEnv = {
 
 export const env = (parsedResult.success ? parsedResult.data : fallbackEnv) as z.infer<typeof serverEnvSchema>;
 export type Env = z.infer<typeof serverEnvSchema>;
+
