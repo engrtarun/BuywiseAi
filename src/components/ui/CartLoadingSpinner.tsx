@@ -2,11 +2,11 @@ import React from "react";
 
 export const CartLoadingSpinner: React.FC = () => {
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0B0C10]">
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background text-foreground transition-colors duration-300">
       <div className="relative flex flex-col items-center justify-center w-48 h-48">
         
         {/* Ambient Depth Background Glow */}
-        <div className="absolute w-28 h-28 bg-[#D4AF37] opacity-10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute w-28 h-28 bg-primary opacity-10 rounded-full blur-3xl animate-pulse" />
 
         {/* Shaking Animation Group Container */}
         <div className="relative flex flex-col items-center justify-center w-full animate-cart-shake">
@@ -14,9 +14,9 @@ export const CartLoadingSpinner: React.FC = () => {
           {/* Falling Items Spawner Layer */}
           <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-12 h-16 overflow-visible pointer-events-none z-20">
             {/* Item 1: Marigold Square */}
-            <div className="absolute left-[25%] w-3 h-3 bg-[#D4AF37] rounded-sm shadow-sm animate-drop-merge-1 mix-blend-screen" />
+            <div className="absolute left-[25%] w-3 h-3 bg-primary rounded-sm shadow-sm animate-drop-merge-1 mix-blend-screen" />
             {/* Item 2: Simple White Circle */}
-            <div className="absolute left-[55%] w-2.5 h-2.5 bg-white opacity-90 rounded-full shadow-sm animate-drop-merge-2" />
+            <div className="absolute left-[55%] w-2.5 h-2.5 bg-foreground opacity-90 rounded-full shadow-sm animate-drop-merge-2" />
           </div>
 
           {/* Cart Icon Container with Dynamic Fill Overlay Mask */}
@@ -24,7 +24,7 @@ export const CartLoadingSpinner: React.FC = () => {
             
             {/* Cart Wireframe Mask Vector Graphic */}
             <svg
-              className="absolute inset-0 w-full h-full text-white opacity-90 z-10 filter drop-shadow-[0_2px_8px_rgba(212,175,55,0.1)]"
+              className="absolute inset-0 w-full h-full text-foreground opacity-90 z-10 filter drop-shadow-[0_2px_8px_var(--primary)/15]"
               fill="none"
               stroke="currentColor"
               strokeWidth="1.5"
@@ -39,17 +39,17 @@ export const CartLoadingSpinner: React.FC = () => {
             </svg>
 
             {/* Solid Filling Dynamic Layer (Clips cleanly into the base bounds) */}
-            <div className="absolute bottom-3 left-4 right-2 h-8 bg-gradient-to-t from-[#D4AF37]/40 to-[#D4AF37]/10 origin-bottom animate-fill z-0 rounded-b-sm" />
+            <div className="absolute bottom-3 left-4 right-2 h-8 bg-gradient-to-t from-primary/40 to-primary/10 origin-bottom animate-fill z-0 rounded-b-sm" />
           </div>
           
         </div>
       </div>
 
       {/* Scannable Minimalism Micro-Typography */}
-      <h2 className="text-xs font-light tracking-[0.3em] text-[#D4AF37] uppercase animate-pulse select-none">
+      <h2 className="text-xs font-light tracking-[0.3em] text-primary uppercase animate-pulse select-none">
         Gathering Smart Deals
       </h2>
-      <p className="mt-2 text-[10px] font-mono tracking-widest text-neutral-500 lowercase select-none">
+      <p className="mt-2 text-[10px] font-mono tracking-widest text-muted-foreground lowercase select-none">
         structuring optimized layout modules...
       </p>
     </div>
