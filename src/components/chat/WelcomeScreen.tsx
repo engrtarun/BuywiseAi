@@ -77,7 +77,7 @@ const MODE_METADATA: Record<ActiveCycleMode, {
       "Automated food/apparel intent triggers",
       "Instant responsive micro-layouts"
     ],
-    themeColor: "text-blue-400 border-blue-500/30"
+    themeColor: "text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/30"
   },
   deep_research: {
     titleKey: "Deep Research Mode",
@@ -88,7 +88,7 @@ const MODE_METADATA: Record<ActiveCycleMode, {
       "Multi-source factual validation check",
       "Semantic cache search optimization"
     ],
-    themeColor: "text-purple-400 border-purple-500/30"
+    themeColor: "text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-500/30"
   },
   quick_buy: {
     titleKey: "Quick Buy Mode",
@@ -99,7 +99,7 @@ const MODE_METADATA: Record<ActiveCycleMode, {
       "Automated target parameter filtration",
       "Shopper speed profile integration"
     ],
-    themeColor: "text-amber-400 border-amber-500/30"
+    themeColor: "text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/30"
   },
   quick_food: {
     titleKey: "Quick Food Mode",
@@ -110,7 +110,7 @@ const MODE_METADATA: Record<ActiveCycleMode, {
       "Delivery times & schema validation",
       "Menu composition analysis"
     ],
-    themeColor: "text-rose-400 border-rose-500/30"
+    themeColor: "text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-500/30"
   },
   virtual_wardrobe: {
     titleKey: "Virtual Wardrobe Mode",
@@ -121,7 +121,7 @@ const MODE_METADATA: Record<ActiveCycleMode, {
       "Clean UI visual overlay modules",
       "Persistent sizing metrics database"
     ],
-    themeColor: "text-emerald-400 border-emerald-500/30"
+    themeColor: "text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30"
   }
 };
 
@@ -227,24 +227,24 @@ export function WelcomeScreen({
   };
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col justify-between overflow-y-auto px-6 py-8 bg-[#0B0B0C]">
+    <div className="flex-1 min-h-0 flex flex-col justify-between overflow-y-auto px-6 py-8 bg-background text-foreground transition-colors duration-300">
       {/* Brand Identity / Top Header */}
       <div className="w-full max-w-2xl mx-auto flex flex-col items-center gap-2 select-none">
         <div className="overflow-visible h-20 flex items-center justify-center">
           <Logo 
             showText={false}
-            iconClassName="w-16 h-16 text-neutral-200 drop-shadow-[0_4px_12px_rgba(255,255,255,0.05)]"
+            iconClassName="w-16 h-16 text-primary drop-shadow-[0_4px_12px_var(--primary)/10]"
           />
         </div>
-        <h1 className="text-xl font-heading font-semibold text-white tracking-wide">
+        <h1 className="text-xl font-heading font-semibold text-foreground tracking-wide">
           BuyWise AI
         </h1>
         {isGuest && (
-          <div className="inline-flex items-center gap-2 mt-2 px-3.5 py-1.5 rounded-full bg-white/[0.05] border border-white/[0.10] backdrop-blur-sm animate-in fade-in duration-500 text-xs font-mono text-text-dim-ondark">
+          <div className="inline-flex items-center gap-2 mt-2 px-3.5 py-1.5 rounded-full bg-muted/50 border border-border backdrop-blur-sm animate-in fade-in duration-500 text-xs font-mono text-muted-foreground">
             <User className="size-3.5" />
             <span>{t("welcome.guestMode")}</span>
-            <span className="w-px h-3 bg-line-ondark" />
-            <span className="text-marigold font-medium">
+            <span className="w-px h-3 bg-border" />
+            <span className="text-primary font-medium">
               {guestMessagesRemaining} {guestMessagesRemaining === 1 ? t("welcome.freeMessageLeft") : t("welcome.freeMessagesLeft")}
             </span>
           </div>
@@ -255,20 +255,20 @@ export function WelcomeScreen({
       <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 my-auto pt-6">
         
         {/* Dynamic Product Showcase Banner (50s loop) */}
-        <div className="w-full bg-[#121214] border border-neutral-800 rounded-lg p-4 transition-all duration-500 ease-in-out relative overflow-hidden">
-          <div className="absolute top-2 right-2 text-[10px] uppercase tracking-wider font-mono text-neutral-600">
+        <div className="w-full bg-card border border-border rounded-lg p-4 transition-all duration-500 ease-in-out relative overflow-hidden">
+          <div className="absolute top-2 right-2 text-[10px] uppercase tracking-wider font-mono text-muted-foreground/60">
             Showcase Spotlight
           </div>
           <div key={productIndex} className="animate-fade-in flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="space-y-1">
-              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-neutral-800 text-neutral-400">
+              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-muted text-muted-foreground">
                 {currentProduct.category}
               </span>
-              <h3 className="text-sm font-sans font-semibold text-white">{currentProduct.name}</h3>
-              <p className="text-xs text-neutral-400 max-w-md">{currentProduct.desc}</p>
+              <h3 className="text-sm font-sans font-semibold text-foreground">{currentProduct.name}</h3>
+              <p className="text-xs text-muted-foreground max-w-md">{currentProduct.desc}</p>
             </div>
             <div className="text-right shrink-0">
-              <span className="text-sm font-mono font-bold text-neutral-100">{currentProduct.price}</span>
+              <span className="text-sm font-mono font-bold text-foreground">{currentProduct.price}</span>
             </div>
           </div>
         </div>
@@ -280,13 +280,13 @@ export function WelcomeScreen({
               key={`${idx}-${promptText}`}
               onClick={() => onSuggestionClick(promptText)}
               disabled={suggestionsLoading}
-              className="w-full text-left p-3.5 rounded-lg bg-[#121214] border border-neutral-800 hover:border-neutral-700 hover:bg-[#18181B] active:scale-[0.99] transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[90px]"
+              className="w-full text-left p-3.5 rounded-lg bg-card border border-border hover:bg-muted/50 hover:border-border/80 active:scale-[0.99] transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[90px]"
             >
-              <span className="text-xs font-sans text-neutral-300 leading-relaxed font-medium">
+              <span className="text-xs font-sans text-foreground leading-relaxed font-medium">
                 {promptText}
               </span>
               <div className="w-full flex justify-end">
-                <ChevronRight className="size-3 text-neutral-500" />
+                <ChevronRight className="size-3 text-muted-foreground" />
               </div>
             </button>
           ))}
@@ -295,35 +295,35 @@ export function WelcomeScreen({
         {/* The Mode Cycling System (10s continuous rotator) */}
         <div 
           onClick={handleModeBlockClick}
-          className="w-full bg-[#121214] border border-neutral-800 hover:border-neutral-700 hover:bg-[#18181B] rounded-lg p-5 cursor-pointer transition-all duration-300 group relative"
+          className="w-full bg-card border border-border hover:bg-muted/50 hover:border-border/80 rounded-lg p-5 cursor-pointer transition-all duration-300 group relative"
         >
           {/* Active timing progress line indicator */}
-          <div key={activeModeIndex} className="absolute bottom-0 left-0 h-[2px] bg-neutral-700 animate-progress-bar" style={{ animationDuration: '10s' }} />
+          <div key={activeModeIndex} className="absolute bottom-0 left-0 h-[2px] bg-primary/50 animate-progress-bar" style={{ animationDuration: '10s' }} />
           
           <div className="flex items-start gap-4">
-            <div className={`p-3 rounded-lg bg-neutral-900 border border-neutral-800 ${currentModeInfo.themeColor}`}>
+            <div className={`p-3 rounded-lg bg-muted border border-border ${currentModeInfo.themeColor}`}>
               <ModeIcon className="size-5" />
             </div>
             <div className="space-y-2 flex-1">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-neutral-400">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">
                   Featured Capabilities
                 </span>
-                <span className="text-[10px] text-neutral-500 font-mono group-hover:text-white transition-colors">
+                <span className="text-[10px] text-muted-foreground font-mono group-hover:text-foreground transition-colors">
                   Launch Workspace →
                 </span>
               </div>
-              <h2 className="text-sm font-sans font-bold text-white">
+              <h2 className="text-sm font-sans font-bold text-foreground">
                 {currentModeType === 'explore' ? t("welcome.exploreMode") : currentModeType === 'deep_research' ? t("welcome.deepResearch") : currentModeInfo.titleKey}
               </h2>
-              <p className="text-xs text-neutral-400 leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 {currentModeInfo.descKey}
               </p>
               
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-2">
                 {currentModeInfo.benefits.map((benefit, bIdx) => (
-                  <li key={bIdx} className="text-[11px] text-neutral-500 flex items-center gap-1.5">
-                    <span className="w-1 h-1 rounded-full bg-neutral-600" />
+                  <li key={bIdx} className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                    <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
                     {benefit}
                   </li>
                 ))}
