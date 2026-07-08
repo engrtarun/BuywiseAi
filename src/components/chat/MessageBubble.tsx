@@ -19,32 +19,7 @@ import { ChatMode } from "@/types/chat";
 import { Brain, Pencil, ArrowRight, ChevronRight, CheckCircle, Microscope, Compass } from "lucide-react";
 import { getExploreLayoutParts } from "@/utils/exploreMode";
 import { useUser } from "@/contexts/UserContext";
-
-function getCuratedProductImage(productName: string): string {
-  const name = productName.toLowerCase();
-  if (name.includes("laptop") || name.includes("macbook") || name.includes("notebook")) {
-    return "https://images.unsplash.com/photo-1496181130204-7552cc14f1d0?auto=format&fit=crop&w=500&q=80";
-  }
-  if (name.includes("phone") || name.includes("pixel") || name.includes("oneplus") || name.includes("smartphone") || name.includes("iphone")) {
-    return "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=500&q=80";
-  }
-  if (name.includes("shirt") || name.includes("tee") || name.includes("t-shirt") || name.includes("clothing")) {
-    return "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=500&q=80";
-  }
-  if (name.includes("shoe") || name.includes("sneaker") || name.includes("boot")) {
-    return "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=500&q=80";
-  }
-  if (name.includes("watch") || name.includes("smartwatch")) {
-    return "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80";
-  }
-  if (name.includes("jacket") || name.includes("coat") || name.includes("hoodie")) {
-    return "https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=500&q=80";
-  }
-  if (name.includes("headphone") || name.includes("earbud")) {
-    return "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&q=80";
-  }
-  return "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=500&q=80";
-}
+import { getCuratedProductImage } from "@/utils/productImage";
 
 /** Detect if raw markdown contains a GFM table */
 function hasTable(content: string): boolean {

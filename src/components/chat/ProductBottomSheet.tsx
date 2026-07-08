@@ -6,6 +6,7 @@ import { motion, AnimatePresence, useAnimation, PanInfo } from "framer-motion";
 import { X, Star, ShoppingBag, ShieldCheck, Layers, ChevronRight } from "lucide-react";
 import { Product } from "@/types/product";
 import { useRouter } from "next/navigation";
+import { getCuratedProductImage } from "@/utils/productImage";
 
 interface ProductBottomSheetProps {
   isOpen: boolean;
@@ -18,6 +19,25 @@ export function ProductBottomSheet({ isOpen, onClose, product, onBuy }: ProductB
   const [mounted, setMounted] = useState(false);
   const controls = useAnimation();
   const router = useRouter();
+  const [imageSrc, setImageSrc] = useState<string>("");
+
+  useEffect(() => {
+    if (!product) return;
+    const rawImg = product.image || "";
+    if (!rawImg || rawImg.includes("placeholder.png")) {
+      setImageSrc(getCuratedProductImage(product.name));
+    } else {
+      setImageSrc(rawImg);
+    }
+  }, [product]);
+
+  const handleImageError = () => {
+    if (!product) return;
+    const fallbackImg = getCuratedProductImage(product.name);
+    if (imageSrc !== fallbackImg) {
+      setImageSrc(fallbackImg);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -95,8 +115,9 @@ export function ProductBottomSheet({ isOpen, onClose, product, onBuy }: ProductB
               {/* Product Image Gallery (Mock single image) */}
               <div className="w-full h-[35vh] min-h-[300px] relative bg-white/5">
                 <img
-                  src={product.image}
+                  src={imageSrc}
                   alt={product.name}
+                  onError={handleImageError}
                   className="w-full h-full object-cover"
                 />
                 {/* Discount Badge */}
