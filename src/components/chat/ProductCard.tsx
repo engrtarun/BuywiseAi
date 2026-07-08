@@ -73,10 +73,10 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
   // Hydrate local state from local storage persistence
   useEffect(() => {
     try {
-      const storedSaved = localStorage.getItem("buywise_quickbuy_saved");
+      const storedSaved = localStorage.getItem("buywise_cart_items");
       if (storedSaved) {
         const parsed = JSON.parse(storedSaved);
-        if (Array.isArray(parsed) && parsed.includes(product.id)) {
+        if (Array.isArray(parsed) && parsed.some((p: any) => p.id === product.id)) {
           setInCart(true);
         }
       }
@@ -126,24 +126,31 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
       });
       
       // Update local storage to persist state across reloads
-      const storedSaved = localStorage.getItem("buywise_quickbuy_saved");
-      let savedIds: string[] = [];
-      if (storedSaved) {
+      const storedCart = localStorage.getItem("buywise_cart_items");
+      let cartItems: any[] = [];
+      if (storedCart) {
         try {
-          savedIds = JSON.parse(storedSaved);
+          cartItems = JSON.parse(storedCart);
         } catch {
-          savedIds = [];
+          cartItems = [];
         }
       }
       
       if (nextInCart) {
-        if (!savedIds.includes(product.id)) {
-          savedIds.push(product.id);
+        if (!cartItems.some((p: any) => p.id === product.id)) {
+          cartItems.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            platform: product.platform,
+          });
         }
       } else {
-        savedIds = savedIds.filter(id => id !== product.id);
+        cartItems = cartItems.filter((p: any) => p.id !== product.id);
       }
-      localStorage.setItem("buywise_quickbuy_saved", JSON.stringify(savedIds));
+      localStorage.setItem("buywise_cart_items", JSON.stringify(cartItems));
+      localStorage.setItem("buywise_quickbuy_saved", JSON.stringify(cartItems.map(p => p.id)));
       window.dispatchEvent(new CustomEvent("cart-updated"));
     } catch (err) {
       console.error("Failed to sync cart state to database:", err);

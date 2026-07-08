@@ -13,7 +13,7 @@ export function QuickBuyButton({ onClick }: QuickBuyButtonProps) {
 
   const updateCount = React.useCallback(() => {
     try {
-      const stored = localStorage.getItem("buywise_quickbuy_saved");
+      const stored = localStorage.getItem("buywise_cart_items");
       if (stored) {
         setCount(JSON.parse(stored).length);
       } else {
