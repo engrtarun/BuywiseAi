@@ -818,7 +818,7 @@ export default function Page() {
           let newId: string;
           let newSession: ChatSession;
  
-          if (isTemporaryChat) {
+          if (isTemporaryChat || isGuest) {
             // Guest / temporary chat — no Supabase persistence
             newId = generateId();
             newSession = {
@@ -831,37 +831,51 @@ export default function Page() {
               requirements: {},
             };
           } else {
-            newId = await createChatSession(selectedMode);
-            newSession = {
-              id: newId,
-              title: generateTitle(content),
-              messages: [userMsg],
-              createdAt: Date.now(),
-              mode: selectedMode,
-              requirements: {},
-            };
-            // Persist user message to Supabase
-            await apiSendMessage(newId, "user", content);
-            // Also set title of the chat in Supabase
-            const supabase = createClient();
-            const updatePayload: any = { title: generateTitle(content), mode: selectedMode };
-            let { error } = await supabase
-              .from("chat_sessions")
-              .update(updatePayload)
-              .eq("id", newId);
-            
-            // Graceful fallback if remote DB is missing the 'mode' column
-            if (error && error.message.includes("'mode' column")) {
-              console.warn("Graceful fallback: 'mode' column missing, updating without it.");
-              delete updatePayload.mode;
-              const fallbackResult = await supabase
+            try {
+              newId = await createChatSession(selectedMode);
+              newSession = {
+                id: newId,
+                title: generateTitle(content),
+                messages: [userMsg],
+                createdAt: Date.now(),
+                mode: selectedMode,
+                requirements: {},
+              };
+              // Persist user message to Supabase
+              await apiSendMessage(newId, "user", content);
+              // Also set title of the chat in Supabase
+              const supabase = createClient();
+              const updatePayload: any = { title: generateTitle(content), mode: selectedMode };
+              let { error } = await supabase
                 .from("chat_sessions")
                 .update(updatePayload)
                 .eq("id", newId);
-              error = fallbackResult.error;
+              
+              // Graceful fallback if remote DB is missing the 'mode' column
+              if (error && error.message.includes("'mode' column")) {
+                console.warn("Graceful fallback: 'mode' column missing, updating without it.");
+                delete updatePayload.mode;
+                const fallbackResult = await supabase
+                  .from("chat_sessions")
+                  .update(updatePayload)
+                  .eq("id", newId);
+                error = fallbackResult.error;
+              }
+  
+              if (error) console.error("Failed to update session title in Supabase:", error.message);
+            } catch (sessionErr) {
+              console.warn("Failed to create chat session, falling back to temporary chat:", sessionErr);
+              newId = generateId();
+              newSession = {
+                id: newId,
+                title: "Temporary Chat",
+                messages: [userMsg],
+                createdAt: Date.now(),
+                isTemporary: true,
+                mode: selectedMode,
+                requirements: {},
+              };
             }
-
-            if (error) console.error("Failed to update session title in Supabase:", error.message);
           }
  
           chatIdToUpdate = newId;
