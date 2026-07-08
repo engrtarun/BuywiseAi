@@ -135,8 +135,8 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
     } else if (parsedJson.ui_type === "unrecognized") {
       // Gibberish / unrecognized input — render as a plain clarification prompt
       aiMsg.content = parsedJson.text || "I'm not sure what product you're looking for — could you tell me more?";
-    } else if (parsedJson.ui_type === "text_response") {
-      aiMsg.content = parsedJson.text || "";
+    } else if (parsedJson.ui_type === "text_response" || parsedJson.ui_type === "text") {
+      aiMsg.content = parsedJson.text || parsedJson.message || parsedJson.content || parsedJson.response || rawContent;
     }
   } else {
     // Explore Mode (prose + tags)
@@ -980,7 +980,9 @@ export default function Page() {
       })
     );
     if (lastUserMessage) {
-      getAiReply(activeChatId, history, lastUserMessage.content, undefined, true);
+      // Remove the last user message from history to prevent duplication
+      const historyWithoutLastUser = history.slice(0, -1);
+      getAiReply(activeChatId, historyWithoutLastUser, lastUserMessage.content, undefined, true);
     }
 
   }, [activeChatId, getAiReply]);

@@ -399,7 +399,8 @@ export async function POST(req: NextRequest) {
             const activeGroqKey = process.env.GROQ_API_KEY;
             if (!activeGroqKey) throw new Error("Groq credentials pool unavailable.");
 
-            const systemInstruction = "You are BuyWise AI. Follow your strict mode instructions.";
+            const { EXPLORE_SYSTEM_PROMPT, DEEP_RESEARCH_SYSTEM_PROMPT } = await import('@/lib/agents/writer');
+            const systemInstruction = mode === "deep_research" ? DEEP_RESEARCH_SYSTEM_PROMPT : EXPLORE_SYSTEM_PROMPT;
 
             const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
               method: "POST",

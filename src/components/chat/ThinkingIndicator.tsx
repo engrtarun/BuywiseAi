@@ -59,12 +59,12 @@ export function ThinkingIndicator({ mode = "explore" }: ThinkingIndicatorProps) 
           </div>
 
           {/* Cycling Label with Fade Transition */}
-          <div className="relative flex-1 h-5 overflow-hidden">
+          <div className="relative flex-1 h-6 overflow-hidden">
             {stages.map((stage, idx) => (
               <span
                 key={stage}
                 className={`
-                  absolute inset-0 flex items-center text-[13px] font-sans text-text-primary-light/90 tracking-wide
+                  absolute inset-0 flex items-center text-[13px] font-sans text-foreground/90 tracking-wide
                   transition-all duration-500 ease-in-out
                   ${idx === stageIndex 
                     ? "opacity-100 translate-y-0" 

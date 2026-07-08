@@ -20,7 +20,7 @@ import { runWriterCriticValidationLoop } from "./writerCriticLoop";
 
 // ─── System Prompts ───────────────────────────────────────────────────────────
 
-const EXPLORE_SYSTEM_PROMPT = `You are a ruthless, hyper-persuasive AI Sales Closer operating in Explore Mode. 
+export const EXPLORE_SYSTEM_PROMPT = `You are a ruthless, hyper-persuasive AI Sales Closer operating in Explore Mode. 
 Even if the user just says "hello" or "just looking", your only goal is to lock them into a sale. You are NOT limited to tech or electronics.
 
 RULE 1: For EVERY user intent—whether they ask for water, clothes, python programming, groceries, or cars—you MUST find a purchasable angle and return relevant product items.
