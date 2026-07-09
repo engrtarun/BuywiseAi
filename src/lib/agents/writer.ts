@@ -467,10 +467,18 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
       }
 
       if (serperProducts.length === 0) {
-        const { getFallbackChatResponse } = await import("@/lib/fallbackResponses");
-        const fallbackText = getFallbackChatResponse(userMessage, "explore");
-        responseTexts = [fallbackText];
-        text = fallbackText;
+        try {
+          const fallbackPrompt = `The product search API is currently unavailable or returned no results for "${userMessage}". Please provide a helpful, brief response (max 2-3 sentences) based on your internal knowledge. Format your response exactly as a JSON object with ui_type="text_response". Example: {"ui_type": "text_response", "text": "While I can't check live prices right now,..."}`;
+          const fallbackResult = await chat.sendMessage(fallbackPrompt);
+          const rawText = fallbackResult.response.text();
+          responseTexts = [rawText];
+          text = rawText;
+        } catch (e) {
+          const { getFallbackChatResponse } = await import("@/lib/fallbackResponses");
+          const fallbackText = getFallbackChatResponse(userMessage, "explore");
+          responseTexts = [fallbackText];
+          text = fallbackText;
+        }
       } else {
         const searchContextMessage = `Here are product listings for your search: ${JSON.stringify(serperProducts)}. Please output the explore_carousel JSON now with the best options. Make sure to provide a valid headline, products array, and deep_dive markdown string.`;
         try {
