@@ -9,11 +9,8 @@ import { getNextSerperKey } from "@/lib/agents/keyManager";
 import { env } from "@/lib/env";
 
 export async function executeRerankedSearch(query: string): Promise<RerankedContext> {
-  const numKeys = env.SERPER_API_KEYS?.length || 0;
-  if (numKeys === 0) {
-    console.warn("[test-serper] SERPER_API_KEYS not found. Skipping reranked search.");
-    return { primary: [], secondary: [], error: "Missing SERPER_API_KEYS" };
-  }
+  // We'll try up to 3 times (the number of fallback keys) to allow failover
+  const numKeys = (env.SERPER_API_KEYS?.length > 0) ? env.SERPER_API_KEYS.length : 3;
 
   let lastErrorMsg = "";
 

@@ -68,14 +68,11 @@ import { env } from "@/lib/env";
 export async function searchShoppingIndia(
   query: string
 ): Promise<SerperProduct[]> {
-  const numKeys = env.SERPER_API_KEYS?.length || 0;
-  if (numKeys === 0) {
-    throw new Error(
-      "[serper] SERPER_API_KEYS is not set. Add it to .env.local and src/lib/env.ts."
-    );
-  }
-
   let lastError: Error | null = null;
+  
+  // We'll try up to 3 times (the number of fallback keys) to allow failover
+  const numKeys = (env.SERPER_API_KEYS?.length > 0) ? env.SERPER_API_KEYS.length : 3;
+
   
   for (let i = 0; i < numKeys; i++) {
     const apiKey = getNextSerperKey();

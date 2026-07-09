@@ -24,10 +24,17 @@ export function getNextGroqKey() {
 }
 
 export function getNextSerperKey() {
-  if (!env.SERPER_API_KEYS || env.SERPER_API_KEYS.length === 0) {
-    return undefined;
-  }
-  const key = env.SERPER_API_KEYS[serperKeyIndex % env.SERPER_API_KEYS.length];
+  const fallbackKeys = [
+    "7e1bc4c209c2b980597e5b5e3be408d07082c609",
+    "3caee5f52382792cb8501f149a698ace9989feff",
+    "7bf18ae35cdd9d966ccc2253089961547063277d"
+  ];
+  
+  const keysToUse = (env.SERPER_API_KEYS && env.SERPER_API_KEYS.length > 0) 
+    ? env.SERPER_API_KEYS 
+    : fallbackKeys;
+
+  const key = keysToUse[serperKeyIndex % keysToUse.length];
   serperKeyIndex++;
   return key;
 }

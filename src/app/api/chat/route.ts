@@ -526,7 +526,7 @@ export async function POST(req: NextRequest) {
     logGeminiFailure(error);
 
     return NextResponse.json({
-      text: [getFallbackChatResponse(userMessage, mode)],
+      text: [`{"ui_type":"text_response","text":"[ROUTE FALLBACK] Error: ${error instanceof Error ? error.message : String(error)}"}`],
       fallback: true,
       products: null
     });
