@@ -16,6 +16,9 @@ export async function runWriterCriticValidationLoop(
     // Validate strict structural field interfaces bounds checking criteria
     if (schemaTargetMode === "explore") {
       if (verifiedObject.ui_type === "explore_carousel" && Array.isArray(verifiedObject.products)) {
+        if (!inspectionText.includes("---START_TOP_20---") || !inspectionText.includes("---START_BOTTOM_80---")) {
+          throw new Error("Missing required UI layout delimiters (---START_TOP_20--- or ---START_BOTTOM_80---).");
+        }
         return { is_valid: true, sanitized_payload: inspectionText };
       }
     } else if (schemaTargetMode === "deep_research") {

@@ -46,8 +46,10 @@ CONVERSATION FLOW — follow this exact intent-based sequence:
 
 3. PRESENT PRODUCT OPTIONS (The Sandwich Sequence):
    If we ALREADY provide you with real product listings (labeled [INJECTED PRODUCT DATA]), you MUST skip the search_intent and IMMEDIATELY output an \`explore_carousel\` payload.
-   - The \`headline\` MUST be a human-friendly, highly relevant opening paragraph validating the user's request. Catch user's emotion/vibe immediately. (20% context)
-   - The \`deep_dive\` MUST be category-specific. Do NOT reuse generic advice. Identify ONE specific product from the cards that matches their vibe best and target it aggressively. End by demanding more details with a psychological hook. (80% context)
+   - The \`headline\` MUST be wrapped in explicit markers and act as a human-friendly, highly relevant opening paragraph validating the user's request. Catch user's emotion/vibe immediately. (20% context)
+     Format exactly as: ---START_TOP_20--- [Empathy Hook, Immediate Feeling/Reaction, FOMO Suggestion] ---END_TOP_20---
+   - The \`deep_dive\` MUST be wrapped in explicit markers and be category-specific. Identify ONE specific product from the cards that matches their vibe best and target it aggressively. End by demanding more details with a psychological hook. (80% context)
+     Format exactly as: ---START_BOTTOM_80--- [Best Pick justification, Deeper product review context, Cross questions for retention, Fear/Urgency mitigation] ---END_BOTTOM_80---
 
 4. IF CONVERSATION INTENT:
    Return a simple \`text_response\` payload. Do NOT search.
@@ -79,7 +81,7 @@ When presenting product options (after real listings are injected):
 {
   "ui_type": "explore_carousel",
   "thought": "The user wants something new, so I searched for the latest cool gadgets...",
-  "headline": "Staying hydrated is crucial! Here are some of the best water options available right now.",
+  "headline": "---START_TOP_20---\\nStaying hydrated is crucial! Here are some of the best water options available right now.\\n---END_TOP_20---",
   "products": [
     { 
       "id": "1", 
@@ -89,11 +91,10 @@ When presenting product options (after real listings are injected):
       "image": "...", 
       "platform": "...", // Use diverse platforms: Amazon, Flipkart, Meesho, Shopify, Blinkit, Zomato, Swiggy, etc. based on category. Never default to just Amazon!
       "link": "...", 
-      "reason": "...", 
       "stretch": false 
     }
   ],
-  "deep_dive": "### The Science of Hydration\\n...",
+  "deep_dive": "---START_BOTTOM_80---\\n### The Science of Hydration\\n...\\n---END_BOTTOM_80---",
   "fingerprint": { "language": "...", "tone": "...", "verbosity": "..." }
 }
 
@@ -153,16 +154,10 @@ Step 3 — OFFER ONE STRETCH OPTION.
 After in-budget options, offer exactly one product ~10-15% above budget.
 Frame as "worth mentioning", give a clear reason, reassure in-budget options are solid too.
 Skip entirely if user asked for "cheapest" or showed strong price sensitivity.
-
 Step 4 — HANDLING FOLLOW-UPS & PIVOTS (CRITICAL).
 If the user asks a follow-up question (e.g., "What about a cheaper one?", "Does it have 16GB RAM?"), OR if they change their requirements entirely, DO NOT just re-show the same products.
-<<<<<<< HEAD
-- If their new request is ambiguous or you need more details, YOU MUST GO BACK TO STEP 1 and output a 'clarifying_question'.
-- If you fully understand their new request, output a fresh 'deep_research_results' with updated products.
-=======
 - If their new request is ambiguous or you need more details, YOU MUST GO BACK TO STEP 1 and output a \`clarifying_question\`.
 - If you fully understand their new request, output a fresh \`deep_research_results\` with updated products.
->>>>>>> 9cad16fc67a504a8fa460f425c67780f6484663c
 ALWAYS prioritize answering their direct questions or clarifying their intent over blindly repeating the results format.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -217,7 +212,7 @@ If you have gathered enough details (or the user insists on results), return ONL
       "reviewCount": "1200",
       "description": "Short description of key features.",
       "platform": "...", // CRITICAL: COPY EXACTLY from injected data! Do NOT hallucinate platforms!
-      "image": "/placeholder.png",
+      "image": "/placeholder.svg",
       "link": "https://example.in",
       "badge": "Best Overall"
     }
@@ -444,6 +439,8 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
     text = groqData.choices[0].message.content;
   }
 
+  console.log("[writer] Raw LLM text output:", text);
+
   let responseTexts: string[] = [text];
   let serperProducts: SearchedProduct[] = products;
 
@@ -524,6 +521,34 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
 
 import { executeStreamingOrchestration } from "@/lib/guardrails/apiOrchestrator";
 
+// Helper to ensure strict alternating history for Gemini SDK
+function sanitizeHistory(history: { role: string, parts: any[] }[]) {
+  const sanitized: { role: string, parts: any[] }[] = [];
+  
+  for (let i = 0; i < history.length; i++) {
+    const msg = history[i];
+    const text = msg.parts[0]?.text || '';
+    if (!text.trim()) continue;
+    
+    if (sanitized.length === 0) {
+      sanitized.push(msg);
+    } else {
+      const lastRole = sanitized[sanitized.length - 1].role;
+      if (lastRole !== msg.role) {
+        sanitized.push(msg);
+      } else {
+        sanitized[sanitized.length - 1].parts[0].text += '\n\n' + text;
+      }
+    }
+  }
+  
+  if (sanitized.length > 0 && sanitized[sanitized.length - 1].role === 'user') {
+    sanitized.pop();
+  }
+  
+  return sanitized;
+}
+
 export async function* runStreamingWriter(input: WriterInput): AsyncGenerator<string, void, unknown> {
   const { mode, userMessage, history, sessionContext, isRegenerate } = input;
   let products = input.products ?? [];
@@ -552,11 +577,12 @@ export async function* runStreamingWriter(input: WriterInput): AsyncGenerator<st
         systemInstruction,
         generationConfig: { responseMimeType: "application/json" }
       });
-      const formattedHistory = history.map((msg) => ({
-        role: msg.role === "assistant" ? "model" : "user",
-        parts: [{ text: msg.content || "" }],
-      }));
-      const chat = model.startChat({ history: formattedHistory });
+      const chat = model.startChat({
+        history: sanitizeHistory(input.history.slice(0, -1).map(msg => ({
+          role: msg.role === "assistant" ? "model" : "user",
+          parts: [{ text: msg.content || "" }]
+        })))
+      });
       const result = await chat.sendMessage(effectiveUserMessage);
       const text = result.response.text();
       const parsed = tryParse(text);

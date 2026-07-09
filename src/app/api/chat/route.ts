@@ -35,6 +35,7 @@ import { getFallbackChatResponse } from "@/lib/fallbackResponses";
 import { enforceChatAccess } from "@/lib/chatAccess";
 import fs from "fs";
 import path from "path";
+import os from "os";
 import { createClient } from "@/lib/supabase/server";
 import { determineIntent } from "@/lib/agents/router";
 import { searchForProducts, type SearchedProduct } from "@/lib/agents/search";
@@ -91,9 +92,14 @@ export async function POST(req: NextRequest) {
     // Do NOT override it with the router agent, otherwise Deep Research mode gets hijacked into Explore mode.
 
     // Backend JSON file logic (Msg Quality Improvement & History Tracking like Gemini Ecosystem)
-    const chatDataDir = path.join(process.cwd(), "chat_data");
-    if (!fs.existsSync(chatDataDir)) {
-      fs.mkdirSync(chatDataDir);
+    const baseDir = process.env.NODE_ENV === "production" ? os.tmpdir() : process.cwd();
+    const chatDataDir = path.join(baseDir, "chat_data");
+    try {
+      if (!fs.existsSync(chatDataDir)) {
+        fs.mkdirSync(chatDataDir);
+      }
+    } catch (fsErr) {
+      console.warn("Failed to create chatDataDir, continuing without file persistence:", fsErr);
     }
     const contextFilePath = path.join(chatDataDir, `${chatId}.json`);
 
@@ -165,7 +171,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Save current state before LLM call
-    fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
+    try {
+      fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
+    } catch (e) {
+      console.warn("Could not save context file before LLM:", e);
+    }
 
     const access = await enforceChatAccess(req);
     if (access.response) {
@@ -279,13 +289,10 @@ export async function POST(req: NextRequest) {
         }
       }
       // If Shopping API completely failed or returned 0 results, we cannot provide product options.
-      // Trigger a full fallback immediately to prevent LLM hallucinations or blank UI.
-      if (shoppingSearchFailed || searchResults.length === 0) {
-        return NextResponse.json({
-          text: [getFallbackChatResponse(userMessage, mode)],
-          fallback: true,
-          products: null
-        });
+      // We will allow it to continue to the writer agent, which can handle empty products gracefully
+      // (either by triggering a second-pass search in explore mode, or outputting a graceful fallback in deep research).
+      if (shoppingSearchFailed) {
+        console.warn("[route] Search failed, but proceeding to writer agent for graceful fallback.");
       }
     }
 
@@ -340,7 +347,24 @@ export async function POST(req: NextRequest) {
           // Once the stream finishes, save the full response to context
           let assistantCleanText = "";
           let confirmedCategory: string | null = null;
-          let fullJsonResponse = fullResponse.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
+          let fullJsonResponse = fullResponse;
+          const jsonBlockMatch = fullResponse.match(/```(?:json)?\s*([\s\S]*?)```/i);
+          if (jsonBlockMatch && jsonBlockMatch[1]) {
+            fullJsonResponse = jsonBlockMatch[1].trim();
+          } else {
+            const firstBrace = fullResponse.indexOf('{');
+            const firstBracket = fullResponse.indexOf('[');
+            let startIndex = -1;
+            if (firstBrace !== -1 && firstBracket !== -1) startIndex = Math.min(firstBrace, firstBracket);
+            else if (firstBrace !== -1) startIndex = firstBrace;
+            else if (firstBracket !== -1) startIndex = firstBracket;
+            
+            if (startIndex !== -1) {
+              fullJsonResponse = fullResponse.substring(startIndex).replace(/```$/, "").trim();
+            } else {
+              fullJsonResponse = fullResponse.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
+            }
+          }
           try {
             const parsedRes = JSON.parse(fullJsonResponse);
             if (parsedRes.fingerprint && parsedRes.fingerprint.language) {
@@ -388,7 +412,11 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
+          try {
+            fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
+          } catch (e) {
+            console.warn("Could not save context file after LLM:", e);
+          }
 
           if (confirmedCategory) {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'metadata', confirmed_category: confirmedCategory })}\n\n`));
@@ -479,9 +507,10 @@ export async function POST(req: NextRequest) {
 
   } catch (error: unknown) {
     logGeminiFailure(error);
+    const errMessage = error instanceof Error ? error.stack : String(error);
 
     return NextResponse.json({
-      text: [getFallbackChatResponse(userMessage, mode)],
+      text: [JSON.stringify({ ui_type: "text_response", text: "SYSTEM DIAGNOSTIC: " + errMessage })],
       fallback: true,
       products: null
     });

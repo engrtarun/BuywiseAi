@@ -61,17 +61,22 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
         category: parsedJson.category || "category",
         key_attributes: Array.isArray(parsedJson.key_attributes) ? parsedJson.key_attributes : [],
       };
+    } else if (parsedJson.ui_type === "clarifying_question" || parsedJson.ui_type === "questionnaire") {
+      aiMsg.content = rawContent; // Allow MessageBubble to parse the raw JSON for the clarifying question
+      aiMsg.clarifyingQuestion = {
+        acknowledgement: parsedJson.thought || "",
+        question: parsedJson.question || "",
+        options: parsedJson.options || [],
+        allow_skip: parsedJson.allow_skip,
+        allow_custom: parsedJson.allow_custom
+      };
     } else if (parsedJson.ui_type === "explore_carousel") {
-      aiMsg.content = parsedJson.headline || "Here are some recommendations:";
-      aiMsg.exploreIntro = parsedJson.headline || "Here are some recommendations:";
-      aiMsg.exploreDeepDive = parsedJson.deep_dive || "";
+      const combinedText = `${parsedJson.headline || ""}\n\n${parsedJson.deep_dive || ""}`;
+      const parts = getExploreLayoutParts(combinedText);
 
-      // If deep_dive is empty in JSON but headline itself has splits, parse it:
-      if (!aiMsg.exploreDeepDive && aiMsg.exploreIntro) {
-        const parts = getExploreLayoutParts(aiMsg.exploreIntro);
-        aiMsg.exploreIntro = parts.intro;
-        aiMsg.exploreDeepDive = parts.deepDive;
-      }
+      aiMsg.content = parts.intro || "Here are some recommendations:";
+      aiMsg.exploreIntro = parts.intro || "Here are some recommendations:";
+      aiMsg.exploreDeepDive = parts.deepDive || "";
 
       const items = Array.isArray(parsedJson.products) ? parsedJson.products : [];
       aiMsg.products = items.map((p: any) => ({
@@ -82,7 +87,7 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
         reviewCount: String(p.reviewCount || "42"),
         description: String(p.description || "Recommended product matching your request."),
         platform: p.platform === "Flipkart" ? "Flipkart" : "Amazon",
-        image: String(p.image || "/placeholder.png"),
+        image: String(p.image || "/placeholder.svg"),
         link: String(p.link || "https://amazon.in"),
       }));
     } else if (parsedJson.ui_type === "deep_research_results" || parsedJson.type === "deep_research_results" || parsedJson.ui_type === "results") {
@@ -129,7 +134,7 @@ function parseAiMessageContent(dbMessageId: string, rawContent: string): Message
         reviewCount: String(p.reviewCount || "100+"),
         description: String(p.description || "Recommended product matching your request."),
         platform: String(p.platform || "Amazon"),
-        image: String(p.image || "/placeholder.png"),
+        image: String(p.image || "/placeholder.svg"),
         link: String(p.link || "https://amazon.in"),
         badge: String(p.badge || "Recommended")
       }));
@@ -441,6 +446,23 @@ export default function Page() {
             }
             appendErrorMessage(chatId, "generic");
           }
+          return;
+        }
+
+        const contentType = response.headers.get("Content-Type") || "";
+        if (contentType.includes("application/json")) {
+          const errorData = await response.json();
+          // Generate a temporary ID
+          const tempMsgId = generateId();
+          const fallbackText = Array.isArray(errorData.text) ? errorData.text[0] : (errorData.text || "An error occurred.");
+          const aiMsg = parseAiMessageContent(tempMsgId, fallbackText);
+          
+          setChatSessions((prev) =>
+            prev.map((s) =>
+              s.id === chatId ? { ...s, messages: [...s.messages, aiMsg] } : s
+            )
+          );
+          setIsTyping(false);
           return;
         }
 
@@ -796,7 +818,7 @@ export default function Page() {
           let newId: string;
           let newSession: ChatSession;
  
-          if (isTemporaryChat) {
+          if (isTemporaryChat || isGuest) {
             // Guest / temporary chat — no Supabase persistence
             newId = generateId();
             newSession = {
@@ -809,37 +831,51 @@ export default function Page() {
               requirements: {},
             };
           } else {
-            newId = await createChatSession(selectedMode);
-            newSession = {
-              id: newId,
-              title: generateTitle(content),
-              messages: [userMsg],
-              createdAt: Date.now(),
-              mode: selectedMode,
-              requirements: {},
-            };
-            // Persist user message to Supabase
-            await apiSendMessage(newId, "user", content);
-            // Also set title of the chat in Supabase
-            const supabase = createClient();
-            const updatePayload: any = { title: generateTitle(content), mode: selectedMode };
-            let { error } = await supabase
-              .from("chat_sessions")
-              .update(updatePayload)
-              .eq("id", newId);
-            
-            // Graceful fallback if remote DB is missing the 'mode' column
-            if (error && error.message.includes("'mode' column")) {
-              console.warn("Graceful fallback: 'mode' column missing, updating without it.");
-              delete updatePayload.mode;
-              const fallbackResult = await supabase
+            try {
+              newId = await createChatSession(selectedMode);
+              newSession = {
+                id: newId,
+                title: generateTitle(content),
+                messages: [userMsg],
+                createdAt: Date.now(),
+                mode: selectedMode,
+                requirements: {},
+              };
+              // Persist user message to Supabase
+              await apiSendMessage(newId, "user", content);
+              // Also set title of the chat in Supabase
+              const supabase = createClient();
+              const updatePayload: any = { title: generateTitle(content), mode: selectedMode };
+              let { error } = await supabase
                 .from("chat_sessions")
                 .update(updatePayload)
                 .eq("id", newId);
-              error = fallbackResult.error;
+              
+              // Graceful fallback if remote DB is missing the 'mode' column
+              if (error && error.message.includes("'mode' column")) {
+                console.warn("Graceful fallback: 'mode' column missing, updating without it.");
+                delete updatePayload.mode;
+                const fallbackResult = await supabase
+                  .from("chat_sessions")
+                  .update(updatePayload)
+                  .eq("id", newId);
+                error = fallbackResult.error;
+              }
+  
+              if (error) console.error("Failed to update session title in Supabase:", error.message);
+            } catch (sessionErr) {
+              console.warn("Failed to create chat session, falling back to temporary chat:", sessionErr);
+              newId = generateId();
+              newSession = {
+                id: newId,
+                title: "Temporary Chat",
+                messages: [userMsg],
+                createdAt: Date.now(),
+                isTemporary: true,
+                mode: selectedMode,
+                requirements: {},
+              };
             }
-
-            if (error) console.error("Failed to update session title in Supabase:", error.message);
           }
  
           chatIdToUpdate = newId;

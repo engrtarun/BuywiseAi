@@ -3,6 +3,7 @@ import { Product } from "@/types/product";
 import { Star, ExternalLink, ShoppingCart, Loader2, ChevronRight, Check } from "lucide-react";
 import { CheckoutFlow } from "../checkout/CheckoutFlow";
 import { ProductBottomSheet } from "./ProductBottomSheet";
+import { ProductImageModal } from "./ProductImageModal";
 
 interface ProductCardProps {
   product: Product;
@@ -65,16 +66,17 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
   const isAmazon = product.platform === "Amazon";
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [inCart, setInCart] = useState(false);
   
   // Hydrate local state from local storage persistence
   useEffect(() => {
     try {
-      const storedSaved = localStorage.getItem("buywise_quickbuy_saved");
+      const storedSaved = localStorage.getItem("buywise_cart_items");
       if (storedSaved) {
         const parsed = JSON.parse(storedSaved);
-        if (Array.isArray(parsed) && parsed.includes(product.id)) {
+        if (Array.isArray(parsed) && parsed.some((p: any) => p.id === product.id)) {
           setInCart(true);
         }
       }
@@ -92,6 +94,11 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('a')) return;
     setIsBottomSheetOpen(true);
+  };
+
+  const handleImageClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsImageModalOpen(true);
   };
 
   const handleCartToggle = async (e: React.MouseEvent) => {
@@ -119,24 +126,32 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
       });
       
       // Update local storage to persist state across reloads
-      const storedSaved = localStorage.getItem("buywise_quickbuy_saved");
-      let savedIds: string[] = [];
-      if (storedSaved) {
+      const storedCart = localStorage.getItem("buywise_cart_items");
+      let cartItems: any[] = [];
+      if (storedCart) {
         try {
-          savedIds = JSON.parse(storedSaved);
+          cartItems = JSON.parse(storedCart);
         } catch {
-          savedIds = [];
+          cartItems = [];
         }
       }
       
       if (nextInCart) {
-        if (!savedIds.includes(product.id)) {
-          savedIds.push(product.id);
+        if (!cartItems.some((p: any) => p.id === product.id)) {
+          cartItems.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            platform: product.platform,
+          });
         }
       } else {
-        savedIds = savedIds.filter(id => id !== product.id);
+        cartItems = cartItems.filter((p: any) => p.id !== product.id);
       }
-      localStorage.setItem("buywise_quickbuy_saved", JSON.stringify(savedIds));
+      localStorage.setItem("buywise_cart_items", JSON.stringify(cartItems));
+      localStorage.setItem("buywise_quickbuy_saved", JSON.stringify(cartItems.map(p => p.id)));
+      window.dispatchEvent(new CustomEvent("cart-updated"));
     } catch (err) {
       console.error("Failed to sync cart state to database:", err);
     }
@@ -156,7 +171,10 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
       `}
     >
       {/* --- Image Panel (Top) --- */}
-      <div className="relative w-full pb-[100%] bg-black/40 overflow-hidden border-b border-white/5">
+      <div 
+        onClick={handleImageClick}
+        className="relative w-full pb-[100%] bg-black/40 overflow-hidden border-b border-white/5 cursor-zoom-in"
+      >
         
         {/* Shimmer skeleton */}
         <div className={`absolute inset-0 bg-white/5 animate-pulse transition-opacity duration-500 ${imageLoaded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`} />
@@ -277,6 +295,13 @@ export function ProductCard({ product, onAddToCartToggle, onBuyCallback }: Produ
           if (onBuyCallback) onBuyCallback(prod);
           setIsCheckoutOpen(true);
         }}
+      />
+
+      <ProductImageModal
+        isOpen={isImageModalOpen}
+        onClose={() => setIsImageModalOpen(false)}
+        imageUrl={product.image}
+        productName={product.name}
       />
     </div>
   );

@@ -278,7 +278,13 @@ export function WelcomeScreen({
           {suggestions.map((promptText, idx) => (
             <button
               key={`${idx}-${promptText}`}
-              onClick={() => onSuggestionClick(promptText)}
+              onClick={() => {
+                if (guestLimitReached && onLoginClick) {
+                  onLoginClick();
+                } else {
+                  onSuggestionClick(promptText);
+                }
+              }}
               disabled={suggestionsLoading}
               className="w-full text-left p-3.5 rounded-lg bg-card border border-border hover:bg-muted/50 hover:border-border/80 active:scale-[0.99] transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[90px]"
             >
