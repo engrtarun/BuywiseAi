@@ -35,6 +35,7 @@ import { getFallbackChatResponse } from "@/lib/fallbackResponses";
 import { enforceChatAccess } from "@/lib/chatAccess";
 import fs from "fs";
 import path from "path";
+import os from "os";
 import { createClient } from "@/lib/supabase/server";
 import { determineIntent } from "@/lib/agents/router";
 import { searchForProducts, type SearchedProduct } from "@/lib/agents/search";
@@ -91,9 +92,14 @@ export async function POST(req: NextRequest) {
     // Do NOT override it with the router agent, otherwise Deep Research mode gets hijacked into Explore mode.
 
     // Backend JSON file logic (Msg Quality Improvement & History Tracking like Gemini Ecosystem)
-    const chatDataDir = path.join(process.cwd(), "chat_data");
-    if (!fs.existsSync(chatDataDir)) {
-      fs.mkdirSync(chatDataDir);
+    const baseDir = process.env.NODE_ENV === "production" ? os.tmpdir() : process.cwd();
+    const chatDataDir = path.join(baseDir, "chat_data");
+    try {
+      if (!fs.existsSync(chatDataDir)) {
+        fs.mkdirSync(chatDataDir);
+      }
+    } catch (fsErr) {
+      console.warn("Failed to create chatDataDir, continuing without file persistence:", fsErr);
     }
     const contextFilePath = path.join(chatDataDir, `${chatId}.json`);
 
@@ -165,7 +171,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Save current state before LLM call
-    fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
+    try {
+      fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
+    } catch (e) {
+      console.warn("Could not save context file before LLM:", e);
+    }
 
     const access = await enforceChatAccess(req);
     if (access.response) {
@@ -422,7 +432,11 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
+          try {
+            fs.writeFileSync(contextFilePath, JSON.stringify(backendContext, null, 2));
+          } catch (e) {
+            console.warn("Could not save context file after LLM:", e);
+          }
 
           if (confirmedCategory) {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'metadata', confirmed_category: confirmedCategory })}\n\n`));
