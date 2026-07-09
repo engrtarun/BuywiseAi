@@ -5,12 +5,12 @@
  */
 
 import { runRerankingPipeline, type RerankedContext } from "../retrieval/index";
-import { getNextSerperKey } from "@/lib/agents/keyManager";
+import { getNextSerperKey, getSerperKeysCount } from "@/lib/agents/keyManager";
 import { env } from "@/lib/env";
 
 export async function executeRerankedSearch(query: string): Promise<RerankedContext> {
   // We'll try up to 3 times (the number of fallback keys) to allow failover
-  const numKeys = (env.SERPER_API_KEYS?.length > 0) ? env.SERPER_API_KEYS.length : 3;
+  const numKeys = getSerperKeysCount();
 
   let lastErrorMsg = "";
 

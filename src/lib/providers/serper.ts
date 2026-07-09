@@ -62,7 +62,7 @@ function parsePrice(raw: string | undefined): number {
  * @returns      - Array of normalised SerperProduct objects (may be empty)
  * @throws       - Rethrows on network / API key errors so callers can handle
  */
-import { getNextSerperKey } from "@/lib/agents/keyManager";
+import { getNextSerperKey, getSerperKeysCount } from "@/lib/agents/keyManager";
 import { env } from "@/lib/env";
 
 export async function searchShoppingIndia(
@@ -70,8 +70,8 @@ export async function searchShoppingIndia(
 ): Promise<SerperProduct[]> {
   let lastError: Error | null = null;
   
-  // We'll try up to 3 times (the number of fallback keys) to allow failover
-  const numKeys = (env.SERPER_API_KEYS?.length > 0) ? env.SERPER_API_KEYS.length : 3;
+  // Try all available keys (env + fallback)
+  const numKeys = getSerperKeysCount();
 
   
   for (let i = 0; i < numKeys; i++) {

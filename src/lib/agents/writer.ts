@@ -467,19 +467,10 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
       }
 
       if (serperProducts.length === 0) {
-        try {
-          const fallbackPrompt = `The product search API is currently unavailable or returned no results for "${userMessage}". Please provide a helpful, brief response (max 2-3 sentences) based on your internal knowledge. Format your response exactly as a JSON object with ui_type="text_response". Example: {"ui_type": "text_response", "text": "While I can't check live prices right now,..."}`;
-          const fallbackResult = await chat.sendMessage(fallbackPrompt);
-          const rawText = fallbackResult.response.text();
-          responseTexts = [rawText];
-          text = rawText;
-        } catch (e: any) {
-          console.error("LLM Fallback Generation Failed:", e);
-          const { getFallbackChatResponse } = await import("@/lib/fallbackResponses");
-          const fallbackText = getFallbackChatResponse(userMessage, "explore");
-          responseTexts = [fallbackText];
-          text = fallbackText;
-        }
+        const { getFallbackChatResponse } = await import("@/lib/fallbackResponses");
+        const fallbackText = getFallbackChatResponse(userMessage, "explore");
+        responseTexts = [fallbackText];
+        text = fallbackText;
       } else {
         const searchContextMessage = `Here are product listings for your search: ${JSON.stringify(serperProducts)}. Please output the explore_carousel JSON now with the best options. Make sure to provide a valid headline, products array, and deep_dive markdown string.`;
         try {
@@ -530,6 +521,34 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
 
 import { executeStreamingOrchestration } from "@/lib/guardrails/apiOrchestrator";
 
+// Helper to ensure strict alternating history for Gemini SDK
+function sanitizeHistory(history: { role: string, parts: any[] }[]) {
+  const sanitized: { role: string, parts: any[] }[] = [];
+  
+  for (let i = 0; i < history.length; i++) {
+    const msg = history[i];
+    const text = msg.parts[0]?.text || '';
+    if (!text.trim()) continue;
+    
+    if (sanitized.length === 0) {
+      sanitized.push(msg);
+    } else {
+      const lastRole = sanitized[sanitized.length - 1].role;
+      if (lastRole !== msg.role) {
+        sanitized.push(msg);
+      } else {
+        sanitized[sanitized.length - 1].parts[0].text += '\n\n' + text;
+      }
+    }
+  }
+  
+  if (sanitized.length > 0 && sanitized[sanitized.length - 1].role === 'user') {
+    sanitized.pop();
+  }
+  
+  return sanitized;
+}
+
 export async function* runStreamingWriter(input: WriterInput): AsyncGenerator<string, void, unknown> {
   const { mode, userMessage, history, sessionContext, isRegenerate } = input;
   let products = input.products ?? [];
@@ -558,11 +577,12 @@ export async function* runStreamingWriter(input: WriterInput): AsyncGenerator<st
         systemInstruction,
         generationConfig: { responseMimeType: "application/json" }
       });
-      const formattedHistory = history.map((msg) => ({
-        role: msg.role === "assistant" ? "model" : "user",
-        parts: [{ text: msg.content || "" }],
-      }));
-      const chat = model.startChat({ history: formattedHistory });
+      const chat = model.startChat({
+        history: sanitizeHistory(input.history.slice(0, -1).map(msg => ({
+          role: msg.role === "assistant" ? "model" : "user",
+          parts: [{ text: msg.content || "" }]
+        })))
+      });
       const result = await chat.sendMessage(effectiveUserMessage);
       const text = result.response.text();
       const parsed = tryParse(text);
