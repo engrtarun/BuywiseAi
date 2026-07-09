@@ -524,9 +524,10 @@ export async function POST(req: NextRequest) {
 
   } catch (error: unknown) {
     logGeminiFailure(error);
+    const errMessage = error instanceof Error ? error.stack : String(error);
 
     return NextResponse.json({
-      text: [getFallbackChatResponse(userMessage, mode)],
+      text: [JSON.stringify({ ui_type: "text_response", text: "SYSTEM DIAGNOSTIC: " + errMessage })],
       fallback: true,
       products: null
     });
