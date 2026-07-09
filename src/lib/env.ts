@@ -84,7 +84,7 @@ const serverEnvSchema = clientEnvSchema.extend({
   GEMINI_API_KEYS: z.array(z.string().min(1)).min(1, "At least one GEMINI_API_KEY is required"),
   GROQ_API_KEY: z.array(z.string()).default([]),
   // Optional: when absent the app falls back to FakeStore product data.
-  SERPER_API_KEY: z.string().trim().optional(),
+  SERPER_API_KEYS: z.array(z.string()).default([]),
   UPSTASH_VECTOR_REST_URL: z.string().trim().optional(),
   UPSTASH_VECTOR_REST_TOKEN: z.string().trim().optional(),
 });
@@ -93,6 +93,7 @@ const envSchema = isServer ? serverEnvSchema : clientEnvSchema;
 
 const geminiKeys = gatherSequentialEnvKeys("GEMINI_API_KEY");
 const groqKeys = gatherSequentialEnvKeys("GROQ_API_KEY", (k) => k.startsWith("gsk_"));
+const serperKeys = gatherSequentialEnvKeys("SERPER_API_KEY");
 
 const rawEnv = {
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -100,7 +101,7 @@ const rawEnv = {
   ...(isServer ? { 
     GEMINI_API_KEYS: geminiKeys, 
     GROQ_API_KEY: groqKeys, 
-    SERPER_API_KEY: process.env.SERPER_API_KEY, 
+    SERPER_API_KEYS: serperKeys, 
     UPSTASH_VECTOR_REST_URL: process.env.UPSTASH_VECTOR_REST_URL, 
     UPSTASH_VECTOR_REST_TOKEN: process.env.UPSTASH_VECTOR_REST_TOKEN 
   } : {}),

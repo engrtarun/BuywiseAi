@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 let geminiKeyIndex = 0;
 let groqKeyIndex = 0;
+let serperKeyIndex = 0;
 
 export function getNextGeminiClient() {
   if (!env.GEMINI_API_KEYS || env.GEMINI_API_KEYS.length === 0) {
@@ -19,5 +20,14 @@ export function getNextGroqKey() {
   }
   const key = env.GROQ_API_KEY[groqKeyIndex % env.GROQ_API_KEY.length];
   groqKeyIndex++;
+  return key;
+}
+
+export function getNextSerperKey() {
+  if (!env.SERPER_API_KEYS || env.SERPER_API_KEYS.length === 0) {
+    return undefined;
+  }
+  const key = env.SERPER_API_KEYS[serperKeyIndex % env.SERPER_API_KEYS.length];
+  serperKeyIndex++;
   return key;
 }

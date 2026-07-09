@@ -62,44 +62,64 @@ function parsePrice(raw: string | undefined): number {
  * @returns      - Array of normalised SerperProduct objects (may be empty)
  * @throws       - Rethrows on network / API key errors so callers can handle
  */
+import { getNextSerperKey } from "@/lib/agents/keyManager";
+import { env } from "@/lib/env";
+
 export async function searchShoppingIndia(
   query: string
 ): Promise<SerperProduct[]> {
-  const apiKey = process.env.SERPER_API_KEY;
-
-  if (!apiKey) {
+  const numKeys = env.SERPER_API_KEYS?.length || 0;
+  if (numKeys === 0) {
     throw new Error(
-      "[serper] SERPER_API_KEY is not set. Add it to .env.local and src/lib/env.ts."
+      "[serper] SERPER_API_KEYS is not set. Add it to .env.local and src/lib/env.ts."
     );
   }
 
-  const response = await fetch(SERPER_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "X-API-KEY": apiKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ q: query, gl: "in", hl: "en" })
-  });
+  let lastError: Error | null = null;
+  
+  for (let i = 0; i < numKeys; i++) {
+    const apiKey = getNextSerperKey();
+    if (!apiKey) break;
 
-  if (!response.ok) {
-    throw new Error(
-      `[serper] API responded with ${response.status}: ${await response.text()}`
+    const response = await fetch(SERPER_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "X-API-KEY": apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ q: query, gl: "in", hl: "en" })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      lastError = new Error(`[serper] API responded with ${response.status}: ${errText}`);
+      
+      // If unauthorized/forbidden (often means out of credits) or rate limited, try next key.
+      if (response.status === 403 || response.status === 429) {
+        console.warn(`[serper] Key exhausted or rate-limited. Trying next key...`);
+        continue;
+      }
+      
+      // For other errors (like 400 Bad Request), it's likely a query issue, not a key issue.
+      throw lastError;
+    }
+
+    const data = (await response.json()) as { shopping?: SerperShoppingItem[] };
+    const items = data.shopping ?? [];
+
+    return items.map(
+      (item): SerperProduct => ({
+        name: item.title ?? "Unknown Product",
+        price: parsePrice(item.price),
+        image: item.imageUrl ?? "",
+        platform: item.source ?? "Google Shopping",
+        url: item.link ?? "",
+        rating: typeof item.rating === "number" ? item.rating : null,
+        reviewCount: typeof item.ratingCount === "number" ? item.ratingCount : null,
+      })
     );
   }
 
-  const data = (await response.json()) as { shopping?: SerperShoppingItem[] };
-  const items = data.shopping ?? [];
-
-  return items.map(
-    (item): SerperProduct => ({
-      name: item.title ?? "Unknown Product",
-      price: parsePrice(item.price),
-      image: item.imageUrl ?? "",
-      platform: item.source ?? "Google Shopping",
-      url: item.link ?? "",
-      rating: typeof item.rating === "number" ? item.rating : null,
-      reviewCount: typeof item.ratingCount === "number" ? item.ratingCount : null,
-    })
-  );
+  throw lastError || new Error("[serper] All Serper API keys failed.");
 }
+

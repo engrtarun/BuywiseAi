@@ -5,42 +5,60 @@
  */
 
 import { runRerankingPipeline, type RerankedContext } from "../retrieval/index";
+import { getNextSerperKey } from "@/lib/agents/keyManager";
+import { env } from "@/lib/env";
 
 export async function executeRerankedSearch(query: string): Promise<RerankedContext> {
-  const apiKey = process.env.SERPER_API_KEY;
-  if (!apiKey) {
-    console.warn("[test-serper] SERPER_API_KEY not found. Skipping reranked search.");
-    return { primary: [], secondary: [], error: "Missing SERPER_API_KEY" };
+  const numKeys = env.SERPER_API_KEYS?.length || 0;
+  if (numKeys === 0) {
+    console.warn("[test-serper] SERPER_API_KEYS not found. Skipping reranked search.");
+    return { primary: [], secondary: [], error: "Missing SERPER_API_KEYS" };
   }
 
-  try {
-    // Fetch top 15 organic search results
-    const response = await fetch("https://google.serper.dev/search", {
-      method: "POST",
-      headers: {
-        "X-API-KEY": apiKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ q: query, gl: "in", hl: "en", num: 15 }),
-    });
+  let lastErrorMsg = "";
 
-    if (!response.ok) {
-      console.warn(`[test-serper] Serper API error: ${response.status}`);
-      return { primary: [], secondary: [], error: `Serper Organic Search failed with status ${response.status}` };
+  for (let i = 0; i < numKeys; i++) {
+    const apiKey = getNextSerperKey();
+    if (!apiKey) break;
+
+    try {
+      // Fetch top 15 organic search results
+      const response = await fetch("https://google.serper.dev/search", {
+        method: "POST",
+        headers: {
+          "X-API-KEY": apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ q: query, gl: "in", hl: "en", num: 15 }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 403 || response.status === 429) {
+          console.warn(`[test-serper] Key exhausted or rate-limited. Trying next key...`);
+          lastErrorMsg = `Serper Organic Search failed with status ${response.status}`;
+          continue;
+        }
+        console.warn(`[test-serper] Serper API error: ${response.status}`);
+        return { primary: [], secondary: [], error: `Serper Organic Search failed with status ${response.status}` };
+      }
+
+      const data = await response.json();
+      const organic = data.organic || [];
+      const urls: string[] = organic.map((r: { link?: string }) => r.link).filter(Boolean);
+
+      if (urls.length === 0) return { primary: [], secondary: [], error: "No organic URLs found" };
+
+      // Trigger Steps 02 through 06 in the Reranking Pipeline
+      const rerankedContext = await runRerankingPipeline(query, urls.slice(0, 15));
+      
+      return rerankedContext;
+    } catch (err: any) {
+      console.warn("[test-serper] Execution failed:", err.message || err);
+      // For fetch network errors, we don't necessarily retry all keys as it's likely a global network issue,
+      // but to be safe, we can just return.
+      return { primary: [], secondary: [], error: "Serper Organic Search execution failed" };
     }
-
-    const data = await response.json();
-    const organic = data.organic || [];
-    const urls: string[] = organic.map((r: { link?: string }) => r.link).filter(Boolean);
-
-    if (urls.length === 0) return { primary: [], secondary: [], error: "No organic URLs found" };
-
-    // Trigger Steps 02 through 06 in the Reranking Pipeline
-    const rerankedContext = await runRerankingPipeline(query, urls.slice(0, 15));
-    
-    return rerankedContext;
-  } catch (err: any) {
-    console.warn("[test-serper] Execution failed:", err.message || err);
-    return { primary: [], secondary: [], error: "Serper Organic Search execution failed" };
   }
+
+  return { primary: [], secondary: [], error: lastErrorMsg || "All Serper API keys failed" };
 }
