@@ -306,13 +306,10 @@ export async function POST(req: NextRequest) {
         }
       }
       // If Shopping API completely failed or returned 0 results, we cannot provide product options.
-      // Trigger a full fallback immediately to prevent LLM hallucinations or blank UI.
-      if (shoppingSearchFailed || searchResults.length === 0) {
-        return NextResponse.json({
-          text: [getFallbackChatResponse(userMessage, mode)],
-          fallback: true,
-          products: null
-        });
+      // We will allow it to continue to the writer agent, which can handle empty products gracefully
+      // (either by triggering a second-pass search in explore mode, or outputting a graceful fallback in deep research).
+      if (shoppingSearchFailed) {
+        console.warn("[route] Search failed, but proceeding to writer agent for graceful fallback.");
       }
     }
 
