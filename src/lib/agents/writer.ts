@@ -475,10 +475,8 @@ export async function runWriter(input: WriterInput): Promise<WriterOutput> {
           text = rawText;
         } catch (e: any) {
           console.error("LLM Fallback Generation Failed:", e);
-          const fallbackText = JSON.stringify({
-            ui_type: "text_response",
-            text: `[WRITER FALLBACK] LLM Error: ${e.message || String(e)}`
-          });
+          const { getFallbackChatResponse } = await import("@/lib/fallbackResponses");
+          const fallbackText = getFallbackChatResponse(userMessage, "explore");
           responseTexts = [fallbackText];
           text = fallbackText;
         }
